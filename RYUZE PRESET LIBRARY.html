@@ -1,0 +1,1589 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>RYUZE PRESET LIBRARY</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0a0a0f;
+      --bg2: #12121a;
+      --card: rgba(255,255,255,0.04);
+      --card-hover: rgba(255,255,255,0.07);
+      --border: rgba(255,255,255,0.08);
+      --border-glow: rgba(99,102,241,0.35);
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --primary: #6366f1;
+      --primary2: #8b5cf6;
+      --neon: #818cf8;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --radius-pill: 9999px;
+      --shadow: 0 8px 32px rgba(0,0,0,0.4);
+      --glass: blur(16px);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Background subtle gradient orbs */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% -10%, rgba(99,102,241,0.15), transparent),
+        radial-gradient(ellipse 60% 40% at 80% 10%, rgba(139,92,246,0.12), transparent),
+        radial-gradient(ellipse 50% 30% at 50% 100%, rgba(99,102,241,0.08), transparent);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app { position: relative; z-index: 1; min-height: 100vh; padding-bottom: 90px; }
+
+    /* ===== HEADER ===== */
+    .header {
+      position: sticky; top: env(safe-area-inset-top, 0px); z-index: 100;
+      background: rgba(10,10,15,0.75);
+      backdrop-filter: var(--glass);
+      -webkit-backdrop-filter: var(--glass);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+    }
+    .header-inner {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; color: var(--text);
+      flex-shrink: 0;
+    }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--primary), var(--primary2));
+      border-radius: 10px;
+      display: grid; place-items: center;
+      font-weight: 800; font-size: 14px;
+      box-shadow: 0 0 20px rgba(99,102,241,0.4);
+    }
+    .logo-text { font-weight: 800; font-size: 15px; letter-spacing: -0.3px; }
+    .logo-text span { color: var(--neon); }
+
+    .search-wrap {
+      flex: 1; position: relative; max-width: 480px;
+    }
+    .search-input {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      padding: 10px 16px 10px 42px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .search-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.2);
+    }
+    .search-input::placeholder { color: var(--text-muted); }
+    .search-icon {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      color: var(--text-muted); pointer-events: none;
+    }
+    .clear-search {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: var(--text-muted);
+      cursor: pointer; padding: 4px; display: none;
+    }
+    .clear-search.show { display: block; }
+
+    .header-actions { display: flex; gap: 8px; align-items: center; }
+    .btn-icon {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      display: grid; place-items: center;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .btn-icon:hover { background: var(--card-hover); border-color: var(--border-glow); }
+
+    /* ===== MAIN ===== */
+    .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
+
+    .stats-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px; flex-wrap: wrap; gap: 8px;
+    }
+    .stat-pill {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      padding: 6px 14px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .stat-pill strong { color: var(--neon); }
+
+    /* Categories */
+    .cats {
+      display: flex; gap: 8px; overflow-x: auto;
+      padding-bottom: 12px; margin-bottom: 20px;
+      scrollbar-width: none; -ms-overflow-style: none;
+    }
+    .cats::-webkit-scrollbar { display: none; }
+    .cat-btn {
+      flex-shrink: 0;
+      padding: 8px 18px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text-muted);
+      font-size: 13px; font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .cat-btn:hover { border-color: var(--border-glow); color: var(--text); }
+    .cat-btn.active {
+      background: linear-gradient(135deg, var(--primary), var(--primary2));
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(99,102,241,0.35);
+    }
+
+    /* Section */
+    .section { margin-bottom: 32px; }
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .section-title {
+      font-size: 18px; font-weight: 700;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-title .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--neon);
+      box-shadow: 0 0 8px var(--neon);
+    }
+
+    /* Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 14px;
+    }
+    @media (min-width: 640px) {
+      .grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+    }
+
+    /* Card */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+      cursor: pointer;
+      position: relative;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: var(--border-glow);
+      box-shadow: 0 12px 40px rgba(99,102,241,0.15);
+    }
+    .card-thumb {
+      aspect-ratio: 16/10;
+      background: linear-gradient(135deg, #1e1b4b, #312e81);
+      position: relative;
+      overflow: hidden;
+    }
+    .card-thumb img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform 0.4s;
+    }
+    .card:hover .card-thumb img { transform: scale(1.05); }
+    .card-thumb-placeholder {
+      width: 100%; height: 100%;
+      display: grid; place-items: center;
+      font-size: 28px; opacity: 0.4;
+    }
+    .card-badge {
+      position: absolute; top: 8px; left: 8px;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(8px);
+      border-radius: var(--radius-pill);
+      padding: 3px 10px;
+      font-size: 11px; font-weight: 600;
+      color: var(--neon);
+    }
+    .card-fav {
+      position: absolute; top: 8px; right: 8px;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.5);
+      border: none;
+      color: #fff;
+      display: grid; place-items: center;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .card-fav:hover { transform: scale(1.1); }
+    .card-fav.active { color: #f43f5e; }
+    .card-body { padding: 12px; }
+    .card-id {
+      display: inline-block;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 11px; font-weight: 600;
+      color: var(--neon);
+      background: rgba(99,102,241,0.15);
+      border: 1px solid rgba(99,102,241,0.3);
+      border-radius: 6px;
+      padding: 2px 8px;
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+    .card-title {
+      font-size: 14px; font-weight: 600;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+    .card-meta {
+      font-size: 12px; color: var(--text-muted);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .card-actions {
+      display: flex; gap: 6px; margin-top: 10px;
+    }
+    .btn-sm {
+      flex: 1;
+      padding: 7px 10px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border);
+      background: var(--bg2);
+      color: var(--text);
+      font-size: 12px; font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 4px;
+    }
+    .btn-sm:hover { border-color: var(--primary); background: rgba(99,102,241,0.15); }
+    .btn-sm.primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary2));
+      border: none; color: #fff;
+    }
+    .btn-sm.primary:hover { opacity: 0.9; }
+
+    /* Empty / Loading */
+    .empty-state {
+      text-align: center; padding: 48px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state svg { margin-bottom: 12px; opacity: 0.4; }
+    .empty-state h3 { color: var(--text); margin-bottom: 6px; }
+    .loading {
+      display: flex; justify-content: center; padding: 40px;
+    }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== DETAIL PAGE ===== */
+    .detail-page { display: none; }
+    .detail-page.active { display: block; }
+    .home-page.hidden { display: none; }
+
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      padding: 8px 16px;
+      color: var(--text);
+      font-size: 13px; font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      margin-bottom: 20px;
+      transition: all 0.2s;
+    }
+    .back-btn:hover { border-color: var(--border-glow); }
+
+    .detail-layout {
+      display: grid; gap: 24px;
+    }
+    @media (min-width: 768px) {
+      .detail-layout { grid-template-columns: 1fr 1fr; align-items: start; }
+    }
+    .detail-thumb {
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      aspect-ratio: 16/10;
+      background: linear-gradient(135deg, #1e1b4b, #312e81);
+    }
+    .detail-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .detail-info h1 {
+      font-size: 24px; font-weight: 800;
+      margin-bottom: 8px; letter-spacing: -0.5px;
+    }
+    .detail-id {
+      display: inline-block;
+      font-family: monospace;
+      font-size: 14px; font-weight: 700;
+      color: var(--neon);
+      background: rgba(99,102,241,0.15);
+      border: 1px solid rgba(99,102,241,0.35);
+      border-radius: 8px;
+      padding: 4px 12px;
+      margin-bottom: 16px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .detail-id:hover { background: rgba(99,102,241,0.25); }
+    .detail-meta {
+      display: flex; flex-wrap: wrap; gap: 10px;
+      margin-bottom: 16px;
+    }
+    .meta-chip {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      padding: 5px 12px;
+      font-size: 12px; color: var(--text-muted);
+    }
+    .meta-chip strong { color: var(--text); }
+    .detail-desc {
+      color: var(--text-muted); font-size: 14px;
+      margin-bottom: 20px; line-height: 1.6;
+    }
+    .detail-actions {
+      display: flex; flex-wrap: wrap; gap: 10px;
+      margin-bottom: 24px;
+    }
+    .btn {
+      padding: 12px 22px;
+      border-radius: var(--radius-pill);
+      border: none;
+      font-size: 14px; font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary2));
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(99,102,241,0.35);
+    }
+    .btn-primary:hover { opacity: 0.92; transform: translateY(-1px); }
+    .btn-outline {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-outline:hover { border-color: var(--primary); background: rgba(99,102,241,0.1); }
+    .btn-danger { background: rgba(239,68,68,0.15); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }
+    .link-warn {
+      background: rgba(234,179,8,0.1);
+      border: 1px solid rgba(234,179,8,0.3);
+      color: #eab308;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+
+    /* ===== ADMIN ===== */
+    .admin-page { display: none; }
+    .admin-page.active { display: block; }
+
+    .admin-login {
+      max-width: 380px; margin: 60px auto;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 24px;
+      text-align: center;
+    }
+    .admin-login h2 { margin-bottom: 8px; }
+    .admin-login p { color: var(--text-muted); font-size: 13px; margin-bottom: 24px; }
+    .form-group { margin-bottom: 16px; text-align: left; }
+    .form-group label {
+      display: block; font-size: 13px; font-weight: 600;
+      margin-bottom: 6px; color: var(--text-muted);
+    }
+    .form-input {
+      width: 100%;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 11px 14px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus { border-color: var(--primary); }
+    .form-select {
+      width: 100%;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 11px 14px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+    }
+    textarea.form-input { resize: vertical; min-height: 80px; }
+
+    .admin-panel { }
+    .admin-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+    }
+    .admin-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    table {
+      width: 100%; border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      background: var(--bg2);
+      font-weight: 600; color: var(--text-muted);
+      white-space: nowrap;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .admin-actions { display: flex; gap: 6px; }
+    .btn-xs {
+      padding: 5px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      font-size: 12px; font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .btn-xs:hover { border-color: var(--primary); }
+    .btn-xs.danger { color: var(--danger); border-color: rgba(239,68,68,0.3); }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      display: none; align-items: center; justify-content: center;
+      padding: 16px;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 100%; max-width: 520px;
+      max-height: 90vh; overflow-y: auto;
+      padding: 24px;
+    }
+    .modal h3 { margin-bottom: 20px; font-size: 18px; }
+    .modal-actions {
+      display: flex; gap: 10px; justify-content: flex-end;
+      margin-top: 20px;
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed; bottom: 100px; left: 50%;
+      transform: translateX(-50%);
+      z-index: 300;
+      display: flex; flex-direction: column; gap: 8px;
+      pointer-events: none;
+    }
+    .toast {
+      background: rgba(30,30,40,0.95);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      padding: 12px 20px;
+      font-size: 13px; font-weight: 600;
+      box-shadow: var(--shadow);
+      animation: toastIn 0.3s ease;
+      white-space: normal; max-width: calc(100vw - 32px); text-align: center;
+    }
+    .toast.success { border-color: rgba(34,197,94,0.4); color: var(--success); }
+    .toast.error { border-color: rgba(239,68,68,0.4); color: var(--danger); }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Bottom Nav (mobile) */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: rgba(10,10,15,0.85);
+      backdrop-filter: var(--glass);
+      -webkit-backdrop-filter: var(--glass);
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-around;
+      padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+      z-index: 100;
+    }
+    @media (min-width: 768px) {
+      .bottom-nav { display: none; }
+      .app { padding-bottom: 24px; }
+    }
+    .nav-item {
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      background: none; border: none;
+      color: var(--text-muted);
+      font-size: 11px; font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      padding: 6px 12px;
+      transition: color 0.2s;
+    }
+    .nav-item.active { color: var(--neon); }
+    .nav-item svg { width: 22px; height: 22px; }
+
+    /* Back to top */
+    .back-top {
+      position: fixed; bottom: 100px; right: 16px;
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--primary2));
+      border: none; color: #fff;
+      display: none; place-items: center;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(99,102,241,0.4);
+      z-index: 90;
+      transition: opacity 0.2s;
+    }
+    .back-top.show { display: grid; }
+
+    /* Pagination */
+    .load-more {
+      display: flex; justify-content: center; margin-top: 24px;
+    }
+
+    /* Status & link */
+    .card-status {
+      display: inline-block; margin-left: 6px;
+      font-size: 10px; font-weight: 700;
+      color: #eab308; background: rgba(234,179,8,0.12);
+      border: 1px solid rgba(234,179,8,0.3);
+      border-radius: 6px; padding: 2px 8px; margin-bottom: 6px;
+    }
+    .btn-sm:disabled, .btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+    .status-pill {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      border-radius: var(--radius-pill); padding: 3px 10px; white-space: nowrap;
+    }
+    .status-pill.ok { color: var(--success); background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.3); }
+    .status-pill.wait { color: #eab308; background: rgba(234,179,8,0.12); border: 1px solid rgba(234,179,8,0.3); }
+    .btn-xs.fill { background: linear-gradient(135deg, var(--primary), var(--primary2)); border: none; color: #fff; }
+    a.btn, a.btn-sm { text-decoration: none; }
+    .link-label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+    .link-box {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 8px 8px 8px 12px;
+      margin-bottom: 16px;
+    }
+    .link-box code {
+      flex: 1; min-width: 0; font-size: 12px; color: var(--neon);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .form-hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
+
+    /* Checkbox */
+    .check-row {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 12px;
+    }
+    .check-row input { width: 16px; height: 16px; accent-color: var(--primary); }
+  </style>
+<div class="app">
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-inner">
+        <a href="#home" class="logo" onclick="navigate('home')">
+          <div class="logo-icon">RZ</div>
+          <div class="logo-text">RYUZE <span>PRESET</span></div>
+        </a>
+        <div class="search-wrap">
+          <svg class="search-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" class="search-input" id="searchInput" placeholder="Cari preset, kreator, tag, ID..." autocomplete="off" />
+          <button class="clear-search" id="clearSearch" onclick="clearSearch()">✕</button>
+        </div>
+        <div class="header-actions">
+          <button class="btn-icon" title="Favorit" onclick="navigate('favorites')" id="btnFavHeader">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          </button>
+          <button class="btn-icon" title="Admin" onclick="navigate('admin')">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- HOME -->
+    <div class="home-page" id="homePage">
+      <div class="container">
+        <div class="stats-bar">
+          <div class="stat-pill"><strong id="totalCount">0</strong> preset tersimpan</div>
+          <div class="stat-pill" id="demoBadge">Memuat data…</div>
+        </div>
+
+        <div class="cats" id="catBar">
+          <button class="cat-btn active" data-cat="All">All</button>
+          <button class="cat-btn" data-cat="Velocity">Velocity</button>
+          <button class="cat-btn" data-cat="Smooth">Smooth</button>
+          <button class="cat-btn" data-cat="Shake">Shake</button>
+          <button class="cat-btn" data-cat="CC">CC</button>
+          <button class="cat-btn" data-cat="XML">XML</button>
+          <button class="cat-btn" data-cat="Jedag Jedug">Jedag Jedug</button>
+          <button class="cat-btn" data-cat="Transition">Transition</button>
+          <button class="cat-btn" data-cat="Lainnya">Lainnya</button>
+        </div>
+
+        <div id="searchResults" style="display:none;">
+          <div class="section">
+            <div class="section-header">
+              <div class="section-title"><span class="dot"></span> Hasil Pencarian</div>
+              <button class="btn-sm" onclick="clearSearch()">Hapus Pencarian</button>
+            </div>
+            <div class="grid" id="searchGrid"></div>
+            <div class="empty-state" id="searchEmpty" style="display:none;">
+              <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              <h3>Preset tidak ditemukan</h3>
+              <p>Coba kata kunci lain atau hapus filter.</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="mainSections">
+          <div class="section" id="secTrending">
+            <div class="section-header">
+              <div class="section-title"><span class="dot"></span> Trending Presets</div>
+            </div>
+            <div class="grid" id="gridTrending"></div>
+          </div>
+          <div class="section" id="secLatest">
+            <div class="section-header">
+              <div class="section-title"><span class="dot"></span> Preset Terbaru</div>
+            </div>
+            <div class="grid" id="gridLatest"></div>
+          </div>
+          <div class="section" id="secPopular">
+            <div class="section-header">
+              <div class="section-title"><span class="dot"></span> Preset Populer</div>
+            </div>
+            <div class="grid" id="gridPopular"></div>
+          </div>
+          <div class="section" id="secAll">
+            <div class="section-header">
+              <div class="section-title"><span class="dot"></span> Semua Preset</div>
+            </div>
+            <div class="grid" id="gridAll"></div>
+            <div class="load-more" id="loadMoreWrap" style="display:none;">
+              <button class="btn btn-outline" onclick="loadMore()">Muat Lebih Banyak</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DETAIL -->
+    <div class="detail-page" id="detailPage">
+      <div class="container">
+        <button class="back-btn" onclick="navigate('home')">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          Kembali
+        </button>
+        <div class="detail-layout" id="detailContent"></div>
+        <div class="section" style="margin-top:32px;" id="similarSection">
+          <div class="section-header">
+            <div class="section-title"><span class="dot"></span> Preset Serupa</div>
+          </div>
+          <div class="grid" id="gridSimilar"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAVORITES -->
+    <div class="detail-page" id="favPage">
+      <div class="container">
+        <button class="back-btn" onclick="navigate('home')">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          Kembali
+        </button>
+        <div class="section">
+          <div class="section-header">
+            <div class="section-title"><span class="dot"></span> Favorit Saya</div>
+          </div>
+          <div class="grid" id="gridFav"></div>
+          <div class="empty-state" id="favEmpty" style="display:none;">
+            <h3>Belum ada favorit</h3>
+            <p>Tekan ikon hati pada preset untuk menambahkan.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADMIN -->
+    <div class="admin-page" id="adminPage">
+      <div class="container">
+        <div id="adminLogin" class="admin-login">
+          <h2>Admin Panel</h2>
+          <p>Masukkan password untuk mengelola preset.</p>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" class="form-input" id="adminPass" placeholder="Password admin" />
+          </div>
+          <button class="btn btn-primary" style="width:100%;" onclick="adminLogin()">Masuk</button>
+          <button class="btn btn-outline" style="width:100%;margin-top:10px;" onclick="navigate('home')">Kembali ke Beranda</button>
+        </div>
+        <div id="adminPanel" style="display:none;">
+          <div class="link-warn" id="adminWarn" style="display:none;">Akun ini hanya punya akses lihat. Untuk menambah atau mengubah preset, minta akses Contributor atau Editor ke pemilik halaman.</div>
+          <div class="admin-header">
+            <h2 style="font-size:20px;">Kelola Preset</h2>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-primary" onclick="openAddModal()">+ Tambah Preset</button>
+              <button class="btn btn-outline" onclick="adminLogout()">Logout</button>
+            </div>
+          </div>
+          <div class="admin-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Kode</th>
+                  <th>Nama</th>
+                  <th>Kreator</th>
+                  <th>Kategori</th>
+                  <th>Status</th>
+                  <th>Trending</th>
+                  <th>Populer</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="adminTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav" id="bottomNav">
+    <button class="nav-item active" data-page="home" onclick="navigate('home')">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Beranda
+    </button>
+    <button class="nav-item" data-page="search" onclick="document.getElementById('searchInput').focus()">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      Cari
+    </button>
+    <button class="nav-item" data-page="favorites" onclick="navigate('favorites')">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      Favorit
+    </button>
+    <button class="nav-item" data-page="admin" onclick="navigate('admin')">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Admin
+    </button>
+  </nav>
+
+  <!-- BACK TO TOP -->
+  <button class="back-top" id="backTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
+  </button>
+
+  <!-- TOAST -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- MODAL ADD/EDIT -->
+  <div class="modal-overlay" id="presetModal">
+    <div class="modal">
+      <h3 id="modalTitle">Tambah Preset</h3>
+      <input type="hidden" id="editId" />
+      <div class="form-group">
+        <label>Nama Preset *</label>
+        <input type="text" class="form-input" id="fName" placeholder="Contoh: Smooth Velocity Pack" />
+      </div>
+      <div class="form-group">
+        <label>Kreator *</label>
+        <input type="text" class="form-input" id="fCreator" placeholder="Nama kreator" />
+      </div>
+      <div class="form-group">
+        <label>Kategori *</label>
+        <select class="form-select" id="fCategory">
+          <option>Velocity</option>
+          <option>Smooth</option>
+          <option>Shake</option>
+          <option>CC</option>
+          <option>XML</option>
+          <option>Jedag Jedug</option>
+          <option>Transition</option>
+          <option>Lainnya</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Deskripsi</label>
+        <textarea class="form-input" id="fDesc" placeholder="Deskripsi singkat preset..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Tag (pisahkan koma)</label>
+        <input type="text" class="form-input" id="fTags" placeholder="smooth, velocity, tiktok" />
+      </div>
+      <div class="form-group">
+        <label>Link Share Alight Motion (opsional)</label>
+        <input type="url" class="form-input" id="fLink" placeholder="https://alightcreative.com/am/share/u/.../p/..." />
+        <div class="form-hint">Boleh dikosongkan. Preset akan tampil dengan status "Menunggu link", lalu link bisa diisi nanti lewat tombol <b>Isi Link</b>.</div>
+      </div>
+      <div class="form-group">
+        <label>URL Thumbnail (opsional)</label>
+        <input type="url" class="form-input" id="fThumb" placeholder="https://..." />
+      </div>
+      <div class="check-row">
+        <input type="checkbox" id="fTrending" />
+        <label for="fTrending">Tandai sebagai Trending</label>
+      </div>
+      <div class="check-row">
+        <input type="checkbox" id="fPopular" />
+        <label for="fPopular">Tandai sebagai Populer</label>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="closeModal()">Batal</button>
+        <button class="btn btn-primary" onclick="savePreset()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL ISI LINK -->
+  <div class="modal-overlay" id="linkModal">
+    <div class="modal">
+      <h3>Isi Link Share</h3>
+      <input type="hidden" id="linkEditId" />
+      <p id="linkModalName" style="color:var(--text-muted);font-size:13px;margin-bottom:16px;"></p>
+      <div class="form-group">
+        <label>Link Share Alight Motion *</label>
+        <input type="url" class="form-input" id="fLinkOnly" placeholder="https://alightcreative.com/am/share/u/.../p/..." />
+        <div class="form-hint">Tempel link <b>share</b> preset dari Alight Motion, contoh:<br><code style="word-break:break-all;">https://alightcreative.com/am/share/u/m2UaNaLaxUa441yhshIovYqWscg2/p/248C1nKUJI-722a42b319379d82</code></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="closeLinkModal()">Batal</button>
+        <button class="btn btn-primary" onclick="saveLink()">Simpan Link</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===================== DATA & STORAGE =====================
+    const FAV_KEY = 'ryuze_favs_v1';
+    const HISTORY_KEY = 'ryuze_history_v1';
+    const ADMIN_KEY = 'ryuze_admin_ok';
+    const LOCAL_KEY = 'ryuze_presets_local_v1';
+    const ADMIN_PASS = 'ryuze';
+    // Alamat halaman ini. Ganti ke domain sendiri kalau nanti dipasang di hosting
+    // (link web otomatis jadi bentuk ?ref=KODE).
+    const SITE_URL = 'https://claude.ai/artifact/RdgNMEKPVVwfYoGS76rRME';
+    let pendingRef = null;
+
+    function webLink(p) {
+      return SITE_URL.includes('claude.ai')
+        ? SITE_URL + '#r-' + p.code
+        : SITE_URL + '?ref=' + p.code;
+    }
+    function genCode() {
+      const used = new Set(presets.map(x => x.code));
+      let c;
+      do {
+        c = Array.from(crypto.getRandomValues(new Uint8Array(4)))
+          .map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+      } while (used.has(c));
+      return c;
+    }
+
+    function lsGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
+    function lsSet(k, v) { try { localStorage.setItem(k, v); } catch {} }
+    function lsDel(k) { try { localStorage.removeItem(k); } catch {} }
+    function setHash(h) { try { history.replaceState(null, '', h); } catch {} }
+
+    let presets = [];
+    let favorites = [];
+    let db = null;
+    let loaded = false;
+    let canWrite = null;
+    let currentCat = 'All';
+    let searchQuery = '';
+    let allPage = 1;
+    const PAGE_SIZE = 8;
+    let isAdmin = false;
+    let currentPage = 'home';
+    let currentId = null;
+
+    function sortPresets(list) {
+      return [...list].sort((a, b) =>
+        (b.date || '').localeCompare(a.date || '') || String(b.id).localeCompare(String(a.id)));
+    }
+
+    function loadData() {
+      try { favorites = JSON.parse(lsGet(FAV_KEY) || '[]'); } catch { favorites = []; }
+      isAdmin = lsGet(ADMIN_KEY) === '1';
+    }
+
+    function saveFavs() { lsSet(FAV_KEY, JSON.stringify(favorites)); }
+
+    function setBadge() {
+      document.getElementById('demoBadge').textContent = db
+        ? 'Tersinkron · Data bersama'
+        : 'Mode lokal · Data di perangkat ini';
+    }
+
+    // Data preset disimpan di database bersama artifact (koleksi "presets").
+    // Tanpa database (dibuka di luar claude.ai) otomatis pakai penyimpanan lokal.
+    async function initBackend() {
+      let user = null;
+      try {
+        const c = window.claude;
+        if (c && c.use) {
+          db = await c.use('db');
+          user = await c.use('user');
+        }
+      } catch { db = null; }
+      if (user) { try { canWrite = await user.can('data.write'); } catch {} }
+
+      if (!db) {
+        try { presets = sortPresets(JSON.parse(lsGet(LOCAL_KEY) || '[]')); } catch { presets = []; }
+        loaded = true; setBadge(); rerender();
+        return;
+      }
+      db.collection('presets').onSnapshot(snap => {
+        presets = sortPresets(snap.docs.map(d => d.data()));
+        loaded = true; setBadge(); rerender();
+      }, err => {
+        loaded = true; setBadge(); rerender();
+        toast('Gagal memuat data (' + ((err && err.code) || 'error') + ')', 'error');
+      });
+    }
+
+    async function writePreset(p) {
+      if (db) { await db.doc('presets/' + p.id).set(p); return; }
+      const i = presets.findIndex(x => x.id === p.id);
+      if (i >= 0) presets[i] = p; else presets.unshift(p);
+      presets = sortPresets(presets);
+      lsSet(LOCAL_KEY, JSON.stringify(presets));
+      rerender();
+    }
+
+    async function removePreset(id) {
+      if (db) { await db.doc('presets/' + id).delete(); return; }
+      presets = presets.filter(p => p.id !== id);
+      lsSet(LOCAL_KEY, JSON.stringify(presets));
+      rerender();
+    }
+
+    function writeError(e) {
+      toast(e && e.code === 'invalid_argument'
+        ? 'Akun ini tidak punya izin menyimpan data.'
+        : 'Gagal menyimpan, coba lagi.', 'error');
+    }
+
+    // Link share Alight Motion, contoh:
+    // https://alightcreative.com/am/share/u/<userId>/p/<presetId>
+    const SHARE_RE = /^https?:\/\/(www\.)?alightcreative\.com\/am\/share\/\S+$/i;
+    function isShareLink(u) { return SHARE_RE.test((u || '').trim()); }
+    const SHARE_ERR = 'Link harus link share Alight Motion (alightcreative.com/am/share/...)';
+
+    function nextId() {
+      const nums = presets.map(p => parseInt((p.id || '').replace('RYZ-', ''), 10) || 0);
+      const max = nums.length ? Math.max(...nums) : 0;
+      return 'RYZ-' + String(max + 1).padStart(3, '0');
+    }
+
+    // ===================== ROUTING =====================
+    function navigate(page, id) {
+      window.scrollTo(0, 0);
+      currentPage = page;
+      currentId = id || null;
+      document.getElementById('homePage').classList.add('hidden');
+      document.getElementById('detailPage').classList.remove('active');
+      document.getElementById('favPage').classList.remove('active');
+      document.getElementById('adminPage').classList.remove('active');
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+      if (page === 'home') {
+        document.getElementById('homePage').classList.remove('hidden');
+        setHash('#home');
+        document.querySelector('.nav-item[data-page="home"]')?.classList.add('active');
+        renderHome();
+      } else if (page === 'detail' && id) {
+        document.getElementById('detailPage').classList.add('active');
+        if (id !== '__ref__') setHash('#p-' + id);
+        renderDetail(id);
+        if (id !== '__ref__') addHistory(id);
+      } else if (page === 'favorites') {
+        document.getElementById('favPage').classList.add('active');
+        setHash('#favorit');
+        document.querySelector('.nav-item[data-page="favorites"]')?.classList.add('active');
+        renderFavorites();
+      } else if (page === 'admin') {
+        document.getElementById('adminPage').classList.add('active');
+        setHash('#admin');
+        document.querySelector('.nav-item[data-page="admin"]')?.classList.add('active');
+        if (isAdmin) showAdminPanel(); else showAdminLogin();
+      }
+    }
+
+    function rerender() {
+      if (pendingRef && loaded) {
+        const code = pendingRef.toUpperCase();
+        pendingRef = null;
+        const hit = presets.find(x => (x.code || '').toUpperCase() === code);
+        if (hit) { navigate('detail', hit.id); return; }
+        toast('Kode preset tidak ditemukan', 'error');
+        navigate('home');
+        return;
+      }
+      if (currentPage === 'home') renderHome();
+      else if (currentPage === 'detail') renderDetail(currentId);
+      else if (currentPage === 'favorites') renderFavorites();
+      else if (currentPage === 'admin' && isAdmin) showAdminPanel();
+    }
+
+    function parseRoute() {
+      const h = (location.hash || '').slice(1);
+      let refParam = null;
+      try { refParam = new URLSearchParams(location.search).get('ref'); } catch {}
+      if (h.startsWith('r-') || refParam) {
+        pendingRef = h.startsWith('r-') ? h.slice(2) : refParam;
+        navigate('detail', '__ref__');
+        if (loaded) rerender();
+      }
+      else if (h.startsWith('p-')) navigate('detail', h.slice(2));
+      else if (h === 'favorit') navigate('favorites');
+      else if (h === 'admin') navigate('admin');
+      else navigate('home');
+    }
+
+    function none(m) {
+      return '<div class="empty-state" style="grid-column:1/-1"><p>' + (loaded ? m : 'Memuat preset…') + '</p></div>';
+    }
+
+    // ===================== RENDER =====================
+    function getFiltered() {
+      let list = [...presets];
+      if (currentCat !== 'All') {
+        list = list.filter(p => p.category === currentCat);
+      }
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        list = list.filter(p =>
+          p.name.toLowerCase().includes(q) ||
+          p.creator.toLowerCase().includes(q) ||
+          p.category.toLowerCase().includes(q) ||
+          p.id.toLowerCase().includes(q) ||
+          (p.tags || []).some(t => t.toLowerCase().includes(q)) ||
+          (p.description || '').toLowerCase().includes(q)
+        );
+      }
+      return list;
+    }
+
+    function cardHTML(p) {
+      const isFav = favorites.includes(p.id);
+      const thumb = p.thumb
+        ? `<img src="${esc(p.thumb)}" alt="${esc(p.name)}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'card-thumb-placeholder\\'>🎬</div>'" />`
+        : `<div class="card-thumb-placeholder">🎬</div>`;
+      return `
+        <div class="card" data-id="${p.id}">
+          <div class="card-thumb" onclick="navigate('detail','${p.id}')">
+            ${thumb}
+            <span class="card-badge">${esc(p.category)}</span>
+            <button class="card-fav ${isFav ? 'active' : ''}" onclick="event.stopPropagation();toggleFav('${p.id}')" title="Favorit">
+              ${isFav ? '❤️' : '🤍'}
+            </button>
+          </div>
+          <div class="card-body">
+            <span class="card-id" onclick="event.stopPropagation();navigate('detail','${p.id}')">${p.id}</span>${p.link ? '' : '<span class="card-status">⏳ Menunggu link</span>'}
+            <div class="card-title" onclick="navigate('detail','${p.id}')">${esc(p.name)}</div>
+            <div class="card-meta">
+              <span>${esc(p.creator)}</span>
+            </div>
+            <div class="card-actions">
+              <button class="btn-sm" onclick="event.stopPropagation();copyWebLink('${p.id}')">Salin Link</button>
+              ${p.link
+                ? `<a class="btn-sm primary" href="${esc(p.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">Buka</a>`
+                : '<button class="btn-sm primary" disabled>Buka</button>'}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function renderHome() {
+      document.getElementById('totalCount').textContent = presets.length;
+
+      if (searchQuery) {
+        document.getElementById('searchResults').style.display = 'block';
+        document.getElementById('mainSections').style.display = 'none';
+        const list = getFiltered();
+        const grid = document.getElementById('searchGrid');
+        const empty = document.getElementById('searchEmpty');
+        if (list.length === 0) {
+          grid.innerHTML = '';
+          empty.style.display = 'block';
+        } else {
+          empty.style.display = 'none';
+          grid.innerHTML = list.map(cardHTML).join('');
+        }
+        return;
+      }
+
+      document.getElementById('searchResults').style.display = 'none';
+      document.getElementById('mainSections').style.display = 'block';
+
+      const filtered = getFiltered();
+      const trending = filtered.filter(p => p.trending);
+      const popular = filtered.filter(p => p.popular);
+      const latest = [...filtered].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+      document.getElementById('gridTrending').innerHTML = trending.length
+        ? trending.map(cardHTML).join('')
+        : none('Tidak ada trending di kategori ini.');
+      document.getElementById('gridLatest').innerHTML = latest.slice(0, 8).map(cardHTML).join('') || none('Belum ada preset.');
+      document.getElementById('gridPopular').innerHTML = popular.length
+        ? popular.map(cardHTML).join('')
+        : none('Tidak ada populer di kategori ini.');
+
+      allPage = 1;
+      renderAllGrid(filtered);
+    }
+
+    function renderAllGrid(list) {
+      const slice = list.slice(0, allPage * PAGE_SIZE);
+      document.getElementById('gridAll').innerHTML = slice.map(cardHTML).join('') ||
+        none('Belum ada preset. Tambah via Admin.');
+      document.getElementById('loadMoreWrap').style.display =
+        list.length > allPage * PAGE_SIZE ? 'flex' : 'none';
+    }
+
+    function loadMore() {
+      allPage++;
+      renderAllGrid(getFiltered());
+    }
+
+    function renderDetail(id) {
+      const p = presets.find(x => x.id === id);
+      const el = document.getElementById('detailContent');
+      if (!p && !loaded) {
+        el.innerHTML = '<div class="empty-state"><p>Memuat preset…</p></div>';
+        document.getElementById('similarSection').style.display = 'none';
+        return;
+      }
+      if (!p) {
+        el.innerHTML = `<div class="empty-state"><h3>Preset tidak ditemukan</h3><p>ID ${esc(id)} tidak ada di database.</p>
+          <button class="btn btn-primary" style="margin-top:16px;" onclick="navigate('home')">Kembali</button></div>`;
+        document.getElementById('similarSection').style.display = 'none';
+        return;
+      }
+      document.getElementById('similarSection').style.display = 'block';
+      document.title = `${p.name} · RYUZE PRESET LIBRARY`;
+
+      const isFav = favorites.includes(p.id);
+      const thumb = p.thumb
+        ? `<img src="${esc(p.thumb)}" alt="${esc(p.name)}" />`
+        : `<div style="width:100%;height:100%;display:grid;place-items:center;font-size:64px;opacity:0.3;">🎬</div>`;
+
+      el.innerHTML = `
+        <div class="detail-thumb">${thumb}</div>
+        <div class="detail-info">
+          <h1>${esc(p.name)}</h1>
+          <div class="detail-id" onclick="copyWebLink('${p.id}')" title="Klik untuk salin link web">${p.id}</div>
+          <div class="detail-meta">
+            <span class="meta-chip"><strong>Kreator:</strong> ${esc(p.creator)}</span>
+            <span class="meta-chip"><strong>Kategori:</strong> ${esc(p.category)}</span>
+            <span class="meta-chip"><strong>Upload:</strong> ${esc(p.date || '-')}</span>
+            ${(p.tags || []).map(t => `<span class="meta-chip">#${esc(t)}</span>`).join('')}
+          </div>
+          ${p.code ? `<div class="link-label">Link web (kode ${esc(p.code)})</div><div class="link-box"><code>${esc(webLink(p))}</code><button class="btn-sm" style="flex:none;" onclick="copyWebLink('${p.id}')">Salin</button></div>` : ''}
+          ${p.link
+            ? `<div class="link-label">Link share Alight Motion</div><div class="link-box"><code>${esc(p.link)}</code><button class="btn-sm" style="flex:none;" onclick="copyLink('${p.id}')">Salin</button></div>`
+            : '<div class="link-warn">⏳ Preset sudah diupload, link share Alight Motion masih menunggu diisi developer.</div>'}
+          <p class="detail-desc">${esc(p.description || 'Tidak ada deskripsi.')}</p>
+          <div class="detail-actions">
+            ${p.link ? `<a class="btn btn-primary" href="${esc(p.link)}" target="_blank" rel="noopener noreferrer">` : '<button class="btn btn-primary" disabled>'}
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              Buka di Alight Motion
+            ${p.link ? '</a>' : '</button>'}
+            <button class="btn btn-outline" ${p.link ? '' : 'disabled'} onclick="copyLink('${p.id}')">Salin Link Share</button>
+            <button class="btn btn-outline" onclick="copyWebLink('${p.id}')">Salin Link Web</button>
+            <button class="btn btn-outline" onclick="sharePreset('${p.id}')">Bagikan</button>
+            <button class="btn btn-outline" onclick="toggleFav('${p.id}')">${isFav ? '❤️ Favorit' : '🤍 Favorit'}</button>
+          </div>
+        </div>`;
+
+      // Similar
+      const similar = presets.filter(x => x.category === p.category && x.id !== p.id).slice(0, 4);
+      document.getElementById('gridSimilar').innerHTML = similar.length
+        ? similar.map(cardHTML).join('')
+        : '<p style="color:var(--text-muted);font-size:13px;">Tidak ada preset serupa.</p>';
+    }
+
+    function renderFavorites() {
+      const list = presets.filter(p => favorites.includes(p.id));
+      const grid = document.getElementById('gridFav');
+      const empty = document.getElementById('favEmpty');
+      if (list.length === 0) {
+        grid.innerHTML = '';
+        empty.style.display = 'block';
+      } else {
+        empty.style.display = 'none';
+        grid.innerHTML = list.map(cardHTML).join('');
+      }
+    }
+
+    // ===================== ACTIONS =====================
+    function copyText(text, okMsg) {
+      const fallback = () => {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          toast(okMsg, 'success');
+        } catch { toast('Gagal menyalin', 'error'); }
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => toast(okMsg, 'success')).catch(fallback);
+      } else {
+        fallback();
+      }
+    }
+
+    function pageUrl(id) { return location.href.split('#')[0] + '#p-' + id; }
+
+    // Salin LINK SHARE Alight Motion (bukan link halaman web)
+    function copyLink(id) {
+      const p = presets.find(x => x.id === id);
+      if (!p || !p.link) { toast('Link share belum diisi developer.', 'error'); return; }
+      copyText(p.link, 'Link share berhasil disalin!');
+    }
+
+    function copyPageLink(id) { copyText(pageUrl(id), 'Link halaman berhasil disalin!'); }
+
+    // Salin LINK WEB berkode, mis. ...?ref=00D53FB0, yang membuka preset ini
+    function copyWebLink(id) {
+      const p = presets.find(x => x.id === id);
+      if (!p) return;
+      if (!p.code) { copyPageLink(id); return; }
+      copyText(webLink(p), 'Link web berhasil disalin!');
+    }
+
+    function sharePreset(id) {
+      const p = presets.find(x => x.id === id);
+      if (!p) return;
+      copyText('Cek preset ' + p.name + ' (' + p.id + ') di RYUZE PRESET LIBRARY!\n' + (p.code ? webLink(p) : pageUrl(id)), 'Teks bagikan disalin!');
+    }
+
+    function toggleFav(id) {
+      const idx = favorites.indexOf(id);
+      if (idx >= 0) favorites.splice(idx, 1); else favorites.push(id);
+      saveFavs();
+      toast(idx >= 0 ? 'Dihapus dari favorit' : 'Ditambahkan ke favorit', 'success');
+      rerender();
+    }
+
+    function addHistory(id) {
+      let hist = [];
+      try { hist = JSON.parse(lsGet(HISTORY_KEY) || '[]'); } catch {}
+      hist = hist.filter(h => h !== id);
+      hist.unshift(id);
+      lsSet(HISTORY_KEY, JSON.stringify(hist.slice(0, 20)));
+    }
+
+    // ===================== SEARCH & FILTER =====================
+    document.getElementById('searchInput').addEventListener('input', e => {
+      searchQuery = e.target.value.trim();
+      document.getElementById('clearSearch').classList.toggle('show', !!searchQuery);
+      if (document.getElementById('homePage').classList.contains('hidden') === false) {
+        renderHome();
+      } else {
+        navigate('home');
+      }
+    });
+
+    function clearSearch() {
+      searchQuery = '';
+      document.getElementById('searchInput').value = '';
+      document.getElementById('clearSearch').classList.remove('show');
+      renderHome();
+    }
+
+    document.getElementById('catBar').addEventListener('click', e => {
+      const btn = e.target.closest('.cat-btn');
+      if (!btn) return;
+      document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentCat = btn.dataset.cat;
+      renderHome();
+    });
+
+    // ===================== ADMIN =====================
+    function showAdminLogin() {
+      document.getElementById('adminLogin').style.display = 'block';
+      document.getElementById('adminPanel').style.display = 'none';
+    }
+    function showAdminPanel() {
+      document.getElementById('adminLogin').style.display = 'none';
+      document.getElementById('adminPanel').style.display = 'block';
+      document.getElementById('adminWarn').style.display = canWrite === false ? 'block' : 'none';
+      renderAdminTable();
+    }
+
+    function adminLogin() {
+      const pass = document.getElementById('adminPass').value;
+      if (pass === ADMIN_PASS) {
+        isAdmin = true;
+        lsSet(ADMIN_KEY, '1');
+        showAdminPanel();
+        toast('Login berhasil', 'success');
+      } else {
+        toast('Password salah', 'error');
+      }
+    }
+
+    function adminLogout() {
+      isAdmin = false;
+      lsDel(ADMIN_KEY);
+      showAdminLogin();
+      toast('Logout berhasil', 'success');
+    }
+
+    let delArm = null, delTimer = null;
+    function askDelete(id) {
+      clearTimeout(delTimer);
+      if (delArm === id) { delArm = null; deletePreset(id); return; }
+      delArm = id;
+      renderAdminTable();
+      delTimer = setTimeout(() => { delArm = null; renderAdminTable(); }, 3000);
+    }
+
+    function renderAdminTable() {
+      const tbody = document.getElementById('adminTableBody');
+      tbody.innerHTML = presets.map(p => `
+        <tr>
+          <td><code style="color:var(--neon)">${p.id}</code></td>
+          <td><code>${esc(p.code || '-')}</code></td>
+          <td>${esc(p.name)}</td>
+          <td>${esc(p.creator)}</td>
+          <td>${esc(p.category)}</td>
+          <td>${p.link ? '<span class="status-pill ok">Link siap</span>' : '<span class="status-pill wait">Menunggu link</span>'}</td>
+          <td>${p.trending ? '✅' : '—'}</td>
+          <td>${p.popular ? '✅' : '—'}</td>
+          <td class="admin-actions">
+            <button class="btn-xs ${p.link ? '' : 'fill'}" onclick="openLinkModal('${p.id}')">${p.link ? 'Ubah Link' : 'Isi Link'}</button>
+            <button class="btn-xs" onclick="openEditModal('${p.id}')">Edit</button>
+            <button class="btn-xs danger" onclick="askDelete('${p.id}')">${delArm === p.id ? 'Yakin hapus?' : 'Hapus'}</button>
+          </td>
+        </tr>`).join('');
+    }
+
+    function openAddModal() {
+      document.getElementById('modalTitle').textContent = 'Tambah Preset';
+      document.getElementById('editId').value = '';
+      document.getElementById('fName').value = '';
+      document.getElementById('fCreator').value = '';
+      document.getElementById('fCategory').value = 'Velocity';
+      document.getElementById('fDesc').value = '';
+      document.getElementById('fTags').value = '';
+      document.getElementById('fLink').value = '';
+      document.getElementById('fThumb').value = '';
+      document.getElementById('fTrending').checked = false;
+      document.getElementById('fPopular').checked = false;
+      document.getElementById('presetModal').classList.add('show');
+    }
+
+    function openEditModal(id) {
+      const p = presets.find(x => x.id === id);
+      if (!p) return;
+      document.getElementById('modalTitle').textContent = 'Edit Preset';
+      document.getElementById('editId').value = id;
+      document.getElementById('fName').value = p.name;
+      document.getElementById('fCreator').value = p.creator;
+      document.getElementById('fCategory').value = p.category;
+      document.getElementById('fDesc').value = p.description || '';
+      document.getElementById('fTags').value = (p.tags || []).join(', ');
+      document.getElementById('fLink').value = p.link || '';
+      document.getElementById('fThumb').value = p.thumb || '';
+      document.getElementById('fTrending').checked = !!p.trending;
+      document.getElementById('fPopular').checked = !!p.popular;
+      document.getElementById('presetModal').classList.add('show');
+    }
+
+    function closeModal() {
+      document.getElementById('presetModal').classList.remove('show');
+    }
+
+    function openLinkModal(id) {
+      const p = presets.find(x => x.id === id);
+      if (!p) return;
+      document.getElementById('linkEditId').value = id;
+      document.getElementById('linkModalName').textContent = p.id + ' · ' + p.name;
+      document.getElementById('fLinkOnly').value = p.link || '';
+      document.getElementById('linkModal').classList.add('show');
+      setTimeout(() => document.getElementById('fLinkOnly').focus(), 50);
+    }
+
+    function closeLinkModal() {
+      document.getElementById('linkModal').classList.remove('show');
+    }
+
+    async function saveLink() {
+      const id = document.getElementById('linkEditId').value;
+      const val = document.getElementById('fLinkOnly').value.trim();
+      if (!isShareLink(val)) { toast(SHARE_ERR, 'error'); return; }
+      const p = presets.find(x => x.id === id);
+      if (!p) return;
+      try {
+        await writePreset({ ...p, link: val });
+        closeLinkModal();
+        renderAdminTable();
+        toast('Link share tersimpan untuk ' + id, 'success');
+      } catch (e) { writeError(e); }
+    }
+
+    async function savePreset() {
+      const name = document.getElementById('fName').value.trim();
+      const creator = document.getElementById('fCreator').value.trim();
+      if (!name || !creator) { toast('Nama dan Kreator wajib diisi', 'error'); return; }
+      const linkVal = document.getElementById('fLink').value.trim();
+      if (linkVal && !isShareLink(linkVal)) { toast(SHARE_ERR, 'error'); return; }
+      const editId = document.getElementById('editId').value;
+      const data = {
+        name,
+        creator,
+        category: document.getElementById('fCategory').value,
+        description: document.getElementById('fDesc').value.trim(),
+        tags: document.getElementById('fTags').value.split(',').map(t => t.trim()).filter(Boolean),
+        link: linkVal,
+        thumb: document.getElementById('fThumb').value.trim(),
+        trending: document.getElementById('fTrending').checked,
+        popular: document.getElementById('fPopular').checked
+      };
+      try {
+        if (editId) {
+          const old = presets.find(x => x.id === editId);
+          if (!old) return;
+          await writePreset({ ...old, ...data });
+          toast('Preset diperbarui', 'success');
+        } else {
+          data.id = nextId();
+          data.code = genCode();
+          data.date = new Date().toISOString().slice(0, 10);
+          await writePreset(data);
+          toast('Preset ditambahkan: ' + data.id + (data.link ? '' : ' (menunggu link)'), 'success');
+        }
+        closeModal();
+        renderAdminTable();
+      } catch (e) { writeError(e); }
+    }
+
+    async function deletePreset(id) {
+      try {
+        await removePreset(id);
+        favorites = favorites.filter(f => f !== id);
+        saveFavs();
+        renderAdminTable();
+        toast('Preset dihapus', 'success');
+      } catch (e) { writeError(e); }
+    }
+
+    // ===================== UTILS =====================
+    function esc(s) {
+      if (!s) return '';
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function toast(msg, type = 'success') {
+      const c = document.getElementById('toastContainer');
+      const t = document.createElement('div');
+      t.className = 'toast ' + type;
+      t.textContent = msg;
+      c.appendChild(t);
+      setTimeout(() => {
+        t.style.opacity = '0';
+        t.style.transition = 'opacity 0.3s';
+        setTimeout(() => t.remove(), 300);
+      }, 2500);
+    }
+
+    // Back to top
+    window.addEventListener('scroll', () => {
+      document.getElementById('backTop').classList.toggle('show', window.scrollY > 400);
+    });
+
+    // Modal close on overlay
+    document.getElementById('presetModal').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeModal();
+    });
+
+    document.getElementById('linkModal').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeLinkModal();
+    });
+    document.getElementById('fLinkOnly').addEventListener('keydown', e => {
+      if (e.key === 'Enter') saveLink();
+    });
+
+    // Enter on admin pass
+    document.getElementById('adminPass')?.addEventListener('keydown', e => {
+      if (e.key === 'Enter') adminLogin();
+    });
+
+    // Init
+    loadData();
+    window.addEventListener('hashchange', parseRoute);
+    parseRoute();
+    initBackend();
+  </script>
+
+</body></html>
