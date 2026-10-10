@@ -449,7 +449,9 @@ textarea.form-input{min-height:88px;resize:vertical}
 .action-row.secondary .btn{flex:1 1 120px}
 .btn-primary{font-size:14px}
 
-.db-status{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 14px}
+.data-box{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 8px}
+.data-count{font-size:13px;color:var(--dim)}
+.data-hint{margin:0 0 14px;font-size:12.5px;line-height:1.6;color:var(--dim)}
 </style>
 </head>
 <body>
@@ -531,7 +533,8 @@ textarea.form-input{min-height:88px;resize:vertical}
           </div>
         </div>
         
-        <div class="db-status" id="dbStatus"></div>
+        <div class="data-box" id="dataBox"></div>
+        <p class="data-hint">Data admin disimpan di browser ini. Supaya muncul untuk semua pengunjung, unduh presets.json lalu taruh di GitHub, satu folder dengan index.html.</p>
         <div class="table-wrap">
           <table>
             <thead><tr><th>ID</th><th>Nama</th><th>Kreator</th><th>Isi</th><th>Status</th><th>Trending</th><th>Populer</th><th>Aksi</th></tr></thead>
@@ -592,7 +595,7 @@ textarea.form-input{min-height:88px;resize:vertical}
   </div>
 
   <script>
-    const FAV_KEY='ryuze_favs_v1',HISTORY_KEY='ryuze_history_v1',LOCAL_KEY='ryuze_presets_v2',CACHE_KEY='ryuze_cache_v1';
+    const FAV_KEY='ryuze_favs_v1',HISTORY_KEY='ryuze_history_v1',ADMIN_KEY='ryuze_admin_ok',LOCAL_KEY='ryuze_presets_v2',LOCAL_TS_KEY='ryuze_presets_ts',ADMIN_PASS='ryuze';
     const SITE_URL='https://kenzie-preset.vercel.app';
     const DEFAULT_XML_URL='https://drive.google.com/file/d/1eNEBRwIPBbsDAicunPmgCZZlAFzbx7W0/view?usp=drivesdk';
     function getSiteBase(){if((location.protocol==='http:'||location.protocol==='https:')&&location.hostname!=='localhost'&&location.hostname!=='127.0.0.1')return location.origin;return SITE_URL;}
@@ -607,66 +610,72 @@ textarea.form-input{min-height:88px;resize:vertical}
     function lsGet(k){try{return localStorage.getItem(k);}catch{return null;}}
     function lsSet(k,v){try{localStorage.setItem(k,v);}catch{}}
     function lsDel(k){try{localStorage.removeItem(k);}catch{}}
-    let dbMode='loading',loaded=false,adminPass='',saving=false,dbReady=null;
-    const DEV=location.protocol==='file:'||/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+    let hasLocal=false,loaded=false;
     function today(){return new Date().toISOString().slice(0,10);}
-    function normalize(p){return {...p,category:p.category||'XML',xmlUrl:p.xmlUrl||'',link:p.link||'',thumb:p.thumb||'',description:p.description||''};}
-    function sortList(){presets.sort((a,b)=>(b.date||'').localeCompare(a.date||'')||String(b.id).localeCompare(String(a.id)));}
-    function persistState(){if(dbMode==='api')lsSet(CACHE_KEY,JSON.stringify(presets));else lsSet(LOCAL_KEY,JSON.stringify(presets));}
-    function loadData(){
-      try{favorites=JSON.parse(lsGet(FAV_KEY)||'[]');}catch{favorites=[];}
-      try{adminPass=sessionStorage.getItem('ryuze_admin_pw')||'';}catch{adminPass='';}
-      isAdmin=!!adminPass;
-      try{const c=JSON.parse(lsGet(CACHE_KEY)||'null');if(Array.isArray(c)&&c.length){presets=c;loaded=true;}}catch{}
+    function norm(p){return {...p,category:'XML',xmlUrl:p.xmlUrl||'',link:p.link||'',thumb:p.thumb||'',description:p.description||''};}
+    function sanitize(x){
+      if(!x||!/^RYZ-\d{1,6}$/.test(String(x.id))||!x.name||!x.creator)return null;
+      return norm({id:String(x.id),name:String(x.name).slice(0,120),creator:String(x.creator).slice(0,80),description:String(x.description||'').slice(0,2000),link:isShareLink(x.link)?x.link:'',thumb:/^https?:\/\//i.test(x.thumb||'')?x.thumb:'',xmlUrl:/^https?:\/\//i.test(x.xmlUrl||'')?x.xmlUrl:'',trending:!!x.trending,popular:!!x.popular,date:/^\d{4}-\d{2}-\d{2}$/.test(x.date||'')?x.date:today()});
     }
-    function saveData(){persistState();}
+    function sortList(){presets.sort((a,b)=>(b.date||'').localeCompare(a.date||'')||String(b.id).localeCompare(String(a.id)));}
+    function idbOpen(){return new Promise((res,rej)=>{try{const r=indexedDB.open('ryuze',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);}catch(e){rej(e);}});}
+    async function idbGet(k){try{const db=await idbOpen();return await new Promise((res,rej)=>{const q=db.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});}catch{return undefined;}}
+    async function idbSet(k,v){try{const db=await idbOpen();await new Promise((res,rej)=>{const t=db.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=res;t.onerror=()=>rej(t.error);});}catch{}}
+    function loadData(){
+      try{const raw=lsGet(LOCAL_KEY);if(raw!==null){const a=JSON.parse(raw);if(Array.isArray(a)){presets=a.map(norm);hasLocal=true;loaded=true;}}}catch{}
+      try{favorites=JSON.parse(lsGet(FAV_KEY)||'[]');}catch{favorites=[];}
+      isAdmin=lsGet(ADMIN_KEY)==='1';
+    }
+    // Simpan ke dua tempat sekaligus: localStorage dan IndexedDB
+    function saveData(){
+      hasLocal=true;const ts=Date.now();
+      lsSet(LOCAL_KEY,JSON.stringify(presets));lsSet(LOCAL_TS_KEY,String(ts));
+      idbSet('presets',{ts,list:presets});
+      try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch{}
+      setDataStatus();
+    }
+    async function initStorage(){
+      const rec=await idbGet('presets');
+      const lsTs=parseInt(lsGet(LOCAL_TS_KEY)||'0',10);
+      if(rec&&Array.isArray(rec.list)&&(!hasLocal||rec.ts>lsTs)){
+        presets=rec.list.map(norm);hasLocal=true;
+        lsSet(LOCAL_KEY,JSON.stringify(presets));lsSet(LOCAL_TS_KEY,String(rec.ts));
+      }else if(hasLocal&&!rec){idbSet('presets',{ts:lsTs||Date.now(),list:presets});}
+      if(!hasLocal){
+        try{const r=await fetch('presets.json',{cache:'no-store'});if(r.ok){const a=await r.json();if(Array.isArray(a)){presets=a.map(sanitize).filter(Boolean);sortList();}}}catch{}
+      }
+      loaded=true;setDataStatus();rerender();
+    }
     function rerender(){
       if(currentPage==='home')renderHome();
       else if(currentPage==='detail')renderDetail(currentId);
       else if(currentPage==='favorites')renderFavorites();
       else if(currentPage==='admin'&&isAdmin)renderAdminTable();
     }
-    async function api(method,qs,body){
-      const headers={'Content-Type':'application/json'};
-      if(adminPass)headers['x-admin-password']=adminPass;
-      const res=await fetch('/api/presets'+(qs||''),{method,headers,body:body?JSON.stringify(body):undefined,cache:'no-store'});
-      let data=null;try{data=await res.json();}catch{}
-      if(!res.ok){const e=new Error((data&&data.error)||('HTTP '+res.status));e.status=res.status;throw e;}
-      return data;
+    function setDataStatus(){
+      const el=document.getElementById('dataBox');if(!el)return;
+      el.innerHTML='<span class="status '+(hasLocal?'ok':'wait')+'">'+(hasLocal?'Tersimpan di browser ini':'Memakai data terbitan')+'</span><span class="data-count">'+presets.length+' preset</span><button class="btn-xs" onclick="exportData()">Unduh presets.json</button><button class="btn-xs" onclick="document.getElementById(\'importFile\').click()">Impor data</button><input type="file" id="importFile" accept="application/json,.json" hidden onchange="importData(this)">';
     }
-    async function refreshPresets(){
-      try{
-        const rows=await api('GET','');
-        if(!Array.isArray(rows))throw new Error('Respons tidak valid');
-        presets=rows.map(normalize);dbMode='api';lsSet(CACHE_KEY,JSON.stringify(presets));
-      }catch(e){
-        dbMode='local';
-        if(!presets.length){try{presets=JSON.parse(lsGet(LOCAL_KEY)||'[]').map(normalize);}catch{presets=[];}}
-      }
-      loaded=true;setDbStatus();rerender();
+    function exportData(){
+      const blob=new Blob([JSON.stringify(presets,null,2)],{type:'application/json'});
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='presets.json';
+      document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+      toast('presets.json diunduh','ok');
     }
-    function legacyPresets(){try{const a=JSON.parse(lsGet(LOCAL_KEY)||'[]');return Array.isArray(a)?a.filter(p=>p&&/^RYZ-\d+$/.test(p.id)):[];}catch{return [];}}
-    function setDbStatus(){
-      const el=document.getElementById('dbStatus');if(!el)return;
-      const legacy=legacyPresets();
-      const mig=(dbMode==='api'&&isAdmin&&legacy.length&&lsGet('ryuze_migrated')!=='1')?`<button class="btn-xs fill" onclick="migrateLocal()">Pindahkan ${legacy.length} preset lokal ke database</button>`:'';
-      el.innerHTML=(dbMode==='api'?'<span class="status ok">Database terhubung</span>':(dbMode==='local'?'<span class="status wait">Database belum terhubung</span>':'<span class="status wait">Menghubungkan…</span>'))+mig;
+    function importData(input){
+      const f=input.files&&input.files[0];if(!f)return;
+      const rd=new FileReader();
+      rd.onload=()=>{
+        try{
+          const a=JSON.parse(rd.result);if(!Array.isArray(a))throw new Error('x');
+          const map=new Map(presets.map(p=>[p.id,p]));let n=0;
+          for(const x of a){const c=sanitize(x);if(c){map.set(c.id,c);n++;}}
+          presets=[...map.values()];sortList();saveData();renderAdminTable();toast(n+' preset digabung','ok');
+        }catch{toast('File tidak valid','err');}
+        input.value='';
+      };
+      rd.readAsText(f);
     }
-    async function migrateLocal(){
-      const list=legacyPresets();let ok=0;
-      for(const p of list){
-        try{await api('POST','',{id:p.id,name:p.name,creator:p.creator,category:p.category||'XML',description:p.description||'',link:isShareLink(p.link)?p.link:'',thumb:/^https?:\/\//i.test(p.thumb||'')?p.thumb:'',xmlUrl:/^https?:\/\//i.test(p.xmlUrl||'')?p.xmlUrl:'',trending:!!p.trending,popular:!!p.popular,date:p.date});ok++;}
-        catch(e){if(e.status===401){onAuthFail();return;}}
-      }
-      lsSet('ryuze_migrated','1');await refreshPresets();toast(ok+' preset dipindahkan ke database','ok');
-    }
-    function needDb(){if(dbMode!=='api'&&!DEV)throw new Error('Database belum terhubung. Muat ulang halaman lalu coba lagi.');}
-    async function dbCreate(data){needDb();if(dbMode==='api')return normalize(await api('POST','',data));return normalize({...data,id:nextId(),date:today()});}
-    async function dbUpdate(id,data){needDb();if(dbMode==='api')return normalize(await api('PUT','?id='+encodeURIComponent(id),data));return normalize({...presets.find(x=>x.id===id),...data});}
-    async function dbDelete(id){needDb();if(dbMode==='api')await api('DELETE','?id='+encodeURIComponent(id));}
-    function putLocal(p){const i=presets.findIndex(x=>x.id===p.id);if(i>=0)presets[i]=p;else presets.unshift(p);sortList();persistState();}
-    function onAuthFail(){adminPass='';isAdmin=false;try{sessionStorage.removeItem('ryuze_admin_pw');}catch{}showAdminLogin();toast('Sesi admin habis, masuk lagi','err');}
-    function handleWriteError(e){if(e&&e.status===401)onAuthFail();else toast((e&&e.message)||'Gagal menyimpan','err');}
 
     function saveFavs(){lsSet(FAV_KEY,JSON.stringify(favorites));}
     function nextId(){const n=presets.map(p=>parseInt((p.id||'').replace('RYZ-',''),10)||0);return 'RYZ-'+String((n.length?Math.max(...n):0)+1).padStart(3,'0');}
@@ -763,21 +772,9 @@ textarea.form-input{min-height:88px;resize:vertical}
     document.getElementById('catBar').addEventListener('click',e=>{const btn=e.target.closest('.cat');if(!btn)return;document.querySelectorAll('.cat').forEach(b=>b.classList.remove('active'));btn.classList.add('active');currentCat=btn.dataset.cat;renderHome();});
 
     function showAdminLogin(){document.getElementById('adminLogin').style.display='block';document.getElementById('adminPanel').style.display='none';}
-    function showAdminPanel(){document.getElementById('adminLogin').style.display='none';document.getElementById('adminPanel').style.display='block';setDbStatus();renderAdminTable();}
-    async function adminLogin(){
-      const pw=document.getElementById('adminPass').value;
-      if(!pw){toast('Masukkan password','err');return;}
-      await dbReady;
-      adminPass=pw;
-      try{
-        if(dbMode==='api')await api('POST','?op=login',{});
-        else if(!DEV)throw new Error('Database belum terhubung');
-        isAdmin=true;try{sessionStorage.setItem('ryuze_admin_pw',pw);}catch{}
-        document.getElementById('adminPass').value='';
-        showAdminPanel();toast('Login berhasil','ok');
-      }catch(e){adminPass='';isAdmin=false;toast(e.status===401?'Password salah':(e.message||'Gagal masuk'),'err');}
-    }
-    function adminLogout(){adminPass='';isAdmin=false;try{sessionStorage.removeItem('ryuze_admin_pw');}catch{}showAdminLogin();toast('Logout','ok');}
+    function showAdminPanel(){document.getElementById('adminLogin').style.display='none';document.getElementById('adminPanel').style.display='block';setDataStatus();renderAdminTable();}
+    function adminLogin(){if(document.getElementById('adminPass').value===ADMIN_PASS){isAdmin=true;lsSet(ADMIN_KEY,'1');showAdminPanel();toast('Login OK','ok');}else toast('Password salah','err');}
+    function adminLogout(){isAdmin=false;lsDel(ADMIN_KEY);showAdminLogin();toast('Logout','ok');}
     function askDelete(id){clearTimeout(delTimer);if(delArm===id){delArm=null;deletePreset(id);return;}delArm=id;renderAdminTable();delTimer=setTimeout(()=>{delArm=null;renderAdminTable();},3000);}
     function renderAdminTable(){document.getElementById('adminTableBody').innerHTML=presets.map(p=>`<tr><td><code style="color:var(--accent)">${p.id}</code></td><td>${esc(p.name)}</td><td>${esc(p.creator)}</td><td>${[p.xmlUrl?'XML':'',p.link?'Link Alight':''].filter(Boolean).join(' + ')||'—'}</td><td>${p.link?'<span class="status ok">Siap</span>':'<span class="status wait">Menunggu link</span>'}</td><td>${p.trending?'✓':'—'}</td><td>${p.popular?'✓':'—'}</td><td class="actions"><button class="btn-xs ${p.link?'':'fill'}" onclick="openLinkModal('${p.id}')">${p.link?'Ubah link':'Isi link'}</button><button class="btn-xs" onclick="openEditModal('${p.id}')">Edit</button><button class="btn-xs danger" onclick="askDelete('${p.id}')">${delArm===p.id?'Yakin?':'Hapus'}</button></td></tr>`).join('');}
     function openAddModal(){document.getElementById('modalTitle').textContent='Upload Preset';document.getElementById('editId').value='';['fName','fCreator','fDesc','fLink','fThumb'].forEach(id=>document.getElementById(id).value='');document.getElementById('fXmlUrl').value='';document.getElementById('fTrending').checked=false;document.getElementById('fPopular').checked=false;document.getElementById('presetModal').classList.add('show');}
@@ -785,37 +782,11 @@ textarea.form-input{min-height:88px;resize:vertical}
     function closeModal(){document.getElementById('presetModal').classList.remove('show');}
     function openLinkModal(id){const p=presets.find(x=>x.id===id);if(!p)return;document.getElementById('linkEditId').value=id;document.getElementById('linkModalName').textContent=p.id+' · '+p.name;document.getElementById('fLinkOnly').value=p.link||'';document.getElementById('linkModal').classList.add('show');setTimeout(()=>document.getElementById('fLinkOnly').focus(),50);}
     function closeLinkModal(){document.getElementById('linkModal').classList.remove('show');}
-    async function saveLink(){
-      const id=document.getElementById('linkEditId').value,val=document.getElementById('fLinkOnly').value.trim();
-      if(!isShareLink(val)){toast(SHARE_ERR,'err');return;}
-      if(saving)return;saving=true;
-      try{putLocal(await dbUpdate(id,{link:val}));closeLinkModal();renderAdminTable();toast('Link tersimpan'+(dbMode==='api'?' di database':' (lokal)'),'ok');}
-      catch(e){handleWriteError(e);}
-      finally{saving=false;}
-    }
-    async function savePreset(){
-      const name=document.getElementById('fName').value.trim(),creator=document.getElementById('fCreator').value.trim();
-      if(!name||!creator){toast('Nama & kreator wajib','err');return;}
-      const linkVal=document.getElementById('fLink').value.trim();
-      if(linkVal&&!isShareLink(linkVal)){toast(SHARE_ERR,'err');return;}
-      const xmlUrl=document.getElementById('fXmlUrl').value.trim();
-      if(xmlUrl&&!/^https?:\/\//i.test(xmlUrl)){toast('Masukkan link XML yang valid','err');return;}
-      const editId=document.getElementById('editId').value;
-      const data={name,creator,category:'XML',description:document.getElementById('fDesc').value.trim(),link:linkVal,thumb:document.getElementById('fThumb').value.trim(),xmlUrl,trending:document.getElementById('fTrending').checked,popular:document.getElementById('fPopular').checked};
-      if(saving)return;saving=true;
-      try{
-        const saved=editId?await dbUpdate(editId,data):await dbCreate(data);
-        putLocal(saved);closeModal();renderAdminTable();
-        toast((editId?'Diperbarui':'Upload: '+saved.id)+(saved.link?'':' (menunggu link)')+(dbMode==='api'?' · tersimpan di database':' · tersimpan lokal'),'ok');
-      }catch(e){handleWriteError(e);}
-      finally{saving=false;}
-    }
+    function saveLink(){const id=document.getElementById('linkEditId').value,val=document.getElementById('fLinkOnly').value.trim();if(!isShareLink(val)){toast(SHARE_ERR,'err');return;}const idx=presets.findIndex(x=>x.id===id);if(idx<0)return;presets[idx].link=val;saveData();closeLinkModal();renderAdminTable();toast('Link tersimpan','ok');}
+    function savePreset(){const name=document.getElementById('fName').value.trim(),creator=document.getElementById('fCreator').value.trim();if(!name||!creator){toast('Nama & kreator wajib','err');return;}const linkVal=document.getElementById('fLink').value.trim();if(linkVal&&!isShareLink(linkVal)){toast(SHARE_ERR,'err');return;}const xmlUrl=document.getElementById('fXmlUrl').value.trim();if(xmlUrl&&!/^https?:\/\//i.test(xmlUrl)){toast('Masukkan link XML yang valid','err');return;}const editId=document.getElementById('editId').value;const data={name,creator,category:'XML',description:document.getElementById('fDesc').value.trim(),link:linkVal,thumb:document.getElementById('fThumb').value.trim(),trending:document.getElementById('fTrending').checked,popular:document.getElementById('fPopular').checked,xmlData:'',xmlName:'',xmlUrl,presetSize:'5MB'};if(editId){const idx=presets.findIndex(x=>x.id===editId);if(idx>=0)presets[idx]={...presets[idx],...data};toast('Diperbarui','ok');}else{data.id=nextId();data.date=new Date().toISOString().slice(0,10);presets.unshift(data);toast('Upload: '+data.id+(data.link?'':' (menunggu)'),'ok');}saveData();closeModal();renderAdminTable();}
     function copyPresetXML(id){copyXMLLink(id);}
     function copyXMLLink(id){const p=presets.find(x=>x.id===id);if(!p||!p.xmlUrl){toast('Link XML belum diisi','err');return;}copyText(p.xmlUrl,'Link XML disalin!');}
-    async function deletePreset(id){
-      try{await dbDelete(id);presets=presets.filter(p=>p.id!==id);favorites=favorites.filter(f=>f!==id);persistState();saveFavs();renderAdminTable();toast('Dihapus','ok');}
-      catch(e){handleWriteError(e);}
-    }
+    function deletePreset(id){presets=presets.filter(p=>p.id!==id);favorites=favorites.filter(f=>f!==id);saveData();saveFavs();renderAdminTable();toast('Dihapus','ok');}
     function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
     function toast(msg,type){const c=document.getElementById('toastContainer'),t=document.createElement('div');t.className='toast '+(type==='err'?'err':'ok');t.textContent=msg;c.appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},2200);}
 
@@ -826,8 +797,7 @@ textarea.form-input{min-height:88px;resize:vertical}
 
     document.addEventListener('pointermove',e=>{const c=e.target.closest&&e.target.closest('.card');if(!c)return;const r=c.getBoundingClientRect();c.style.setProperty('--mx',(e.clientX-r.left)+'px');c.style.setProperty('--my',(e.clientY-r.top)+'px');});
     document.addEventListener('keydown',e=>{if(e.key==='/'&&!/INPUT|TEXTAREA|SELECT/.test((document.activeElement||{}).tagName||'')){e.preventDefault();document.getElementById('searchInput').focus();}});
-    loadData();window.addEventListener('hashchange',parseRoute);parseRoute();dbReady=refreshPresets();
-    document.addEventListener('visibilitychange',()=>{if(!document.hidden&&dbMode==='api')refreshPresets();});
+    loadData();window.addEventListener('hashchange',parseRoute);parseRoute();initStorage();
   </script>
 </body>
 </html>
