@@ -255,21 +255,22 @@
       color: #b8860b; padding: 10px 12px; border-radius: 14px; font-size: 13px; margin-bottom: 12px;
     }
     .link-box { border-radius: 20px; 
-      display: flex; flex-direction: column; gap: 6px;
-      background: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.7);
-      border-radius: 12px; padding: 8px; margin-bottom: 8px;
+      display: flex; flex-direction: column; gap: 8px;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+      padding: 10px; margin-bottom: 10px;
     }
     .link-box code {
-      display: block; width: 100%; font-size: 11px; color: var(--blue);
+      display: block; width: 100%; font-size: 11px; color: #c7c7cc;
       word-break: break-all; white-space: normal; line-height: 1.3;
     }
     .link-actions { display: flex; gap: 8px; }
+    .link-actions .btn-sm { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #fff; }
     .link-actions .btn-sm, .link-actions a {
       flex: 1; min-height: 32px; display: flex; align-items: center; justify-content: center;
       text-align: center; border-radius: 8px; font-size: 12px; font-weight: 600;
     }
     [data-theme="dark"] .link-box { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); }
-    .link-box code { flex: 1; min-width: 0; font-size: 11.5px; color: var(--blue); word-break: break-all; white-space: normal; }
+    .link-box code { flex: 1; min-width: 0; font-size: 11.5px; color: #c7c7cc; word-break: break-all; white-space: normal; }
 
     /* Admin */
     .login-box {
