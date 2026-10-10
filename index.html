@@ -523,25 +523,23 @@
       publishPresets();
     }
     async function publishPresets() {
-      if (!Array.isArray(presets)) return;
+      if (!Array.isArray(presets)) { toast('Tidak ada preset', 'err'); return; }
+      toast('Menyimpan...', 'ok');
       try {
-        const r = await fetch(PRESETS_PUT, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + PRESETS_TOKEN
-          },
-          body: JSON.stringify(presets)
+        const r = await fetch('/api/publish', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: ADMIN_PASS, presets })
         });
-        if (r.ok) {
-          toast('Berhasil! Semua orang bisa lihat preset ini', 'ok');
+        const j = await r.json().catch(()=>({}));
+        if (r.ok && j.ok) {
+          toast('Berhasil! Semua orang bisa lihat', 'ok');
           lsSet(LOCAL_KEY, JSON.stringify(presets));
         } else {
-          const j = await r.json().catch(()=>({}));
-          toast('Gagal simpan: ' + (j.error?.message || r.status), 'err');
+          toast('Gagal: ' + (j.error || r.status), 'err');
         }
       } catch (e) {
-        toast('Gagal hubungi server', 'err');
+        toast('Gagal hubungi server: ' + e.message, 'err');
       }
     }
     function saveFavs() { lsSet(FAV_KEY, JSON.stringify(favorites)); }
