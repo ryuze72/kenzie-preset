@@ -711,6 +711,27 @@
       }
       applyAvatar(src);
     }
+    
+    // ===== TRACKING =====
+    function getVisitorId() {
+      let id = lsGet('kenzie_vid');
+      if (!id) { id = 'v_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6); lsSet('kenzie_vid', id); }
+      return id;
+    }
+    function logEvent(type, extra) {
+      if (!db) return;
+      const entry = {
+        type,
+        time: new Date().toISOString(),
+        vid: getVisitorId(),
+        ua: navigator.userAgent.slice(0, 120),
+        page: location.hash || '#home',
+        ...extra
+      };
+      db.ref('logs').push(entry).catch(()=>{});
+    }
+    // Log visit on load
+    setTimeout(() => logEvent('visit'), 500);
     async function loadData() {
       isAdmin = lsGet(ADMIN_KEY) === '1';
       siteMode = lsGet(MODE_KEY) || 'public';
@@ -927,8 +948,8 @@
       a.click();
       toast('presets.json diunduh — upload ke GitHub agar semua orang bisa lihat', 'ok');
     }
-    function adminLogin() { if(document.getElementById('adminPass').value===ADMIN_PASS){ isAdmin=true; lsSet(ADMIN_KEY,'1'); showAdminPanel(); toast('Login OK','ok'); } else toast('Password salah','err'); }
-    function adminLogout() { isAdmin=false; lsDel(ADMIN_KEY); showAdminLogin(); toast('Logout','ok'); }
+    function adminLogin() { if(document.getElementById('adminPass').value===ADMIN_PASS){ isAdmin=true; lsSet(ADMIN_KEY,'1'); showAdminPanel(); toast('Login OK','ok'); logEvent('admin_login'); } else toast('Password salah','err'); }
+    function adminLogout() { isAdmin=false; lsDel(ADMIN_KEY); showAdminLogin(); toast('Logout','ok'); logEvent('admin_logout'); }
     function askDelete(id) { clearTimeout(delTimer); if(delArm===id){ delArm=null; deletePreset(id); return; } delArm=id; renderAdminTable(); delTimer=setTimeout(()=>{delArm=null;renderAdminTable();},3000); }
     function renderAdminTable() {
       const el = document.getElementById('adminTableBody');
