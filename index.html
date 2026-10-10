@@ -218,29 +218,29 @@
 
     .detail-layout { display: grid; gap: 20px; }
     @media (min-width: 700px) { .detail-layout { grid-template-columns: 1fr 1fr; } }
-    .detail-thumb {
+    .detail-thumb { max-height: 180px; 
       border-radius: 24px; overflow: hidden;
       border: 1px solid rgba(255,255,255,0.7);
       aspect-ratio: 16/10; background: #e5e5ea;
       box-shadow: 0 16px 40px rgba(0,0,0,0.08);
     }
-    [data-theme="dark"] .detail-thumb { background: #1c1c1e; border-color: rgba(255,255,255,0.1); }
+    [data-theme="dark"] .detail-thumb { max-height: 180px;  background: #1c1c1e; border-color: rgba(255,255,255,0.1); }
     .detail-thumb img { width: 100%; height: 100%; object-fit: cover; }
-    .detail-info h1 { font-size: clamp(26px, 5vw, 36px); font-weight: 800; letter-spacing: -1px; margin-bottom: 8px; }
+    .detail-info h1 { font-size: clamp(20px, 4vw, 26px); font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px; }
     .detail-id {
       display: inline-block; font-family: ui-monospace, monospace;
       font-size: 12px; font-weight: 700; color: var(--blue);
       background: rgba(0,122,255,0.1); padding: 4px 10px; border-radius: 8px; cursor: pointer;
     }
-    .detail-meta { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+    .detail-meta { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0; }
     .chip {
       background: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.7);
       border-radius: 999px; padding: 5px 10px; font-size: 11.5px; color: var(--muted);
     }
     [data-theme="dark"] .chip { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); }
     .chip b { color: var(--ink); font-weight: 600; }
-    .detail-desc { color: var(--muted); font-size: 14px; line-height: 1.6; margin: 12px 0; }
-    .detail-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    .detail-desc { color: var(--muted); font-size: 13px; line-height: 1.4; margin: 8px 0; }
+    .detail-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
     .btn {
       min-height: 42px; padding: 0 18px; border-radius: 999px;
       border: none; font-weight: 700; font-size: 13px;
@@ -255,18 +255,18 @@
       color: #b8860b; padding: 10px 12px; border-radius: 14px; font-size: 13px; margin-bottom: 12px;
     }
     .link-box {
-      display: flex; flex-direction: column; gap: 8px;
+      display: flex; flex-direction: column; gap: 6px;
       background: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.7);
-      border-radius: 14px; padding: 10px; margin-bottom: 12px;
+      border-radius: 12px; padding: 8px; margin-bottom: 8px;
     }
     .link-box code {
-      display: block; width: 100%; font-size: 12px; color: var(--blue);
-      word-break: break-all; white-space: normal; line-height: 1.4;
+      display: block; width: 100%; font-size: 11px; color: var(--blue);
+      word-break: break-all; white-space: normal; line-height: 1.3;
     }
     .link-actions { display: flex; gap: 8px; }
     .link-actions .btn-sm, .link-actions a {
-      flex: 1; min-height: 36px; display: flex; align-items: center; justify-content: center;
-      text-align: center; border-radius: 10px; font-size: 13px; font-weight: 600;
+      flex: 1; min-height: 32px; display: flex; align-items: center; justify-content: center;
+      text-align: center; border-radius: 8px; font-size: 12px; font-weight: 600;
     }
     [data-theme="dark"] .link-box { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); }
     .link-box code { flex: 1; min-width: 0; font-size: 11.5px; color: var(--blue); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
