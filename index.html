@@ -341,6 +341,9 @@
     [data-theme="dark"] .theme-toggle { background: rgba(44,44,46,0.85); border-color: rgba(255,255,255,0.1); }
     @media (min-width: 700px) { .theme-toggle { bottom: 20px; } }
   </style>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 </head>
 <body>
   <div class="app">
@@ -477,6 +480,28 @@
   <script>
     const FAV_KEY = 'kenzie_favs_v1', ADMIN_KEY = 'kenzie_admin_ok', LOCAL_KEY = 'kenzie_presets_v2', ADMIN_PASS = 'kenzie', MODE_KEY = 'kenzie_mode';
     const SITE_URL = 'https://kenzie-preset.vercel.app';
+
+    // ===== FIREBASE CONFIG (isi dari Firebase Console) =====
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuRmnuZ0XMqwdh7X4ITutmwTgA3YL-5bc",
+      authDomain: "kenzie-preset.firebaseapp.com",
+      databaseURL: "https://kenzie-preset-default-rtdb.firebaseio.com",
+      projectId: "kenzie-preset",
+      storageBucket: "kenzie-preset.firebasestorage.app",
+      messagingSenderId: "225447135498",
+      appId: "1:225447135498:web:ce6515b38b10ea602e92f3",
+      measurementId: "G-NFC225TYLB"
+    };
+    // ======================================================
+
+    let db = null;
+    try {
+      if (firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith('ISI_')) {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.database();
+      }
+    } catch (e) { console.warn('Firebase init', e); }
+
     const PRESETS_URL = '/api/presets';
     const PRESETS_PUT = 'https://api.jstash.app/v1/bins/pcexosfWnXmzw6wk5NmgDQ';
     const PRESETS_TOKEN = 'js_edit_T9y2iIeZPa_K6jY3zFHZy9Vx9JwnWuDiFNndT-IYWG0';
@@ -497,25 +522,31 @@
     function lsSet(k, v) { try { localStorage.setItem(k, v); } catch {} }
     function lsDel(k) { try { localStorage.removeItem(k); } catch {} }
     async function loadData() {
-      let remote = [];
-      try {
-        const res = await fetch(PRESETS_URL + '?t=' + Date.now());
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data)) remote = data;
-        }
-      } catch (e) { console.warn('load presets', e); }
-      let local = [];
-      try { local = JSON.parse(lsGet(LOCAL_KEY) || '[]'); } catch {}
       isAdmin = lsGet(ADMIN_KEY) === '1';
-      if (remote.length) {
-        presets = remote;
-      } else if (local.length) {
-        presets = local;
-        if (isAdmin) setTimeout(() => publishPresets(), 800);
-      }
-      try { favorites = JSON.parse(lsGet(FAV_KEY) || '[]'); } catch { favorites = []; }
       siteMode = lsGet(MODE_KEY) || 'public';
+      try { favorites = JSON.parse(lsGet(FAV_KEY) || '[]'); } catch { favorites = []; }
+
+      if (db) {
+        try {
+          const snap = await db.ref('presets').once('value');
+          const val = snap.val();
+          presets = Array.isArray(val) ? val : (val ? Object.values(val) : []);
+        } catch (e) {
+          console.warn('Firebase load', e);
+          try { presets = JSON.parse(lsGet(LOCAL_KEY) || '[]'); } catch { presets = []; }
+        }
+      } else {
+        // Fallback ke API lokal
+        try {
+          const res = await fetch('/api/presets?t=' + Date.now());
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data)) presets = data;
+          }
+        } catch (e) {
+          try { presets = JSON.parse(lsGet(LOCAL_KEY) || '[]'); } catch { presets = []; }
+        }
+      }
       loaded = true;
     }
     function saveData() { 
@@ -526,20 +557,26 @@
       if (!Array.isArray(presets)) { toast('Tidak ada preset', 'err'); return; }
       toast('Menyimpan...', 'ok');
       try {
-        const r = await fetch('/api/publish', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password: ADMIN_PASS, presets })
-        });
-        const j = await r.json().catch(()=>({}));
-        if (r.ok && j.ok) {
-          toast('Berhasil! Semua orang bisa lihat', 'ok');
+        if (db) {
+          await db.ref('presets').set(presets);
+          toast('Berhasil! Tersimpan di Firebase', 'ok');
           lsSet(LOCAL_KEY, JSON.stringify(presets));
         } else {
-          toast('Gagal: ' + (j.error || r.status), 'err');
+          const r = await fetch('/api/publish', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: ADMIN_PASS, presets })
+          });
+          const j = await r.json().catch(()=>({}));
+          if (r.ok && j.ok) {
+            toast('Berhasil! Semua orang bisa lihat', 'ok');
+            lsSet(LOCAL_KEY, JSON.stringify(presets));
+          } else {
+            toast('Gagal: ' + (j.error || r.status), 'err');
+          }
         }
       } catch (e) {
-        toast('Gagal hubungi server', 'err');
+        toast('Gagal: ' + (e.message || 'server'), 'err');
       }
     }
     function saveFavs() { lsSet(FAV_KEY, JSON.stringify(favorites)); }
