@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KENZIE Monitor</title>
+<style>
+:root { --bg:#000; --surface:#1c1c1e; --ink:#f5f5f7; --muted:#98989d; --accent:#0a84ff; --green:#30d158; --red:#ff453a; --line:rgba(255,255,255,.08); }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,sans-serif; background:var(--bg); color:var(--ink); min-height:100dvh; padding:16px; }
+h1 { font-size:22px; font-weight:700; margin-bottom:4px; }
+.sub { color:var(--muted); font-size:13px; margin-bottom:16px; }
+.stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:20px; }
+.stat { background:var(--surface); border-radius:14px; padding:14px; text-align:center; border:1px solid var(--line); }
+.stat b { display:block; font-size:24px; font-weight:700; }
+.stat span { font-size:11px; color:var(--muted); }
+.tabs { display:flex; gap:8px; margin-bottom:14px; }
+.tab { flex:1; padding:10px; border-radius:10px; border:1px solid var(--line); background:transparent; color:var(--ink); font-weight:600; cursor:pointer; }
+.tab.active { background:var(--accent); border-color:var(--accent); }
+.list { display:flex; flex-direction:column; gap:8px; }
+.item { background:var(--surface); border-radius:12px; padding:12px; border:1px solid var(--line); }
+.item-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
+.badge { font-size:11px; font-weight:700; padding:3px 8px; border-radius:6px; }
+.badge.visit { background:rgba(10,132,255,.15); color:var(--accent); }
+.badge.admin_login { background:rgba(48,209,88,.15); color:var(--green); }
+.badge.admin_logout { background:rgba(255,69,58,.15); color:var(--red); }
+.time { font-size:12px; color:var(--muted); }
+.meta { font-size:12px; color:var(--muted); margin-top:4px; word-break:break-all; }
+.empty { text-align:center; color:var(--muted); padding:40px; }
+.refresh { position:fixed; bottom:20px; right:20px; width:50px; height:50px; border-radius:50%; background:var(--accent); border:none; color:#fff; font-size:20px; cursor:pointer; box-shadow:0 4px 16px rgba(0,0,0,.3); }
+</style>
+</head>
+<body>
+<h1>KENZIE Monitor</h1>
+<p class="sub">Pengunjung & login admin</p>
+<div class="stats">
+  <div class="stat"><b id="totalVisits">0</b><span>Kunjungan</span></div>
+  <div class="stat"><b id="uniqueVisitors">0</b><span>Pengunjung</span></div>
+  <div class="stat"><b id="adminLogins">0</b><span>Login Admin</span></div>
+</div>
+<div class="tabs">
+  <button class="tab active" onclick="filterList('all')">Semua</button>
+  <button class="tab" onclick="filterList('visit')">Kunjungan</button>
+  <button class="tab" onclick="filterList('admin')">Admin</button>
+</div>
+<div class="list" id="logList"><div class="empty">Memuat...</div></div>
+<button class="refresh" onclick="loadLogs()">↻</button>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDuRmnuZ0XMqwdh7X4ITutmwTgA3YL-5bc",
+  authDomain: "kenzie-preset.firebaseapp.com",
+  databaseURL: "https://kenzie-preset-default-rtdb.firebaseio.com",
+  projectId: "kenzie-preset",
+  storageBucket: "kenzie-preset.firebasestorage.app",
+  messagingSenderId: "225447135498",
+  appId: "1:225447135498:web:ce6515b38b10ea602e92f3"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+let allLogs = [], currentFilter = 'all';
+
+async function loadLogs() {
+  document.getElementById('logList').innerHTML = '<div class="empty">Memuat...</div>';
+  try {
+    const snap = await db.ref('logs').orderByChild('time').limitToLast(200).once('value');
+    const val = snap.val();
+    allLogs = val ? Object.entries(val).map(([k,v]) => ({id:k, ...v})).reverse() : [];
+    updateStats();
+    renderList();
+  } catch(e) {
+    document.getElementById('logList').innerHTML = '<div class="empty">Gagal memuat: ' + e.message + '</div>';
+  }
+}
+function updateStats() {
+  const visits = allLogs.filter(l => l.type === 'visit');
+  const unique = new Set(visits.map(l => l.vid)).size;
+  const admins = allLogs.filter(l => l.type === 'admin_login').length;
+  document.getElementById('totalVisits').textContent = visits.length;
+  document.getElementById('uniqueVisitors').textContent = unique;
+  document.getElementById('adminLogins').textContent = admins;
+}
+function filterList(f) {
+  currentFilter = f;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  renderList();
+}
+function renderList() {
+  let list = allLogs;
+  if (currentFilter === 'visit') list = list.filter(l => l.type === 'visit');
+  else if (currentFilter === 'admin') list = list.filter(l => l.type.startsWith('admin'));
+  const el = document.getElementById('logList');
+  if (!list.length) { el.innerHTML = '<div class="empty">Belum ada data</div>'; return; }
+  el.innerHTML = list.map(l => {
+    const t = new Date(l.time);
+    const timeStr = t.toLocaleString('id-ID', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+    const label = l.type === 'visit' ? 'Kunjungan' : l.type === 'admin_login' ? 'Login Admin' : 'Logout Admin';
+    return `<div class="item"><div class="item-top"><span class="badge ${l.type}">${label}</span><span class="time">${timeStr}</span></div><div class="meta">${l.vid || '-'} · ${l.page || ''}</div><div class="meta">${(l.ua||'').slice(0,80)}</div></div>`;
+  }).join('');
+}
+loadLogs();
+</script>
+</body>
+</html>
