@@ -56,7 +56,12 @@
     button { cursor: pointer; }
     a { color: inherit; text-decoration: none; }
 
-    .app { width: min(100%, 1080px); margin: auto; padding: 18px 16px 80px; }
+    .app { width: min(100%, 1080px); margin: auto; padding: 12px 12px 90px; overflow-x: hidden; }
+    .topbar { max-width: 100%; }
+    .brandtext { overflow: hidden; text-overflow: ellipsis; }
+    .card, .detail-info, .modal { max-width: 100%; overflow-wrap: anywhere; }
+    .admin-header { flex-wrap: wrap; }
+    .admin-header > div { flex-wrap: wrap; }
 
     /* Topbar liquid glass */
     .topbar {
@@ -88,7 +93,9 @@
       display: grid; place-items: center;
       font-weight: 800; font-size: 17px;
       box-shadow: inset 0 1px 0 #fff, 0 5px 15px rgba(0,0,0,0.08);
+      overflow: hidden; flex-shrink: 0;
     }
+    .brandmark img { width: 100%; height: 100%; object-fit: cover; }
     [data-theme="dark"] .brandmark { background: linear-gradient(145deg, #2c2c2e, #1c1c1e); color: #fff; }
     .brandtext { font-weight: 800; font-size: 13px; letter-spacing: -0.25px; }
     .brandtext span { display: block; font-size: 8px; color: var(--muted); margin-top: 1px; font-weight: 600; }
@@ -349,7 +356,7 @@
   <div class="app">
     <header class="topbar">
       <div class="brand" onclick="navigate('home')">
-        <div class="brandmark">RZ</div>
+        <div class="brandmark" id="brandAvatar">RZ</div>
         <div class="brandtext">KENZIE<span>PRESET</span></div>
       </div>
       <div class="search-wrap">
@@ -412,6 +419,8 @@
             <button class="btn btn-outline" id="modeToggleBtn" onclick="toggleSiteMode()" style="font-size:12px;padding:0 12px">Public</button>
             <button class="btn btn-primary" onclick="openAddModal()">+ Upload</button>
             <button class="btn btn-outline" onclick="publishPresets()" style="font-size:12px;background:#34c759;color:#fff">Publish</button>
+            <button class="btn btn-outline" onclick="document.getElementById('avatarInput').click()" style="font-size:12px">Foto Profil</button>
+            <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="uploadAvatar(this)" />
             <button class="btn btn-outline" onclick="adminLogout()">Logout</button>
           </div>
         </div>
@@ -538,6 +547,50 @@
     function lsGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
     function lsSet(k, v) { try { localStorage.setItem(k, v); } catch {} }
     function lsDel(k) { try { localStorage.removeItem(k); } catch {} }
+    
+    const AVATAR_KEY = 'kenzie_avatar';
+    function applyAvatar(src) {
+      const el = document.getElementById('brandAvatar');
+      if (!el) return;
+      if (src) el.innerHTML = '<img src="' + src + '" alt=""/>';
+      else el.textContent = 'RZ';
+    }
+    function uploadAvatar(input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const c = document.createElement('canvas');
+          c.width = 200; c.height = 200;
+          c.getContext('2d').drawImage(img, 0, 0, 200, 200);
+          const data = c.toDataURL('image/jpeg', 0.8);
+          lsSet(AVATAR_KEY, data);
+          applyAvatar(data);
+          if (db) db.ref('settings/avatar').set(data).catch(()=>{});
+          toast('Foto profil diperbarui', 'ok');
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+    async function loadAvatar() {
+      let src = lsGet(AVATAR_KEY);
+      if (db) {
+        try {
+          const snap = await db.ref('settings/avatar').once('value');
+          if (snap.val()) { src = snap.val(); lsSet(AVATAR_KEY, src); }
+        } catch(e) {}
+      }
+      if (!src) {
+        try {
+          const r = await fetch('https://kenzie-preset-default-rtdb.firebaseio.com/settings/avatar.json');
+          if (r.ok) { const v = await r.json(); if (v) { src = v; lsSet(AVATAR_KEY, src); } }
+        } catch(e) {}
+      }
+      applyAvatar(src);
+    }
     async function loadData() {
       isAdmin = lsGet(ADMIN_KEY) === '1';
       siteMode = lsGet(MODE_KEY) || 'public';
@@ -694,7 +747,7 @@
       document.getElementById('similarSection').style.display='block';
       const isFav = favorites.includes(p.id);
       const thumb = p.thumb ? `<img src="${esc(p.thumb)}" alt=""/>` : `<div style="width:100%;height:100%;display:grid;place-items:center;font-size:48px;opacity:.3">🎬</div>`;
-      el.innerHTML = `<div class="detail-thumb">${thumb}</div><div class="detail-info"><span class="detail-id" onclick="copyWebLink('${p.id}')">${p.id}</span><h1>${esc(p.name)}</h1><div class="detail-meta"><span class="chip"><b>Kreator</b> ${esc(p.creator)}</span><span class="chip"><b>Upload</b> ${esc(p.date||'-')}</span>${p.trending?'<span class="chip">Trending</span>':''}${p.popular?'<span class="chip">Populer</span>':''}</div>${p.description?`<p class="detail-desc">${esc(p.description)}</p>`:''}${p.link?`<div class="link-box"><code>${esc(p.link)}</code><button class="btn-sm" style="flex:none" onclick="copyAlightLink('${p.id}')">Salin</button></div>`:`<div class="warn">⏳ Menunggu link Alight Motion</div>`}${p.demo?`<div class="link-box"><code>${esc(p.demo)}</code><button class="btn-sm" style="flex:none" onclick="copyDemoLink('${p.id}')">Salin</button></div>`:''}${p.xmlUrl?`<div class="link-box"><code>${esc(p.xmlUrl)}</code><button class="btn-sm" style="flex:none" onclick="copyXMLLink('${p.id}')">Salin</button></div>`:''}<div class="detail-actions">${p.link?`<a class="btn btn-primary" href="${esc(p.link)}">Impor</a>`:'<button class="btn btn-primary" disabled>Impor</button>'}<button class="btn btn-outline" onclick="copyWebLink('${p.id}')">Salin Web</button><button class="btn btn-outline" onclick="sharePreset('${p.id}')">Bagikan</button><button class="btn btn-outline" onclick="toggleFav('${p.id}');renderDetail('${p.id}')">${isFav?'❤️':'🤍'}</button></div></div>`;
+      el.innerHTML = `<div class="detail-thumb">${thumb}</div><div class="detail-info"><span class="detail-id" onclick="copyWebLink('${p.id}')">${p.id}</span><h1>${esc(p.name)}</h1><div class="detail-meta"><span class="chip"><b>Kreator</b> ${esc(p.creator)}</span><span class="chip"><b>Upload</b> ${esc(p.date||'-')}</span>${p.trending?'<span class="chip">Trending</span>':''}${p.popular?'<span class="chip">Populer</span>':''}</div>${p.description?`<p class="detail-desc">${esc(p.description)}</p>`:''}${p.link?`<div class="link-box"><code>${esc(p.link)}</code><a class="btn-sm primary" href="${esc(p.link)}" target="_blank" style="flex:none">Open Link</a><button class="btn-sm" style="flex:none" onclick="copyAlightLink('${p.id}')">Salin</button></div>`:`<div class="warn">⏳ Menunggu link Alight Motion</div>`}${p.demo?`<div class="link-box"><code>${esc(p.demo)}</code><a class="btn-sm primary" href="${esc(p.demo)}" target="_blank" style="flex:none">Open Link</a><button class="btn-sm" style="flex:none" onclick="copyDemoLink('${p.id}')">Salin</button></div>`:''}${p.xmlUrl?`<div class="link-box"><code>${esc(p.xmlUrl)}</code><a class="btn-sm primary" href="${esc(p.xmlUrl)}" target="_blank" style="flex:none">Open Link</a><button class="btn-sm" style="flex:none" onclick="copyXMLLink('${p.id}')">Salin</button></div>`:''}${p.video && !p.video.startsWith('data:')?`<div class="link-box"><code>${esc(p.video)}</code><a class="btn-sm primary" href="${esc(p.video)}" target="_blank" style="flex:none">Open Link</a></div>`:''}<div class="detail-actions">${p.link?`<a class="btn btn-primary" href="${esc(p.link)}">Impor</a>`:'<button class="btn btn-primary" disabled>Impor</button>'}<button class="btn btn-outline" onclick="copyWebLink('${p.id}')">Salin Web</button><button class="btn btn-outline" onclick="sharePreset('${p.id}')">Bagikan</button><button class="btn btn-outline" onclick="toggleFav('${p.id}');renderDetail('${p.id}')">${isFav?'❤️':'🤍'}</button></div></div>`;
       document.getElementById('gridSimilar').innerHTML = presets.filter(x=>x.id!==p.id).slice(0,4).map(cardHTML).join('') || '<p style="color:var(--muted)">Tidak ada</p>';
     }
     function renderFavorites() {
@@ -850,7 +903,7 @@
       lastTouchEnd = now;
     }, { passive: false });
 
-    loadData().then(() => { parseRoute(); });
+    loadData().then(() => { parseRoute(); loadAvatar(); });
     window.addEventListener('hashchange', parseRoute);
     parseRoute();
   </script>
