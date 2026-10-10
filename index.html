@@ -543,42 +543,36 @@
       siteMode = lsGet(MODE_KEY) || 'public';
       try { favorites = JSON.parse(lsGet(FAV_KEY) || '[]'); } catch { favorites = []; }
 
-      let remote = [];
-      // Try REST first (more reliable)
+      let collected = [];
+      const addAll = (arr) => {
+        if (!Array.isArray(arr)) return;
+        for (const p of arr) {
+          if (p && p.id && p.name && !collected.some(x => x.id === p.id)) collected.push(p);
+        }
+      };
+      // 1. Firebase REST
       try {
-        const r = await fetch('https://kenzie-preset-default-rtdb.firebaseio.com/presets.json?t=' + Date.now());
+        const r = await fetch('https://kenzie-preset-default-rtdb.firebaseio.com/presets.json');
         if (r.ok) {
           const val = await r.json();
-          if (Array.isArray(val)) remote = val.filter(Boolean);
-          else if (val && typeof val === 'object') remote = Object.values(val).filter(Boolean);
+          if (Array.isArray(val)) addAll(val);
+          else if (val && typeof val === 'object') addAll(Object.values(val));
         }
-      } catch (e) { console.warn('REST load', e); }
-      // Fallback to SDK
-      if (!remote.length && db) {
+      } catch (e) { console.warn('REST', e); }
+      // 2. Firebase SDK
+      if (db) {
         try {
           const snap = await db.ref('presets').once('value');
           const val = snap.val();
-          if (Array.isArray(val)) remote = val.filter(Boolean);
-          else if (val && typeof val === 'object') remote = Object.values(val).filter(Boolean);
-        } catch (e) { console.warn('Firebase SDK', e); }
+          if (Array.isArray(val)) addAll(val);
+          else if (val && typeof val === 'object') addAll(Object.values(val));
+        } catch (e) { console.warn('SDK', e); }
       }
-      if (!remote.length) {
-        try {
-          const res = await fetch('/api/presets?t=' + Date.now());
-          if (res.ok) {
-            const data = await res.json();
-            if (Array.isArray(data) && data.length) remote = data;
-          }
-        } catch (e) {}
-      }
-      let local = [];
-      try { local = JSON.parse(lsGet(LOCAL_KEY) || '[]'); } catch {}
-      // Prefer remote if it has data; otherwise keep local so nothing disappears
-      if (remote.length) presets = remote;
-      else if (local.length) presets = local;
-      else presets = [];
-      // Clean invalid entries
-      presets = presets.filter(p => p && p.id && p.name);
+      // 3. Local storage (never lose local data)
+      try { addAll(JSON.parse(lsGet(LOCAL_KEY) || '[]')); } catch {}
+      presets = collected;
+      // Persist merged result so it survives refresh
+      if (presets.length) lsSet(LOCAL_KEY, JSON.stringify(presets));
       loaded = true;
     }
     function saveData() { 
