@@ -59,7 +59,7 @@
     .app { width: min(100%, 1080px); margin: auto; padding: 8px 10px 80px; overflow-x: hidden; }
     .topbar { max-width: 100%; }
     .brandtext { }
-    .card, .detail-info, .modal { max-width: 100%; overflow-wrap: anywhere; }
+    .card, .detail-info, .modal { border-radius: 28px 28px 0 0;  max-width: 100%; overflow-wrap: anywhere; }
     .admin-header { flex-wrap: wrap; }
     .admin-header > div { flex-wrap: wrap; }
 
@@ -101,7 +101,7 @@
     .brandtext span { display: block; font-size: 8px; color: var(--muted); margin-top: 1px; font-weight: 600; }
 
     .search-wrap { flex: 1; max-width: 360px; position: relative; }
-    .search-input {
+    .search-input { border-radius: 999px; 
       width: 100%;
       height: 42px;
       padding: 0 36px 0 40px;
@@ -121,7 +121,7 @@
     }
     .clear-btn.show { display: grid; }
 
-    .icon-btn {
+    .icon-btn { border-radius: 999px; 
       width: 42px; height: 42px; border-radius: 14px;
       background: rgba(118,118,128,0.1);
       border: 1px solid rgba(255,255,255,0.45);
@@ -140,7 +140,7 @@
     .stats b { color: var(--ink); font-weight: 700; }
 
     .cats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
-    .cat {
+    .cat { border-radius: 999px; 
       min-height: 36px; padding: 0 14px; border-radius: 999px;
       background: rgba(118,118,128,0.1); border: 1px solid rgba(255,255,255,0.45);
       color: var(--muted); font-size: 12.5px; font-weight: 600;
@@ -156,7 +156,7 @@
     @media (min-width: 640px) { .grid { grid-template-columns: repeat(3, 1fr); gap: 16px; } }
     @media (min-width: 900px) { .grid { grid-template-columns: repeat(4, 1fr); gap: 18px; } }
 
-    .card {
+    .card { border-radius: 24px; 
       background: var(--surface);
       border: 1px solid rgba(255,255,255,0.7);
       backdrop-filter: blur(20px);
@@ -190,7 +190,7 @@
     .card-title { font-size: 14px; font-weight: 700; margin: 4px 0 2px; white-space: normal; word-break: break-word; line-height: 1.3; }
     .card-meta { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
     .card-actions { display: flex; gap: 6px; align-items: stretch; }
-    .btn-sm {
+    .btn-sm { border-radius: 999px; 
       flex: 1; min-height: 34px; border-radius: 10px;
       border: 1px solid var(--line); background: rgba(255,255,255,0.6);
       font-size: 12px; font-weight: 600; color: var(--ink);
@@ -233,7 +233,7 @@
       background: rgba(0,122,255,0.1); padding: 4px 10px; border-radius: 8px; cursor: pointer;
     }
     .detail-meta { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0; }
-    .chip {
+    .chip { border-radius: 999px; 
       background: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.7);
       border-radius: 999px; padding: 5px 10px; font-size: 11.5px; color: var(--muted);
     }
@@ -241,7 +241,7 @@
     .chip b { color: var(--ink); font-weight: 600; }
     .detail-desc { color: var(--muted); font-size: 13px; line-height: 1.4; margin: 8px 0; }
     .detail-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-    .btn {
+    .btn { border-radius: 999px; 
       min-height: 42px; padding: 0 18px; border-radius: 999px;
       border: none; font-weight: 700; font-size: 13px;
     }
@@ -254,7 +254,7 @@
       background: rgba(255,204,0,0.12); border: 1px solid rgba(255,204,0,0.3);
       color: #b8860b; padding: 10px 12px; border-radius: 14px; font-size: 13px; margin-bottom: 12px;
     }
-    .link-box {
+    .link-box { border-radius: 20px; 
       display: flex; flex-direction: column; gap: 6px;
       background: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.7);
       border-radius: 12px; padding: 8px; margin-bottom: 8px;
@@ -296,22 +296,22 @@
     .table-wrap { background: transparent; }
     .admin-list { display: flex; flex-direction: column; gap: 10px; }
     .admin-card {
-      background: var(--surface); border-radius: 16px; padding: 12px;
+      background: var(--surface); border-radius: 28px; padding: 14px 16px;
       border: 1px solid rgba(255,255,255,0.1);
     }
     .admin-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
-    .admin-card-id { font-family: ui-monospace, monospace; font-size: 12px; font-weight: 700; color: var(--blue); background: rgba(0,122,255,0.12); padding: 3px 8px; border-radius: 6px; }
+    .admin-card-id { font-family: ui-monospace, monospace; font-size: 12px; font-weight: 700; color: var(--blue); background: rgba(0,122,255,0.12); padding: 4px 12px; border-radius: 999px; }
     .admin-card-name { font-size: 15px; font-weight: 700; word-break: break-word; }
     .admin-card-meta { font-size: 12px; color: var(--muted); margin: 4px 0 8px; word-break: break-word; }
     .admin-card-actions { display: flex; gap: 6px; flex-wrap: wrap; }
-    .admin-card-actions .btn-xs { flex: 1; min-width: 60px; text-align: center; }
+    .admin-card-actions .btn-xs { border-radius: 999px;  flex: 1; min-width: 60px; text-align: center; }
     th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--line); }
     th { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
     .btn-xs { min-height: 30px; padding: 0 10px; border-radius: 8px; font-size: 11px; font-weight: 600; border: 1px solid var(--line); background: rgba(255,255,255,0.6); }
     [data-theme="dark"] .btn-xs { background: rgba(255,255,255,0.08); }
     .btn-xs.fill { background: var(--blue); color: #fff; border-color: transparent; }
     .btn-xs.danger { color: var(--red); }
-    .status { display: inline-block; padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+    .status { border-radius: 999px;  display: inline-block; padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
     .status.ok { color: var(--green); background: rgba(52,199,89,0.12); }
     .status.wait { color: #b8860b; background: rgba(255,204,0,0.15); }
 
@@ -332,7 +332,7 @@
     .modal h3 { position: sticky; top: 0; background: var(--surface2); padding: 4px 0 10px; z-index: 1; }
     .form-group { margin-bottom: 12px; }
     .form-group label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; color: var(--muted); }
-    .form-input { width: 100%; }
+    .form-input { border-radius: 16px;  width: 100%; }
     [data-theme="dark"] .modal { border-color: rgba(255,255,255,0.1); }
     .modal h3 { font-size: 17px; font-weight: 800; margin-bottom: 14px; }
     .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
