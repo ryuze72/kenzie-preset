@@ -58,7 +58,7 @@
 
     .app { width: min(100%, 1080px); margin: auto; padding: 8px 10px 80px; overflow-x: hidden; }
     .topbar { max-width: 100%; }
-    .brandtext { overflow: hidden; text-overflow: ellipsis; }
+    .brandtext { }
     .card, .detail-info, .modal { max-width: 100%; overflow-wrap: anywhere; }
     .admin-header { flex-wrap: wrap; }
     .admin-header > div { flex-wrap: wrap; }
@@ -187,7 +187,7 @@
       font-size: 10px; font-weight: 700; color: var(--blue);
       background: rgba(0,122,255,0.1); padding: 2px 6px; border-radius: 5px;
     }
-    .card-title { font-size: 14px; font-weight: 700; margin: 4px 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-title { font-size: 14px; font-weight: 700; margin: 4px 0 2px; white-space: normal; word-break: break-word; }
     .card-meta { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
     .card-actions { display: flex; gap: 6px; align-items: stretch; }
     .btn-sm {
@@ -205,7 +205,7 @@
     .empty h3 { font-size: 15px; margin-bottom: 4px; }
 
     .page { display: none; }
-    .page.active { display: block; animation: fade 0.25s ease; }
+    .page.active { display: block; animation: fade 0.25s ease; overflow: visible; }
     @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
     .back {
@@ -218,14 +218,14 @@
 
     .detail-layout { display: grid; gap: 20px; }
     @media (min-width: 700px) { .detail-layout { grid-template-columns: 1fr 1fr; } }
-    .detail-thumb { max-height: 180px; 
+    .detail-thumb { 
       border-radius: 24px; overflow: hidden;
       border: 1px solid rgba(255,255,255,0.7);
       aspect-ratio: 16/10; background: #e5e5ea;
       box-shadow: 0 16px 40px rgba(0,0,0,0.08);
     }
-    [data-theme="dark"] .detail-thumb { max-height: 180px;  background: #1c1c1e; border-color: rgba(255,255,255,0.1); }
-    .detail-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    [data-theme="dark"] .detail-thumb {  background: #1c1c1e; border-color: rgba(255,255,255,0.1); }
+    .detail-thumb img { width: 100%; height: auto; max-height: 220px; object-fit: contain; }
     .detail-info h1 { font-size: clamp(20px, 4vw, 26px); font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px; }
     .detail-id {
       display: inline-block; font-family: ui-monospace, monospace;
@@ -269,7 +269,7 @@
       text-align: center; border-radius: 8px; font-size: 12px; font-weight: 600;
     }
     [data-theme="dark"] .link-box { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); }
-    .link-box code { flex: 1; min-width: 0; font-size: 11.5px; color: var(--blue); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .link-box code { flex: 1; min-width: 0; font-size: 11.5px; color: var(--blue); word-break: break-all; white-space: normal; }
 
     /* Admin */
     .login-box {
