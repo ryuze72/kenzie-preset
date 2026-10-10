@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>KENZIE PRESET LIBRARY</title>
   <meta name="theme-color" content="#f2f2f7" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -37,7 +37,7 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     html { scroll-behavior: smooth; background: var(--bg); }
-    body {
+    body { font-size: 15px;
       min-height: 100vh;
       background: radial-gradient(circle at 12% 5%, rgba(0,122,255,0.12), transparent 28%),
                   radial-gradient(circle at 88% 20%, rgba(175,82,222,0.13), transparent 28%),
@@ -47,7 +47,7 @@
       overflow-x: hidden;
       touch-action: manipulation;
     }
-    [data-theme="dark"] body {
+    [data-theme="dark"] body { font-size: 15px;
       background: radial-gradient(circle at 12% 5%, rgba(0,122,255,0.18), transparent 28%),
                   radial-gradient(circle at 88% 20%, rgba(175,82,222,0.2), transparent 28%),
                   linear-gradient(180deg, #08080b 0%, #0c0c0f 100%);
@@ -56,7 +56,7 @@
     button { cursor: pointer; }
     a { color: inherit; text-decoration: none; }
 
-    .app { width: min(100%, 1080px); margin: auto; padding: 12px 12px 90px; overflow-x: hidden; }
+    .app { width: min(100%, 1080px); margin: auto; padding: 8px 10px 80px; overflow-x: hidden; }
     .topbar { max-width: 100%; }
     .brandtext { overflow: hidden; text-overflow: ellipsis; }
     .card, .detail-info, .modal { max-width: 100%; overflow-wrap: anywhere; }
@@ -181,7 +181,7 @@
       background: rgba(0,0,0,0.5); border: none; color: #fff;
       display: grid; place-items: center;
     }
-    .card-body { padding: 12px; }
+    .card-body { font-size: 15px; padding: 12px; }
     .card-id {
       display: inline-block; font-family: ui-monospace, monospace;
       font-size: 10px; font-weight: 700; color: var(--blue);
