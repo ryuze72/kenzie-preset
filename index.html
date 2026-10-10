@@ -544,13 +544,23 @@
       try { favorites = JSON.parse(lsGet(FAV_KEY) || '[]'); } catch { favorites = []; }
 
       let remote = [];
-      if (db) {
+      // Try REST first (more reliable)
+      try {
+        const r = await fetch('https://kenzie-preset-default-rtdb.firebaseio.com/presets.json?t=' + Date.now());
+        if (r.ok) {
+          const val = await r.json();
+          if (Array.isArray(val)) remote = val.filter(Boolean);
+          else if (val && typeof val === 'object') remote = Object.values(val).filter(Boolean);
+        }
+      } catch (e) { console.warn('REST load', e); }
+      // Fallback to SDK
+      if (!remote.length && db) {
         try {
           const snap = await db.ref('presets').once('value');
           const val = snap.val();
           if (Array.isArray(val)) remote = val.filter(Boolean);
           else if (val && typeof val === 'object') remote = Object.values(val).filter(Boolean);
-        } catch (e) { console.warn('Firebase load', e); }
+        } catch (e) { console.warn('Firebase SDK', e); }
       }
       if (!remote.length) {
         try {
@@ -581,7 +591,7 @@
       try {
         if (db) {
           await db.ref('presets').set(presets);
-          toast('Berhasil! Tersimpan di Firebase', 'ok');
+          toast('Berhasil! Tersimpan di Firebase', 'ok'); renderHome();
           lsSet(LOCAL_KEY, JSON.stringify(presets));
         } else {
           const r = await fetch('/api/publish', {
@@ -808,7 +818,7 @@
       const data={name,creator,description:document.getElementById('fDesc').value.trim(),link:linkVal,demo:demoVal,xmlUrl,trending:document.getElementById('fTrending').checked,popular:document.getElementById('fPopular').checked,thumb:document.getElementById('fThumbData').value,video:document.getElementById('fVideo').value.trim()};
       if(editId){ const idx=presets.findIndex(x=>x.id===editId); if(idx>=0) presets[idx]={...presets[idx],...data}; toast('Diperbarui','ok'); }
       else { data.id=nextId(); data.date=new Date().toISOString().slice(0,10); presets.unshift(data); toast('Upload: '+data.id,'ok'); }
-      saveData(); closeModal(); renderAdminTable();
+      saveData(); closeModal(); renderAdminTable(); renderHome();
     }
     function deletePreset(id) { presets=presets.filter(p=>p.id!==id); favorites=favorites.filter(f=>f!==id); saveData(); saveFavs(); renderAdminTable(); toast('Dihapus','ok'); }
     function esc(s){ if(!s) return ''; return String(s).replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"'); }
