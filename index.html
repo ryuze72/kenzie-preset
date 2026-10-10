@@ -408,7 +408,7 @@
           <div style="display:flex;gap:8px;align-items:center">
             <button class="btn btn-outline" id="modeToggleBtn" onclick="toggleSiteMode()" style="font-size:12px;padding:0 12px">Public</button>
             <button class="btn btn-primary" onclick="openAddModal()">+ Upload</button>
-            <button class="btn btn-outline" onclick="downloadPresetsJson()" style="font-size:12px">Download JSON</button>
+            <button class="btn btn-outline" onclick="publishPresets()" style="font-size:12px;background:#34c759;color:#fff">Publish</button>
             <button class="btn btn-outline" onclick="adminLogout()">Logout</button>
           </div>
         </div>
@@ -493,21 +493,25 @@
     function lsSet(k, v) { try { localStorage.setItem(k, v); } catch {} }
     function lsDel(k) { try { localStorage.removeItem(k); } catch {} }
     async function loadData() {
-      // Load shared presets so everyone sees the same data
+      let remote = [];
       try {
         const res = await fetch('/presets.json?t=' + Date.now());
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data) && data.length) presets = data;
+          if (Array.isArray(data)) remote = data;
         }
       } catch (e) { console.warn('presets.json', e); }
-      // Fallback / admin local override
-      try {
-        const local = JSON.parse(lsGet(LOCAL_KEY) || '[]');
-        if (local.length && !presets.length) presets = local;
-      } catch {}
-      try { favorites = JSON.parse(lsGet(FAV_KEY) || '[]'); } catch { favorites = []; }
+      let local = [];
+      try { local = JSON.parse(lsGet(LOCAL_KEY) || '[]'); } catch {}
       isAdmin = lsGet(ADMIN_KEY) === '1';
+      // Everyone sees remote. Admin with local data that is newer/more will sync it.
+      if (remote.length) {
+        presets = remote;
+      } else if (local.length) {
+        presets = local;
+        if (isAdmin) setTimeout(() => publishPresets(), 500);
+      }
+      try { favorites = JSON.parse(lsGet(FAV_KEY) || '[]'); } catch { favorites = []; }
       siteMode = lsGet(MODE_KEY) || 'public';
       loaded = true;
     }
@@ -516,6 +520,7 @@
       publishPresets();
     }
     async function publishPresets() {
+      if (!presets.length) return;
       try {
         const r = await fetch('/api/presets', {
           method: 'POST',
@@ -523,9 +528,15 @@
           body: JSON.stringify({ password: ADMIN_PASS, presets })
         });
         const j = await r.json().catch(()=>({}));
-        if (r.ok) toast('Tersimpan ke presets.json', 'ok');
-        else console.warn('publish', j);
-      } catch (e) { console.warn('publish', e); }
+        if (r.ok) {
+          toast('Preset tersimpan — semua orang bisa lihat', 'ok');
+          lsSet(LOCAL_KEY, JSON.stringify(presets));
+        } else {
+          toast('Gagal simpan ke server: ' + (j.error || r.status), 'err');
+        }
+      } catch (e) {
+        toast('Gagal hubungi server', 'err');
+      }
     }
     function saveFavs() { lsSet(FAV_KEY, JSON.stringify(favorites)); }
     function nextId() {
