@@ -543,27 +543,32 @@
       siteMode = lsGet(MODE_KEY) || 'public';
       try { favorites = JSON.parse(lsGet(FAV_KEY) || '[]'); } catch { favorites = []; }
 
+      let remote = [];
       if (db) {
         try {
           const snap = await db.ref('presets').once('value');
           const val = snap.val();
-          presets = Array.isArray(val) ? val : (val ? Object.values(val) : []);
-        } catch (e) {
-          console.warn('Firebase load', e);
-          try { presets = JSON.parse(lsGet(LOCAL_KEY) || '[]'); } catch { presets = []; }
-        }
-      } else {
-        // Fallback ke API lokal
+          if (Array.isArray(val)) remote = val.filter(Boolean);
+          else if (val && typeof val === 'object') remote = Object.values(val).filter(Boolean);
+        } catch (e) { console.warn('Firebase load', e); }
+      }
+      if (!remote.length) {
         try {
           const res = await fetch('/api/presets?t=' + Date.now());
           if (res.ok) {
             const data = await res.json();
-            if (Array.isArray(data)) presets = data;
+            if (Array.isArray(data) && data.length) remote = data;
           }
-        } catch (e) {
-          try { presets = JSON.parse(lsGet(LOCAL_KEY) || '[]'); } catch { presets = []; }
-        }
+        } catch (e) {}
       }
+      let local = [];
+      try { local = JSON.parse(lsGet(LOCAL_KEY) || '[]'); } catch {}
+      // Prefer remote if it has data; otherwise keep local so nothing disappears
+      if (remote.length) presets = remote;
+      else if (local.length) presets = local;
+      else presets = [];
+      // Clean invalid entries
+      presets = presets.filter(p => p && p.id && p.name);
       loaded = true;
     }
     function saveData() { 
