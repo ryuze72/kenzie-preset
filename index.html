@@ -295,6 +295,7 @@
     .chip b { color: var(--ink); font-weight: 600; }
     .detail-desc { color: var(--muted); font-size: 13px; line-height: 1.4; margin: 8px 0; }
     .detail-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: center; }
+    .detail-actions .btn-outline { background: rgba(120,120,128,0.18); border-color: rgba(255,255,255,0.12); border-radius: 999px; }
     .btn { border-radius: 999px; 
       min-height: 42px; padding: 0 18px; border-radius: 999px;
       border: none; font-weight: 700; font-size: 13px;
@@ -308,7 +309,7 @@
       background: rgba(255,204,0,0.12); border: 1px solid rgba(255,204,0,0.3);
       color: #b8860b; padding: 10px 12px; border-radius: 14px; font-size: 13px; margin-bottom: 12px;
     }
-    .link-box { border-radius: 20px; 
+    .link-box { border-radius: 28px; background: rgba(120,120,128,0.12) !important; 
       display: flex; flex-direction: column; gap: 8px;
       background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
       padding: 10px; margin-bottom: 10px;
@@ -320,7 +321,7 @@
     .link-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .link-actions:has(.btn-sm:only-child) { grid-template-columns: 1fr; }
     .link-actions .btn-sm, .link-actions a { min-height: 44px; }
-    .link-actions .btn-sm { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #fff; }
+    .link-actions .btn-sm { background: rgba(120,120,128,0.2) !important; border: 1px solid rgba(255,255,255,0.15) !important; color: #e5e5ea !important; border-radius: 999px !important; }
     .link-actions .btn-sm, .link-actions a {
       flex: 1; min-height: 32px; display: flex; align-items: center; justify-content: center;
       text-align: center; border-radius: 8px; font-size: 12px; font-weight: 600;
@@ -462,6 +463,36 @@
     body.fx-hard .card, body.fx-hard .admin-card, body.fx-hard .topbar {
       backdrop-filter: blur(28px) saturate(200%);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 8px 32px rgba(0,0,0,0.2);
+    }
+
+    /* Brutal effect levels */
+    body.fx-low .card, body.fx-low .admin-card, body.fx-low .link-box {
+      backdrop-filter: blur(6px) saturate(120%);
+      transition: all 0.4s cubic-bezier(.2,.8,.2,1);
+    }
+    body.fx-med .card, body.fx-med .admin-card, body.fx-med .link-box {
+      backdrop-filter: blur(20px) saturate(180%);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 8px 24px rgba(0,0,0,0.15);
+      transition: all 0.3s cubic-bezier(.2,.8,.2,1);
+    }
+    body.fx-hard .card, body.fx-hard .admin-card, body.fx-hard .link-box, body.fx-hard .topbar {
+      backdrop-filter: blur(40px) saturate(220%);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 12px 40px rgba(0,0,0,0.3), 0 0 60px rgba(37,99,235,0.15);
+      animation: brutalPulse 2s ease-in-out infinite;
+    }
+    body.fx-hard .btn, body.fx-hard .btn-sm, body.fx-hard .glass-btn {
+      animation: brutalGlow 1.5s ease-in-out infinite alternate;
+    }
+    @keyframes brutalPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.015); }
+    }
+    @keyframes brutalGlow {
+      0% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.2); }
+      100% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 0 20px rgba(255,255,255,0.1); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      body.fx-hard .card, body.fx-hard .btn { animation: none; }
     }
 </style>
 
@@ -1046,7 +1077,15 @@
     function cycleEffect() {
       fxIndex = (fxIndex + 1) % 3;
       applyEffect(fxLevels[fxIndex]);
-      toast('Efek: ' + fxLabels[fxLevels[fxIndex]], 'ok');
+      const level = fxLevels[fxIndex];
+      const msgs = { low: 'Efek Low — halus', med: 'Efek Medium — kuat', hard: 'Efek HARD — brutal!' };
+      toast(msgs[level], 'ok');
+      // Flash effect on hard
+      if (level === 'hard') {
+        document.body.style.transition = 'filter 0.2s';
+        document.body.style.filter = 'brightness(1.15)';
+        setTimeout(() => { document.body.style.filter = ''; }, 200);
+      }
     }
     try {
       const saved = localStorage.getItem(FX_KEY);
