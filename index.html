@@ -444,6 +444,25 @@
     }
     @keyframes blobMove { to { transform: translate(5%, 5%) scale(1.1); } }
     @media (prefers-reduced-motion: reduce) { body::before { animation: none; } }
+
+    .glass-btn {
+      background: rgba(255,255,255,0.08) !important;
+      backdrop-filter: blur(18px) saturate(170%);
+      -webkit-backdrop-filter: blur(18px) saturate(170%);
+      border: 1px solid rgba(255,255,255,0.2) !important;
+      color: var(--ink) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.15);
+    }
+    [data-theme="light"] .glass-btn, :root:not([data-theme="dark"]) .glass-btn {
+      background: rgba(255,255,255,0.55) !important;
+      border-color: rgba(0,0,0,0.08) !important;
+    }
+    body.fx-low .card, body.fx-low .admin-card { backdrop-filter: blur(8px); }
+    body.fx-med .card, body.fx-med .admin-card { backdrop-filter: blur(16px) saturate(160%); }
+    body.fx-hard .card, body.fx-hard .admin-card, body.fx-hard .topbar {
+      backdrop-filter: blur(28px) saturate(200%);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 8px 32px rgba(0,0,0,0.2);
+    }
 </style>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -514,11 +533,12 @@
         <div class="admin-header">
           <h2>Kelola Preset</h2>
           <div class="admin-btns">
-            <button class="btn btn-outline" id="modeToggleBtn" onclick="toggleSiteMode()">Public</button>
-            <button class="btn btn-primary" onclick="openAddModal()">+ Upload</button>
-            <button class="btn btn-outline" onclick="publishPresets()" style="background:var(--green);color:#fff">Publish</button>
-            <button class="btn btn-outline" onclick="document.getElementById('avatarInput').click()">Foto Profil</button>
-            <button class="btn btn-outline" onclick="adminLogout()">Logout</button>
+            <button class="btn btn-outline glass-btn" id="modeToggleBtn" onclick="toggleSiteMode()">Public</button>
+            <button class="btn btn-outline glass-btn" onclick="openAddModal()">+ Upload</button>
+            <button class="btn btn-outline glass-btn" onclick="publishPresets()">Publish</button>
+            <button class="btn btn-outline glass-btn" onclick="document.getElementById('avatarInput').click()">Foto Profil</button>
+            <button class="btn btn-outline glass-btn" onclick="adminLogout()">Logout</button>
+            <button class="btn btn-outline glass-btn" id="fxBtn" onclick="cycleEffect()">Efek: Low</button>
             <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="uploadAvatar(this)" />
           </div>
         </div>
@@ -1012,6 +1032,28 @@
     }, { passive: false });
 
     loadData().then(() => { parseRoute(); loadAvatar(); });
+    const FX_KEY = 'kenzie_fx';
+    const fxLevels = ['low', 'med', 'hard'];
+    const fxLabels = { low: 'Low', med: 'Medium', hard: 'Hard' };
+    let fxIndex = 0;
+    function applyEffect(level) {
+      document.body.classList.remove('fx-low', 'fx-med', 'fx-hard');
+      document.body.classList.add('fx-' + level);
+      const btn = document.getElementById('fxBtn');
+      if (btn) btn.textContent = 'Efek: ' + fxLabels[level];
+      try { localStorage.setItem(FX_KEY, level); } catch {}
+    }
+    function cycleEffect() {
+      fxIndex = (fxIndex + 1) % 3;
+      applyEffect(fxLevels[fxIndex]);
+      toast('Efek: ' + fxLabels[fxLevels[fxIndex]], 'ok');
+    }
+    try {
+      const saved = localStorage.getItem(FX_KEY);
+      if (saved && fxLevels.includes(saved)) { fxIndex = fxLevels.indexOf(saved); applyEffect(saved); }
+      else applyEffect('low');
+    } catch { applyEffect('low'); }
+
     window.addEventListener('hashchange', parseRoute);
     parseRoute();
   </script>
