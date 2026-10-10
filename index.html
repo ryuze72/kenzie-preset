@@ -10,25 +10,20 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #eef1f7;
-      --surface: rgba(255,255,255,0.72);
-      --surface2: rgba(255,255,255,0.88);
-      --ink: #12141a;
-      --muted: #4b5160;
-      --line: rgba(0,0,0,0.08);
-      --accent: #2563eb;
-      --accent2: #7c3aed;
-      --blue: var(--accent);
-      --purple: var(--accent2);
-      --green: #16a34a;
-      --red: #dc2626;
-      --yellow: #ca8a04;
-      --shadow: 0 8px 32px rgba(0,0,0,0.08);
-      --radius: 20px;
-      --radius-sm: 14px;
-      --radius-pill: 999px;
-      --glass: rgba(255,255,255,0.12);
-      --glass-border: rgba(255,255,255,0.25);
+      --bg: #f5f5f7;
+      --surface: #ffffff;
+      --surface2: #fafafa;
+      --ink: #1d1d1f;
+      --muted: #86868b;
+      --line: rgba(0,0,0,0.06);
+      --accent: #0071e3;
+      --accent-soft: rgba(0,113,227,0.1);
+      --green: #30d158;
+      --red: #ff453a;
+      --shadow: 0 2px 12px rgba(0,0,0,0.06);
+      --radius: 16px;
+      --radius-sm: 12px;
+      --radius-pill: 980px;
     }
     @media (prefers-color-scheme: dark) {
       :root:not([data-theme="light"]) {
@@ -44,16 +39,17 @@
       }
     }
     [data-theme="dark"] {
-      --accent: #4f8cff;
-      --bg: #0b0d14;
-      --surface: rgba(255,255,255,0.06);
-      --surface2: rgba(255,255,255,0.1);
-      --ink: #f4f5f8;
-      --muted: #aab0bd;
-      --line: rgba(255,255,255,0.1);
-      --shadow: 0 8px 32px rgba(0,0,0,0.4);
-      --glass: rgba(255,255,255,0.08);
-      --glass-border: rgba(255,255,255,0.15);
+      --bg: #000000;
+      --surface: #1c1c1e;
+      --surface2: #2c2c2e;
+      --ink: #f5f5f7;
+      --muted: #98989d;
+      --line: rgba(255,255,255,0.08);
+      --accent: #0a84ff;
+      --accent-soft: rgba(10,132,255,0.15);
+      --green: #30d158;
+      --red: #ff453a;
+      --shadow: 0 2px 16px rgba(0,0,0,0.5);
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -62,18 +58,14 @@
     html { scroll-behavior: smooth; background: var(--bg); }
     body { font-size: 15px; transition: background-color .3s, color .3s;
       min-height: 100vh;
-      background: radial-gradient(circle at 12% 5%, rgba(0,122,255,0.12), transparent 28%),
-                  radial-gradient(circle at 88% 20%, rgba(175,82,222,0.13), transparent 28%),
-                  linear-gradient(180deg, var(--bg) 0%, #ededf2 100%);
+      background: var(--bg);
       color: var(--ink);
       font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', sans-serif;
       overflow-x: hidden;
       touch-action: manipulation;
     }
     [data-theme="dark"] body { font-size: 15px; transition: background-color .3s, color .3s;
-      background: radial-gradient(circle at 12% 5%, rgba(0,122,255,0.18), transparent 28%),
-                  radial-gradient(circle at 88% 20%, rgba(175,82,222,0.2), transparent 28%),
-                  linear-gradient(180deg, #08080b 0%, #0c0c0f 100%);
+      background: var(--bg);
     }
     /* Liquid glass on floating elements */
     .topbar, .card, .modal, .admin-card, .link-box, .bottom-nav {
@@ -89,7 +81,7 @@
       }
     }
     .btn-primary, .btn-sm.primary, .cat.active {
-      background: var(--accent);
+      background: var(--accent); color: #fff;
       transition: transform 0.3s cubic-bezier(.2,.8,.2,1);
     }
     .btn-primary:hover, .btn-sm.primary:hover { transform: scale(1.02); }
@@ -119,21 +111,12 @@
 
     /* Topbar liquid glass */
     .topbar {
-      position: sticky;
-      top: 12px;
-      z-index: 20;
-      height: 62px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 7px 9px 7px 10px;
-      border: 1px solid rgba(255,255,255,0.7);
-      background: rgba(255,255,255,0.55);
-      backdrop-filter: blur(28px) saturate(180%);
-      -webkit-backdrop-filter: blur(28px) saturate(180%);
-      border-radius: 30px;
-      box-shadow: 0 12px 35px rgba(0,0,0,0.08);
+      position: sticky; top: 8px; z-index: 30;
+      height: 56px; display: flex; align-items: center;
+      justify-content: space-between; gap: 10px;
+      padding: 6px 8px; border-radius: var(--radius-pill);
+      background: var(--surface); border: 1px solid var(--line);
+      box-shadow: var(--shadow);
     }
     [data-theme="dark"] .topbar {
       background: rgba(28,28,30,0.65);
@@ -210,7 +193,7 @@
     @media (min-width: 640px) { .grid { grid-template-columns: repeat(3, 1fr); gap: 16px; } }
     @media (min-width: 900px) { .grid { grid-template-columns: repeat(4, 1fr); gap: 18px; } }
 
-    .card { border-radius: 24px; 
+    .card { border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); 
       background: var(--surface);
       border: 1px solid rgba(255,255,255,0.7);
       backdrop-filter: blur(20px);
@@ -296,7 +279,7 @@
     .detail-desc { color: var(--muted); font-size: 13px; line-height: 1.4; margin: 8px 0; }
     .detail-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: center; }
     .detail-actions .btn-outline { background: rgba(120,120,128,0.18); border-color: rgba(255,255,255,0.12); border-radius: 999px; }
-    .btn { border-radius: 999px; 
+    .btn { border-radius: var(--radius-pill); min-height: 44px; font-weight: 600; font-size: 14px; 
       min-height: 42px; padding: 0 18px; border-radius: 999px;
       border: none; font-weight: 700; font-size: 13px;
     }
@@ -309,7 +292,7 @@
       background: rgba(255,204,0,0.12); border: 1px solid rgba(255,204,0,0.3);
       color: #b8860b; padding: 10px 12px; border-radius: 14px; font-size: 13px; margin-bottom: 12px;
     }
-    .link-box { border-radius: 28px; background: rgba(120,120,128,0.12) !important; 
+    .link-box { border-radius: var(--radius); background: var(--surface2) !important; border: 1px solid var(--line) !important; 
       display: flex; flex-direction: column; gap: 8px;
       background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
       padding: 10px; margin-bottom: 10px;
@@ -356,7 +339,7 @@
     .table-wrap { background: transparent; }
     .admin-list { display: flex; flex-direction: column; gap: 10px; }
     .admin-card {
-      background: var(--surface); border-radius: 28px; padding: 14px 16px;
+      background: var(--surface); border-radius: var(--radius); padding: 16px; border: 1px solid var(--line);
       border: 1px solid rgba(255,255,255,0.1);
     }
     .admin-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
@@ -437,14 +420,7 @@
     [data-theme="dark"] .theme-toggle { background: rgba(44,44,46,0.85); border-color: rgba(255,255,255,0.1); }
     @media (min-width: 700px) { .theme-toggle { bottom: 20px; } }
   
-    body::before {
-      content: ''; position: fixed; inset: -20%; z-index: -1; pointer-events: none;
-      background: radial-gradient(circle at 20% 30%, rgba(37,99,235,0.15), transparent 40%),
-                  radial-gradient(circle at 80% 70%, rgba(139,92,246,0.12), transparent 40%);
-      animation: blobMove 25s ease-in-out infinite alternate;
-    }
-    @keyframes blobMove { to { transform: translate(5%, 5%) scale(1.1); } }
-    @media (prefers-reduced-motion: reduce) { body::before { animation: none; } }
+    
 
     .glass-btn {
       background: rgba(255,255,255,0.08) !important;
