@@ -672,13 +672,17 @@
     }
     function cardHTML(p) {
       const isFav = favorites.includes(p.id);
-      const thumb = p.thumb ? `<img src="${esc(p.thumb)}" alt="" onerror="this.parentElement.innerHTML='<div style=\\'width:100%;
-      const play = p.video ? '<div style="position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.25);font-size:22px;pointer-events:none">▶</div>' : '';height:100%;display:grid;place-items:center;font-size:28px;opacity:.4\\'>🎬</div>'"/>` : `<div style="width:100%;height:100%;display:grid;place-items:center;font-size:28px;opacity:.35">🎬</div>`;
+      const thumb = p.thumb
+        ? '<img src="' + esc(p.thumb) + '" alt="" style="width:100%;height:100%;object-fit:cover"/>'
+        : '<div style="width:100%;height:100%;display:grid;place-items:center;font-size:28px;opacity:.35">🎬</div>';
+      const play = p.video
+        ? '<div style="position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.25);font-size:22px;pointer-events:none">▶</div>'
+        : '';
       const badge = currentCat === 'XML' ? 'XML' : (p.link ? '5MB' : 'XML');
       const main = currentCat === 'XML'
-        ? (p.xmlUrl ? `<a class="btn-sm primary" href="${esc(p.xmlUrl)}" target="_blank" onclick="event.stopPropagation()">Buka XML</a>` : '<button class="btn-sm primary" disabled>XML</button>')
-        : (p.link ? `<a class="btn-sm primary" href="${esc(p.link)}" onclick="event.stopPropagation()">Impor</a>` : '<button class="btn-sm primary" disabled>Belum</button>');
-      return `<div class="card"><div class="card-thumb" onclick="navigate('detail','${p.id}')">${thumb}${play}<span class="card-badge">${badge}</span><button class="card-fav" onclick="event.stopPropagation();toggleFav('${p.id}')">${isFav?'❤️':'🤍'}</button></div><div class="card-body"><span class="card-id">${p.id}</span><div class="card-title" onclick="navigate('detail','${p.id}')">${esc(p.name)}</div><div class="card-meta">${esc(p.creator)}</div><div class="card-actions">${main}<button class="btn-sm" onclick="event.stopPropagation();copyWebLink('${p.id}')">Salin</button></div></div></div>`;
+        ? (p.xmlUrl ? '<a class="btn-sm primary" href="' + esc(p.xmlUrl) + '" target="_blank" onclick="event.stopPropagation()">Buka XML</a>' : '<button class="btn-sm primary" disabled>XML</button>')
+        : (p.link ? '<a class="btn-sm primary" href="' + esc(p.link) + '" onclick="event.stopPropagation()">Impor</a>' : '<button class="btn-sm primary" disabled>Belum</button>');
+      return '<div class="card"><div class="card-thumb" onclick="navigate(\'detail\',\'' + p.id + '\')">' + thumb + play + '<span class="card-badge">' + badge + '</span><button class="card-fav" onclick="event.stopPropagation();toggleFav(\'' + p.id + '\')">' + (isFav ? '❤️' : '🤍') + '</button></div><div class="card-body"><span class="card-id">' + p.id + '</span><div class="card-title" onclick="navigate(\'detail\',\'' + p.id + '\')">' + esc(p.name) + '</div><div class="card-meta">' + esc(p.creator) + '</div><div class="card-actions">' + main + '<button class="btn-sm" onclick="event.stopPropagation();copyWebLink(\'' + p.id + '\')">Salin</button></div></div></div>';
     }
     function renderHome() {
       document.getElementById('totalCount').textContent = presets.length;
