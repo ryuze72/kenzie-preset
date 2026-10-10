@@ -477,6 +477,10 @@
   <script>
     const FAV_KEY = 'kenzie_favs_v1', ADMIN_KEY = 'kenzie_admin_ok', LOCAL_KEY = 'kenzie_presets_v2', ADMIN_PASS = 'kenzie', MODE_KEY = 'kenzie_mode';
     const SITE_URL = 'https://kenzie-preset.vercel.app';
+    const PRESETS_URL = 'https://j.jstash.app/pcexosfWnXmzw6wk5NmgDQ';
+    const PRESETS_PUT = 'https://api.jstash.app/v1/bins/pcexosfWnXmzw6wk5NmgDQ';
+    const PRESETS_TOKEN = 'js_edit_T9y2iIeZPa_K6jY3zFHZy9Vx9JwnWuDiFNndT-IYWG0';
+
     function getSiteBase() {
       if ((location.protocol === 'http:' || location.protocol === 'https:') && !['localhost','127.0.0.1'].includes(location.hostname)) return location.origin;
       return SITE_URL;
@@ -495,21 +499,20 @@
     async function loadData() {
       let remote = [];
       try {
-        const res = await fetch('/presets.json?t=' + Date.now());
+        const res = await fetch(PRESETS_URL + '?t=' + Date.now());
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data)) remote = data;
         }
-      } catch (e) { console.warn('presets.json', e); }
+      } catch (e) { console.warn('load presets', e); }
       let local = [];
       try { local = JSON.parse(lsGet(LOCAL_KEY) || '[]'); } catch {}
       isAdmin = lsGet(ADMIN_KEY) === '1';
-      // Everyone sees remote. Admin with local data that is newer/more will sync it.
       if (remote.length) {
         presets = remote;
       } else if (local.length) {
         presets = local;
-        if (isAdmin) setTimeout(() => publishPresets(), 500);
+        if (isAdmin) setTimeout(() => publishPresets(), 800);
       }
       try { favorites = JSON.parse(lsGet(FAV_KEY) || '[]'); } catch { favorites = []; }
       siteMode = lsGet(MODE_KEY) || 'public';
@@ -520,19 +523,22 @@
       publishPresets();
     }
     async function publishPresets() {
-      if (!presets.length) return;
+      if (!Array.isArray(presets)) return;
       try {
-        const r = await fetch('/api/presets', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password: ADMIN_PASS, presets })
+        const r = await fetch(PRESETS_PUT, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + PRESETS_TOKEN
+          },
+          body: JSON.stringify(presets)
         });
-        const j = await r.json().catch(()=>({}));
         if (r.ok) {
-          toast('Preset tersimpan — semua orang bisa lihat', 'ok');
+          toast('Berhasil! Semua orang bisa lihat preset ini', 'ok');
           lsSet(LOCAL_KEY, JSON.stringify(presets));
         } else {
-          toast('Gagal simpan ke server: ' + (j.error || r.status), 'err');
+          const j = await r.json().catch(()=>({}));
+          toast('Gagal simpan: ' + (j.error?.message || r.status), 'err');
         }
       } catch (e) {
         toast('Gagal hubungi server', 'err');
