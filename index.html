@@ -455,6 +455,16 @@
       <div class="form-group"><label>Link Alight Motion (opsional)</label><input class="form-input" id="fLink" placeholder="https://alightcreative.com/am/share/..." /></div>
       <div class="form-group"><label>Link TikTok demo (opsional)</label><input class="form-input" id="fDemo" placeholder="https://www.tiktok.com/..." /></div>
       <div class="form-group"><label>Link XML / Drive (opsional)</label><input class="form-input" id="fXmlUrl" placeholder="https://drive.google.com/..." /></div>
+      <div class="form-group">
+        <label>Thumbnail</label>
+        <input type="file" id="fThumb" accept="image/*" capture="environment" style="display:none" onchange="previewThumb(this)" />
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <button type="button" class="btn btn-outline" style="font-size:12px;flex:1" onclick="document.getElementById('fThumb').removeAttribute('capture');document.getElementById('fThumb').click()">Galeri</button>
+          <button type="button" class="btn btn-outline" style="font-size:12px;flex:1" onclick="document.getElementById('fThumb').setAttribute('capture','environment');document.getElementById('fThumb').click()">Kamera</button>
+        </div>
+        <div id="thumbPreview" style="width:100%;aspect-ratio:16/10;background:#1c1c1e;border-radius:12px;display:grid;place-items:center;overflow:hidden;font-size:28px;opacity:.4">🎬</div>
+        <input type="hidden" id="fThumbData" />
+      </div>
       <div class="check-row"><input type="checkbox" id="fTrending" /><label for="fTrending">Trending</label></div>
       <div class="check-row"><input type="checkbox" id="fPopular" /><label for="fPopular">Populer</label></div>
       <div class="modal-actions">
@@ -729,8 +739,33 @@
     function renderAdminTable() {
       document.getElementById('adminTableBody').innerHTML = presets.map(p=>`<tr><td><code>${p.id}</code></td><td>${esc(p.name)}</td><td>${esc(p.creator)}</td><td>${[p.xmlUrl?'XML':'',p.link?'Alight':''].filter(Boolean).join(' + ')||'—'}</td><td>${p.link?'<span class="status ok">Siap</span>':'<span class="status wait">Wait</span>'}</td><td>${p.trending?'✓':'—'}</td><td>${p.popular?'✓':'—'}</td><td><button class="btn-xs ${p.link?'':'fill'}" onclick="openLinkModal('${p.id}')">${p.link?'Ubah':'Isi'}</button> <button class="btn-xs" onclick="openEditModal('${p.id}')">Edit</button> <button class="btn-xs danger" onclick="askDelete('${p.id}')">${delArm===p.id?'Yakin?':'Hapus'}</button></td></tr>`).join('');
     }
-    function openAddModal() { document.getElementById('modalTitle').textContent='Upload Preset'; document.getElementById('editId').value=''; ['fName','fCreator','fDesc','fLink','fDemo','fXmlUrl'].forEach(id=>document.getElementById(id).value=''); document.getElementById('fTrending').checked=false; document.getElementById('fPopular').checked=false; document.getElementById('presetModal').classList.add('show'); }
-    function openEditModal(id) { const p=presets.find(x=>x.id===id); if(!p) return; document.getElementById('modalTitle').textContent='Edit'; document.getElementById('editId').value=id; document.getElementById('fName').value=p.name||''; document.getElementById('fCreator').value=p.creator||''; document.getElementById('fDesc').value=p.description||''; document.getElementById('fLink').value=p.link||''; document.getElementById('fDemo').value=p.demo||''; document.getElementById('fXmlUrl').value=p.xmlUrl||''; document.getElementById('fTrending').checked=!!p.trending; document.getElementById('fPopular').checked=!!p.popular; document.getElementById('presetModal').classList.add('show'); }
+    
+    function previewThumb(input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const max = 600;
+          let w = img.width, h = img.height;
+          if (w > max || h > max) {
+            if (w > h) { h = Math.round(h * max / w); w = max; }
+            else { w = Math.round(w * max / h); h = max; }
+          }
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          const data = canvas.toDataURL('image/jpeg', 0.7);
+          document.getElementById('fThumbData').value = data;
+          document.getElementById('thumbPreview').innerHTML = '<img src="' + data + '" style="width:100%;height:100%;object-fit:cover"/>';
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+    function openAddModal() { document.getElementById('modalTitle').textContent='Upload Preset'; document.getElementById('editId').value=''; ['fName','fCreator','fDesc','fLink','fDemo','fXmlUrl'].forEach(id=>document.getElementById(id).value=''); document.getElementById('fTrending').checked=false; document.getElementById('fPopular').checked=false; document.getElementById('fThumbData').value=''; document.getElementById('thumbPreview').innerHTML='🎬'; document.getElementById('fThumb').value=''; document.getElementById('presetModal').classList.add('show'); }
+    function openEditModal(id) { const p=presets.find(x=>x.id===id); if(!p) return; document.getElementById('modalTitle').textContent='Edit'; document.getElementById('editId').value=id; document.getElementById('fName').value=p.name||''; document.getElementById('fCreator').value=p.creator||''; document.getElementById('fDesc').value=p.description||''; document.getElementById('fLink').value=p.link||''; document.getElementById('fDemo').value=p.demo||''; document.getElementById('fXmlUrl').value=p.xmlUrl||''; document.getElementById('fTrending').checked=!!p.trending; document.getElementById('fPopular').checked=!!p.popular; document.getElementById('fThumbData').value=p.thumb||''; document.getElementById('thumbPreview').innerHTML=p.thumb?'<img src="'+p.thumb+'" style="width:100%;height:100%;object-fit:cover"/>':'🎬'; document.getElementById('fThumb').value=''; document.getElementById('presetModal').classList.add('show'); }
     function closeModal() { document.getElementById('presetModal').classList.remove('show'); }
     function openLinkModal(id) { const p=presets.find(x=>x.id===id); if(!p) return; document.getElementById('linkEditId').value=id; document.getElementById('linkModalName').textContent=p.id+' · '+p.name; document.getElementById('fLinkOnly').value=p.link||''; document.getElementById('linkModal').classList.add('show'); setTimeout(()=>document.getElementById('fLinkOnly').focus(),50); }
     function closeLinkModal() { document.getElementById('linkModal').classList.remove('show'); }
@@ -742,7 +777,7 @@
       const demoVal=document.getElementById('fDemo').value.trim(); if(demoVal&&!isTikTok(demoVal)){ toast('Link TikTok tidak valid','err'); return; }
       const xmlUrl=document.getElementById('fXmlUrl').value.trim(); if(xmlUrl&&!/^https?:\/\//i.test(xmlUrl)){ toast('Link XML tidak valid','err'); return; }
       const editId=document.getElementById('editId').value;
-      const data={name,creator,description:document.getElementById('fDesc').value.trim(),link:linkVal,demo:demoVal,xmlUrl,trending:document.getElementById('fTrending').checked,popular:document.getElementById('fPopular').checked};
+      const data={name,creator,description:document.getElementById('fDesc').value.trim(),link:linkVal,demo:demoVal,xmlUrl,trending:document.getElementById('fTrending').checked,popular:document.getElementById('fPopular').checked,thumb:document.getElementById('fThumbData').value};
       if(editId){ const idx=presets.findIndex(x=>x.id===editId); if(idx>=0) presets[idx]={...presets[idx],...data}; toast('Diperbarui','ok'); }
       else { data.id=nextId(); data.date=new Date().toISOString().slice(0,10); presets.unshift(data); toast('Upload: '+data.id,'ok'); }
       saveData(); closeModal(); renderAdminTable();
