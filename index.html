@@ -408,6 +408,7 @@
           <div style="display:flex;gap:8px;align-items:center">
             <button class="btn btn-outline" id="modeToggleBtn" onclick="toggleSiteMode()" style="font-size:12px;padding:0 12px">Public</button>
             <button class="btn btn-primary" onclick="openAddModal()">+ Upload</button>
+            <button class="btn btn-outline" onclick="downloadPresetsJson()" style="font-size:12px">Download JSON</button>
             <button class="btn btn-outline" onclick="adminLogout()">Logout</button>
           </div>
         </div>
@@ -491,8 +492,20 @@
     function lsGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
     function lsSet(k, v) { try { localStorage.setItem(k, v); } catch {} }
     function lsDel(k) { try { localStorage.removeItem(k); } catch {} }
-    function loadData() {
-      try { presets = JSON.parse(lsGet(LOCAL_KEY) || '[]'); } catch { presets = []; }
+    async function loadData() {
+      // Load shared presets so everyone sees the same data
+      try {
+        const res = await fetch('/presets.json?t=' + Date.now());
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length) presets = data;
+        }
+      } catch (e) { console.warn('presets.json', e); }
+      // Fallback / admin local override
+      try {
+        const local = JSON.parse(lsGet(LOCAL_KEY) || '[]');
+        if (local.length && !presets.length) presets = local;
+      } catch {}
       try { favorites = JSON.parse(lsGet(FAV_KEY) || '[]'); } catch { favorites = []; }
       isAdmin = lsGet(ADMIN_KEY) === '1';
       siteMode = lsGet(MODE_KEY) || 'public';
@@ -635,6 +648,14 @@
       updateModeButton();
       toast(siteMode === 'private' ? 'Mode Private aktif' : 'Mode Public aktif', 'ok');
     }
+    function downloadPresetsJson() {
+      const blob = new Blob([JSON.stringify(presets, null, 2)], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'presets.json';
+      a.click();
+      toast('presets.json diunduh — upload ke GitHub agar semua orang bisa lihat', 'ok');
+    }
     function adminLogin() { if(document.getElementById('adminPass').value===ADMIN_PASS){ isAdmin=true; lsSet(ADMIN_KEY,'1'); showAdminPanel(); toast('Login OK','ok'); } else toast('Password salah','err'); }
     function adminLogout() { isAdmin=false; lsDel(ADMIN_KEY); showAdminLogin(); toast('Logout','ok'); }
     function askDelete(id) { clearTimeout(delTimer); if(delArm===id){ delArm=null; deletePreset(id); return; } delArm=id; renderAdminTable(); delTimer=setTimeout(()=>{delArm=null;renderAdminTable();},3000); }
@@ -690,7 +711,7 @@
       lastTouchEnd = now;
     }, { passive: false });
 
-    loadData();
+    loadData().then(() => { parseRoute(); });
     window.addEventListener('hashchange', parseRoute);
     parseRoute();
   </script>
