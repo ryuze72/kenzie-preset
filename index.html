@@ -511,7 +511,22 @@
       siteMode = lsGet(MODE_KEY) || 'public';
       loaded = true;
     }
-    function saveData() { lsSet(LOCAL_KEY, JSON.stringify(presets)); }
+    function saveData() { 
+      lsSet(LOCAL_KEY, JSON.stringify(presets)); 
+      publishPresets();
+    }
+    async function publishPresets() {
+      try {
+        const r = await fetch('/api/presets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: ADMIN_PASS, presets })
+        });
+        const j = await r.json().catch(()=>({}));
+        if (r.ok) toast('Tersimpan ke presets.json', 'ok');
+        else console.warn('publish', j);
+      } catch (e) { console.warn('publish', e); }
+    }
     function saveFavs() { lsSet(FAV_KEY, JSON.stringify(favorites)); }
     function nextId() {
       const n = presets.map(p => parseInt((p.id||'').replace('RYZ-',''),10)||0);
