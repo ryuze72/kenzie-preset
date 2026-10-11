@@ -6,6 +6,7 @@
 <script src="/gate.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>AM Premium</title>
+<!-- fix-redeploy-2026-10-12 -->
 <style>
 :root{color-scheme:dark;--ink:#f7f8ff;--muted:#9ba8c4;--blue:#6eb5ff;--green:#64e6b0;--red:#ff7188;--line:rgba(255,255,255,.13)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -37,7 +38,6 @@ input:focus,textarea:focus{border-color:#8dbdff;box-shadow:0 0 0 3px #6ea8ff20}t
 @media(min-width:700px){.panel{max-width:620px;margin:0 auto}.header{padding-left:max(18px,calc((100vw - 900px)/2));padding-right:max(18px,calc((100vw - 900px)/2))}.stats,.desc{max-width:660px;margin-left:auto;margin-right:auto}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
 
-/* Effect levels synced with kenzie-preset */
 body.fx-low { --blur: 14px; }
 body.fx-med { --blur: 22px; }
 body.fx-med .card, body.fx-med .header { box-shadow: 0 0 0 1px rgba(255,255,255,.1), 0 8px 32px rgba(100,150,255,.15); }
@@ -67,7 +67,6 @@ body.fx-hard .tab.active { animation: glow 1.8s ease-in-out infinite alternate; 
   <span><span class="dot green"></span> <b id="verified">0</b> verified</span>
 </div>
 
-<!-- AM Premium Panel -->
 <div class="panel active" id="panel-am">
   <p class="desc">Masukkan email, kirim magic link, lalu verifikasi dari link yang kamu terima.</p>
   <div class="card">
@@ -87,7 +86,6 @@ body.fx-hard .tab.active { animation: glow 1.8s ease-in-out infinite alternate; 
   </div>
 </div>
 
-<!-- Temp Mail Panel -->
 <div class="panel" id="panel-mail">
   <p class="desc">Email sementara untuk menerima magic link.</p>
   <div class="card">
@@ -104,7 +102,6 @@ body.fx-hard .tab.active { animation: glow 1.8s ease-in-out infinite alternate; 
   </div>
 </div>
 
-<!-- Saved Panel -->
 <div class="panel" id="panel-saved">
   <p class="desc">Email yang tersimpan.</p>
   <div class="card">
@@ -113,7 +110,6 @@ body.fx-hard .tab.active { animation: glow 1.8s ease-in-out infinite alternate; 
   </div>
 </div>
 
-<!-- Guide Panel -->
 <div class="panel" id="panel-guide">
   <p class="desc">Cara pakai.</p>
   <div class="card">
@@ -130,17 +126,15 @@ body.fx-hard .tab.active { animation: glow 1.8s ease-in-out infinite alternate; 
 </div>
 
 <script>
-// Sync effect with kenzie-preset
 (function() {
   const fx = localStorage.getItem('kenzie_fx') || 'low';
   document.body.classList.add('fx-' + fx);
 })();
 
-const API = 'https://amprem.ran.my.id/api';   // POST /send {email}, POST /verify {email, link}
-const API_PROXY = '/api/amprem';              // cadangan lewat Vercel bila diblokir CORS
+const API = 'https://amprem.ran.my.id/api';
+const API_PROXY = '/api/amprem';
 async function amCall(path, body) {
   const opts = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
-  // Prefer Vercel proxy (correct query: action=send|verify), fallback to external
   let r, text;
   try {
     r = await fetch(API_PROXY + '?action=' + encodeURIComponent(path), opts);
@@ -157,7 +151,6 @@ async function amCall(path, body) {
   try { d = JSON.parse(text); } catch { d = { ok: false, message: (text || '').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0, 160) || ('HTTP ' + r.status) }; }
   if (!d || typeof d !== 'object') d = { ok: false, message: String(d) };
   if (d.ok === undefined) d.ok = !!(r.ok && d.error == null && d.success !== false);
-  // Never leave message/error as object (prevents [object Object] in UI)
   for (const k of ['message', 'error', 'msg']) {
     if (d[k] != null && typeof d[k] === 'object') {
       try { d[k] = JSON.stringify(d[k]).slice(0, 300); } catch { d[k] = String(d[k]); }
@@ -196,7 +189,6 @@ function apiErr(d) {
   return toMsg(d && (d.message || d.error || d.msg)) || 'Gagal';
 }
 
-// AM Premium
 async function sendLink() {
   const email = document.getElementById('email').value.trim();
   if (!email || !email.includes('@')) { showMsg('msg', 'Email tidak valid', 'err'); return; }
@@ -231,7 +223,6 @@ async function verifyLink() {
   btn.disabled = false; btn.textContent = 'Verify account →';
 }
 
-// Temp Mail
 async function generateEmail() {
   showMsg('mailMsg', 'Membuat email...', '');
   try {
@@ -246,19 +237,17 @@ async function generateEmail() {
     const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
     saved.unshift({email: tempAddress, time: new Date().toISOString()});
     localStorage.setItem('savedEmails', JSON.stringify(saved.slice(0, 20)));
-    
+    renderSaved();
+    if (window._inboxTimer) clearInterval(window._inboxTimer);
+    window._inboxTimer = setInterval(checkInbox, 5000);
+    checkInbox();
+  } catch(e) { showMsg('mailMsg', 'Gagal: ' + e.message, 'err'); }
+}
 function deleteSavedEmail(index) {
   const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
   saved.splice(index, 1);
   localStorage.setItem('savedEmails', JSON.stringify(saved));
   renderSaved();
-}
-renderSaved();
-    // Auto check inbox every 5 seconds
-    if (window._inboxTimer) clearInterval(window._inboxTimer);
-    window._inboxTimer = setInterval(checkInbox, 5000);
-    checkInbox();
-  } catch(e) { showMsg('mailMsg', 'Gagal: ' + e.message, 'err'); }
 }
 function copyTempEmail() {
   const email = document.getElementById('tempEmail').textContent;
@@ -271,7 +260,7 @@ async function checkInbox() {
   try {
     const r = await fetch(MAIL_API + '?action=inbox&email=' + encodeURIComponent(tempAddress));
     const data = await r.json();
-    console.log('Inbox response:', data); const list = data.messages || data.inbox || data.emails || [];
+    const list = data.messages || data.inbox || data.emails || [];
     const el = document.getElementById('mailList');
     if (!list.length) { 
       el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:12px">Inbox kosong. Kirim email ke ' + (tempAddress || '') + '</p>'; 
@@ -280,10 +269,9 @@ async function checkInbox() {
     el.innerHTML = list.map((m, i) => {
       const subj = (m.subject || '').toLowerCase();
       const isAlight = subj.includes('alight') || subj.includes('sign in') || subj.includes('login') || subj.includes('verify');
-      return `<div class="mail-item" onclick="readMail(${i})" style="${isAlight?'border:1px solid #3b82f6':''}"><div class="mail-from">${m.from || m.sender || '-'}</div><div class="mail-subj">${m.subject || '(no subject)'}</div><div class="mail-time">${m.date || m.time || ''}</div></div>`;
+      return '<div class="mail-item" onclick="readMail(' + i + ')" style="' + (isAlight?'border:1px solid #3b82f6':'') + '"><div class="mail-from">' + (m.from || m.sender || '-') + '</div><div class="mail-subj">' + (m.subject || '(no subject)') + '</div><div class="mail-time">' + (m.date || m.time || '') + '</div></div>';
     }).join('');
     window._mailCache = list;
-    // Auto detect and paste Alight Creative sign-in link
     for (const m of list) {
       const fullText = (m.body || m.text || m.content || m.html || '') + ' ' + JSON.stringify(m);
       const text = fullText.toLowerCase();
@@ -294,7 +282,7 @@ async function checkInbox() {
         if (alightLink && !document.getElementById('link').value) {
           document.getElementById('link').value = alightLink;
           document.getElementById('email').value = tempAddress;
-          showPanel('am',this);
+          showPanel('am');
           showMsg('msg', 'Link Alight Creative otomatis ditempel! Klik Verify.', 'ok');
           if (window._inboxTimer) clearInterval(window._inboxTimer);
           break;
