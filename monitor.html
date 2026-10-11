@@ -2,6 +2,8 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
+<style>html:not(.gate-ok) body>*:not(#kgate){display:none!important}html:not(.gate-ok){background:#000}</style>
+<script src="/gate.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>KENZIE Monitor</title>
@@ -84,8 +86,8 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}a{colo
 const DB='https://kenzie-preset-default-rtdb.firebaseio.com', SITE='https://kenzie-preset.vercel.app';
 const TABS=[['ov','Ringkasan'],['act','Aktivitas'],['pre','Preset'],['ord','Pesanan'],['sys','Halaman']];
 const RANGES=[['1','Hari ini'],['7','7 hari'],['0','Semua']];
-const PAGES={home:'Beranda',search:'Cari',favorites:'Favorit',music:'Musik',admin:'Admin',premium:'Premium',detail:'Detail preset'};
-const ST={pending:['Menunggu bayar','wait'],review:['Perlu dicek','info'],paid:['Dibayar','info'],done:['Selesai','ok'],cancel:['Dibatalkan','bad']};
+const PAGES={home:'Beranda',search:'Cari',favorites:'Favorit',music:'Musik',admin:'Admin',premium:'Premium',contact:'Hubungi penjual',detail:'Detail preset'};
+const ST={pending:['Menunggu pembayaran','wait'],review:['Menunggu verifikasi','info'],paid:['Uang sudah masuk','info'],done:['AM Prem sudah dikirim','ok'],cancel:['Ditolak','bad']};
 const LINKS=[['Web utama',SITE+'/','M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z'],['Buat AM Premium',SITE+'/amprem.html','M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z'],['Konfirmasi pesanan',SITE+'/confirm.html','M5 12.5l4.5 4.5L19 7.5'],['Monitor (halaman ini)',SITE+'/monitor.html','M3 12h4l3-8 4 16 3-8h4']];
 const IC={visit:'<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',nav:'<path d="M5 12h14M13 6l6 6-6 6"/>',admin:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="m9 12 2 2 4-4"/>',out:'<path d="M9 21H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h4M16 17l5-5-5-5M21 12H9"/>',music:'<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',order:'<path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/>'};
 let tab='ov',range='7',actF='all',logs=[],stats={},orders={},buyers={},presets={},st={};
