@@ -3,8 +3,8 @@
 // POST /api/amprem?path=verify { email, link }
 // GET  /api/amprem?path=status
 
-const SEND_BASE = 'https://amrpem-ran.vercel.app/api/';
-const VERIFY_BASE = 'https://amprem-ran.vercel.app/api/';
+const SEND_BASE = 'https://amrpem-ran.vercel.app/api/send';
+const VERIFY_BASE = 'https://amprem-ran.vercel.app/api/verify';
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
