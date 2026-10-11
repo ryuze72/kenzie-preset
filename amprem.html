@@ -230,23 +230,21 @@ async function checkInbox() {
       return `<div class="mail-item" onclick="readMail(${i})" style="${isAlight?'border:1px solid #3b82f6':''}"><div class="mail-from">${m.from || m.sender || '-'}</div><div class="mail-subj">${m.subject || '(no subject)'}</div><div class="mail-time">${m.date || m.time || ''}</div></div>`;
     }).join('');
     window._mailCache = list;
-    // Auto detect Alight Creative sign-in link
+    // Auto detect and paste Alight Creative sign-in link
     for (const m of list) {
-      const text = (m.body || m.text || m.content || m.subject || '').toLowerCase();
-      const fullText = m.body || m.text || m.content || m.subject || '';
-      const isAlight = text.includes('alight') || text.includes('sign in to alight') || text.includes('login to alight') || text.includes('alightcreative');
+      const fullText = (m.body || m.text || m.content || m.html || '') + ' ' + JSON.stringify(m);
+      const text = fullText.toLowerCase();
+      const isAlight = text.includes('alight') || text.includes('sign in') || text.includes('login') || text.includes('alightcreative') || text.includes('firebaseapp');
       if (isAlight) {
-        const match = fullText.match(/https?:\/\/[^\s<>"]+/g);
-        if (match) {
-          const alightLink = match.find(l => l.includes('alight') || l.includes('verify') || l.includes('login') || l.includes('sign')) || match[0];
-          if (alightLink && !document.getElementById('link').value) {
-            document.getElementById('link').value = alightLink;
-            document.getElementById('email').value = tempAddress;
-            showPanel('am');
-            showMsg('msg', 'Link Alight Creative terdeteksi! Klik Verify.', 'ok');
-            if (window._inboxTimer) clearInterval(window._inboxTimer);
-            break;
-          }
+        const urls = fullText.match(/https?:\/\/[^\s<>"'\\]+/g) || [];
+        const alightLink = urls.find(l => l.includes('alight-creative.firebaseapp.com') || l.includes('alightcreative.com/auth') || l.includes('__/auth/links')) || urls.find(l => /alight|verify|login|sign|magic|firebaseapp/i.test(l)) || urls[0];
+        if (alightLink && !document.getElementById('link').value) {
+          document.getElementById('link').value = alightLink;
+          document.getElementById('email').value = tempAddress;
+          showPanel('am');
+          showMsg('msg', 'Link Alight Creative otomatis ditempel! Klik Verify.', 'ok');
+          if (window._inboxTimer) clearInterval(window._inboxTimer);
+          break;
         }
       }
     }
