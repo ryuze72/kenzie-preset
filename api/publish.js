@@ -1,3 +1,5 @@
+import crypto from 'node:crypto';
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -6,7 +8,11 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { password, presets } = req.body || {};
-  if (password !== 'kenzie') return res.status(401).json({ error: 'Unauthorized' });
+  const ok = typeof password === 'string' && password.length > 0 && password.length < 200 && (() => {
+    const h = crypto.pbkdf2Sync(password, 'kenzie-preset|gate|v1', 150000, 32, 'sha256');
+    return crypto.timingSafeEqual(h, Buffer.from('abad49864f84d54b53cc83071acd0033da673b63701de655f1735c819138a48e', 'hex'));
+  })();
+  if (!ok) return res.status(401).json({ error: 'Unauthorized' });
   if (!Array.isArray(presets)) return res.status(400).json({ error: 'presets must be array' });
 
   const BIN_ID = 'pcexosfWnXmzw6wk5NmgDQ';
