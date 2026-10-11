@@ -47,6 +47,14 @@ input:focus, textarea:focus { border-color:var(--blue); }
 .panel.active { display:block; }
 .email-box { background:rgba(0,0,0,.3); border-radius:12px; padding:14px; font-family:monospace; font-size:14px; word-break:break-all; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; }
 .copy-btn { background:var(--blue); border:none; color:#fff; padding:6px 12px; border-radius:8px; font-size:12px; cursor:pointer; }
+
+.email-view { background:rgba(0,0,0,.3); border-radius:12px; padding:14px; margin-top:10px; display:none; }
+.email-view.show { display:block; }
+.email-view .ev-from { font-size:12px; color:var(--blue); margin-bottom:4px; }
+.email-view .ev-subj { font-size:15px; font-weight:700; margin-bottom:8px; }
+.email-view .ev-body { font-size:13px; line-height:1.6; color:var(--ink); }
+.email-view .ev-body a { color:#60a5fa; text-decoration:underline; word-break:break-all; }
+.copy-link-btn { background:var(--blue); border:none; color:#fff; padding:8px 14px; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; margin-top:10px; }
 </style>
 </head>
 <body>
@@ -96,7 +104,7 @@ input:focus, textarea:focus { border-color:var(--blue); }
     </div>
     <button class="btn btn-send" onclick="generateEmail()">Generate Email</button>
     <button class="btn btn-copy" onclick="checkInbox()">Refresh Inbox</button>
-    <div class="mail-list" id="mailList"></div>
+    <div class="mail-list" id="mailList"></div><div class="email-view" id="emailView"></div>
     <div class="msg" id="mailMsg"></div>
   </div>
 </div>
@@ -247,14 +255,25 @@ async function checkInbox() {
 function readMail(idx) {
   const m = window._mailCache && window._mailCache[idx];
   if (!m) return;
-  const text = m.body || m.text || m.content || m.subject || 'Tidak ada isi';
-  alert(text);
-  const match = text.match(/https?:\/\/[^\s<>"]+/);
-  if (match) {
-    document.getElementById('link').value = match[0];
-    showPanel('am');
-    showMsg('msg', 'Link ditempel!', 'ok');
+  const text = m.body || m.text || m.content || '';
+  const subj = m.subject || '(no subject)';
+  const from = m.from || m.sender || '-';
+  // Convert URLs to blue clickable links
+  const linked = text.replace(/(https?:\/\/[^\s<>"]+)/g, '<a href="$1" target="_blank">$1</a>');
+  // Also make "Sign in to Alight Creative" style text a link if we find a URL
+  const urls = text.match(/https?:\/\/[^\s<>"]+/g) || [];
+  const alightUrl = urls.find(u => u.includes('alight') || u.includes('verify') || u.includes('login') || u.includes('sign')) || urls[0];
+  const view = document.getElementById('emailView');
+  view.innerHTML = '<div class="ev-from">Dari: ' + from + '</div><div class="ev-subj">' + subj + '</div><div class="ev-body">' + linked.replace(/\n/g, '<br>') + '</div>' + (alightUrl ? '<button class="copy-link-btn" onclick="copyAlightLink(\'' + alightUrl.replace(/'/g, "\\'") + '\')">Salin Link Alight</button>' : '');
+  view.classList.add('show');
+  if (alightUrl) {
+    document.getElementById('link').value = alightUrl;
+    document.getElementById('email').value = tempAddress || '';
   }
+}
+function copyAlightLink(url) {
+  navigator.clipboard.writeText(url).then(() => showMsg('mailMsg', 'Link disalin!', 'ok'));
+  document.getElementById('link').value = url;
 }
 function renderSaved() {
   const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
