@@ -599,6 +599,17 @@
       animation: pageIn .45s var(--ease);
     }
     @media (min-width: 700px) { .mini-player.docked { max-width: none; bottom: auto; } }
+
+    /* parked: player disembunyikan di halaman lain tapi tetap hidup */
+    .mini-player.parked {
+      position: fixed; top: 0; left: 12px; right: 12px; bottom: auto; margin: 0 auto; z-index: -1;
+      visibility: hidden; opacity: 0; pointer-events: none; animation: none;
+    }
+    /* titik hijau di menu Musik saat ada lagu yang masih main di latar */
+    body.mx-parked .nav-item[data-page="music"]::after {
+      content: ""; position: absolute; top: 9px; left: calc(50% + 7px); width: 9px; height: 9px; border-radius: 50%;
+      background: var(--green); border: 1.5px solid var(--sheet); animation: ping 2.4s ease-out infinite;
+    }
 </style>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -1438,9 +1449,13 @@
     function mxLayout() {
       const mp = mxEl('miniPlayer'), slot = mxEl('mpSlot'), xb = mxEl('mpClose'), t = mx.tracks[mx.i];
       if (!mp || !slot) return;
+      // dock = player ditaruh di bawah pencarian. Di halaman lain: "parked" (disembunyikan, TIDAK dihentikan)
       const docked = !!t && mx.dock && currentPage === 'music';
+      const parked = !!t && mx.dock && currentPage !== 'music';
       mp.classList.toggle('docked', docked);
-      document.body.classList.toggle('has-player', !!t && !docked);
+      mp.classList.toggle('parked', parked);
+      document.body.classList.toggle('has-player', !!t && !docked && !parked);
+      document.body.classList.toggle('mx-parked', parked);
       if (xb) { const lbl = docked ? 'Tutup player' : (currentPage === 'music' ? 'Taruh di bawah pencarian' : 'Tutup player'); xb.title = lbl; xb.setAttribute('aria-label', lbl); }
       if (!docked) { mp.style.top = mp.style.left = mp.style.width = ''; slot.style.height = '0px'; return; }
       let y = 0, x = 0, e = slot;
