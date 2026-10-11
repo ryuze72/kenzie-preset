@@ -591,6 +591,14 @@
       body.has-player .app { padding-bottom: 120px; }
       body.has-player .toasts { bottom: 120px; }
     }
+
+    /* player menempel di bawah kolom pencarian (mode docked) */
+    .mp-slot { height: 0; transition: height .3s var(--ease); }
+    .mini-player.docked {
+      position: absolute; z-index: 5; right: auto; bottom: auto; margin: 0; max-width: none;
+      animation: pageIn .45s var(--ease);
+    }
+    @media (min-width: 700px) { .mini-player.docked { max-width: none; bottom: auto; } }
 </style>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -661,6 +669,7 @@
           </div>
           <button type="submit" class="btn btn-primary" id="musicGo">Cari</button>
         </form>
+        <div class="mp-slot" id="mpSlot"></div>
         <div class="music-status" id="musicStatus">Ketik judul lagu atau nama artis, lalu tekan Cari.</div>
         <pre class="music-raw" id="musicRaw" hidden></pre>
         <div class="music-list" id="musicList"></div>
@@ -722,7 +731,7 @@
       <button class="mp-btn mp-prev" type="button" onclick="musicStep(-1)" aria-label="Sebelumnya"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2.5v14H6zM20 5.6v12.8a.8.8 0 0 1-1.2.7L9.6 12.7a.8.8 0 0 1 0-1.4l9.2-6.4a.8.8 0 0 1 1.2.7z"/></svg></button>
       <button class="mp-btn mp-main" type="button" onclick="musicToggle()" aria-label="Putar atau jeda"><span class="ic-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg></span><span class="ic-pause"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4.5" height="14" rx="1.4"/><rect x="13.5" y="5" width="4.5" height="14" rx="1.4"/></svg></span></button>
       <button class="mp-btn" type="button" onclick="musicStep(1)" aria-label="Berikutnya"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 5H18v14h-2.5zM4 5.6v12.8a.8.8 0 0 0 1.2.7l9.2-6.4a.8.8 0 0 0 0-1.4L5.2 4.9A.8.8 0 0 0 4 5.6z"/></svg></button>
-      <button class="mp-btn mp-x" type="button" onclick="musicClose()" aria-label="Tutup">✕</button>
+      <button class="mp-btn mp-x" type="button" id="mpClose" onclick="musicX()" aria-label="Taruh di bawah pencarian" title="Taruh di bawah pencarian">✕</button>
     </div>
     <div class="mp-embed" id="mpEmbed"></div>
   </div>
@@ -952,7 +961,7 @@
         toast('Mode Private — masukkan password admin', 'err');
         return;
       }
-      window.scrollTo(0,0); currentPage = page;
+      window.scrollTo(0,0); currentPage = page; setTimeout(mxLayout, 0);
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
       if (page === 'home') {
@@ -1242,7 +1251,7 @@
     // ===== Musik: cari lagu & putar di web =====
     // API: POST https://api.jhx.my.id/sp-search {"q": "..."}  (cadangan: proxy /api/sp-search di Vercel bila terblokir CORS)
     const MX_API = 'https://api.jhx.my.id/sp-search', MX_PROXY = '/api/sp-search';
-    const mx = { tracks: [], i: -1, raw: null, ctl: null, playing: false };
+    const mx = { tracks: [], i: -1, raw: null, ctl: null, playing: false, dock: false };
     const mxEl = id => document.getElementById(id);
     const IC_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>';
     const IC_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4.5" height="14" rx="1.4"/><rect x="13.5" y="5" width="4.5" height="14" rx="1.4"/></svg>';
@@ -1416,7 +1425,28 @@
     function musicClose() {
       const a = mxEl('musicAudio');
       a.pause(); a.removeAttribute('src'); a.load();
-      mx.i = -1; mx.playing = false; mxEmbed(null); mxPaint();
+      mx.i = -1; mx.playing = false; mx.dock = false; mxEmbed(null); mxPaint();
+    }
+    // ✕ di halaman Musik: turunkan player ke bawah kolom pencarian (musik tetap jalan). ✕ lagi / di halaman lain: tutup.
+    function musicX() {
+      if (currentPage === 'music' && !mx.dock) {
+        mx.dock = true; mxLayout();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else musicClose();
+    }
+    // posisikan player: mengambang di bawah layar, atau menempel tepat di bawah pencarian (tanpa memindah elemen, agar embed Spotify tidak ke-reload)
+    function mxLayout() {
+      const mp = mxEl('miniPlayer'), slot = mxEl('mpSlot'), xb = mxEl('mpClose'), t = mx.tracks[mx.i];
+      if (!mp || !slot) return;
+      const docked = !!t && mx.dock && currentPage === 'music';
+      mp.classList.toggle('docked', docked);
+      document.body.classList.toggle('has-player', !!t && !docked);
+      if (xb) { const lbl = docked ? 'Tutup player' : (currentPage === 'music' ? 'Taruh di bawah pencarian' : 'Tutup player'); xb.title = lbl; xb.setAttribute('aria-label', lbl); }
+      if (!docked) { mp.style.top = mp.style.left = mp.style.width = ''; slot.style.height = '0px'; return; }
+      let y = 0, x = 0, e = slot;
+      while (e) { y += e.offsetTop; x += e.offsetLeft; e = e.offsetParent; }
+      mp.style.top = y + 'px'; mp.style.left = x + 'px'; mp.style.width = slot.offsetWidth + 'px';
+      slot.style.height = (mp.offsetHeight + 12) + 'px';
     }
     function mxPaint() {
       document.querySelectorAll('#musicList .track[data-i]').forEach(el => {
@@ -1424,15 +1454,17 @@
         el.classList.toggle('active', on); el.classList.toggle('playing', on && mx.playing);
       });
       const t = mx.tracks[mx.i], mp = mxEl('miniPlayer');
-      document.body.classList.toggle('has-player', !!t);
-      if (!t) { mp.hidden = true; return; }
+      if (!t) { mp.hidden = true; mxLayout(); return; }
       mp.hidden = false;
       mp.classList.toggle('is-embed', !t.audio); mp.classList.toggle('playing', mx.playing);
       mxEl('mpTitle').textContent = t.title; mxEl('mpSub').textContent = t.artist || '—';
       const c = mxEl('mpCover');
       if (t.cover) { c.src = t.cover; c.style.visibility = 'visible'; } else { c.removeAttribute('src'); c.style.visibility = 'hidden'; }
+      mxLayout();
     }
     function musicOpen() { const inp = mxEl('musicInput'); if (!mx.tracks.length && inp) setTimeout(() => inp.focus(), 120); }
+    window.addEventListener('resize', () => mxLayout());
+    if ('ResizeObserver' in window) { const ro = new ResizeObserver(() => mxLayout()); ro.observe(mxEl('musicPage')); ro.observe(mxEl('miniPlayer')); }
     (function () {
       const a = mxEl('musicAudio');
       a.addEventListener('play', () => { mx.playing = true; mxPaint(); });
