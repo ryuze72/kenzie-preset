@@ -172,8 +172,8 @@ function render() {
       '<div class="proof" id="pf-' + esc(o.id) + '">' + (p ? proofHtml(p) : '<button class="proof-btn" data-proof="' + esc(o.id) + '">Lihat bukti pembayaran</button>') + '</div>' +
       '<div class="acts">' +
         '<button class="act" data-set="paid" data-id="' + esc(o.id) + '">Dibayar</button>' +
-        '<button class="act go" data-set="done" data-id="' + esc(o.id) + '">Konfirmasi</button>' +
-        '<button class="act" data-set="cancel" data-id="' + esc(o.id) + '">Tolak</button>' +
+        '<button class="act go" data-set="done" data-id="' + esc(o.id) + '">Uang masuk & AM Prem dikirim</button>' +
+        '<button class="act" data-set="cancel" data-id="' + esc(o.id) + '">Ditolak, cek WA</button>' +
         '</div></article>';
   }).join('');
 }
