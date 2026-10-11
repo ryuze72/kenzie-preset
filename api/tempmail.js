@@ -3,20 +3,17 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
   
-  const { action, token } = req.query;
+  const { action, email } = req.query;
+  const APIKEY = '_mvCAp4042xedZVW';
+  const BASE = 'https://api.jerexd.my.id/api/tools/tempmail';
   
   try {
-    if (action === 'gen') {
-      const r = await fetch('https://api.tempmail.lol/generate');
-      const data = await r.json();
-      res.json({ email: data.address, token: data.token });
-    } else if (action === 'inbox' && token) {
-      const r = await fetch('https://api.tempmail.lol/auth/' + token);
-      const data = await r.json();
-      res.json(data.email || []);
-    } else {
-      res.status(400).json({ error: 'Invalid action' });
-    }
+    let url = `${BASE}?apikey=${APIKEY}&action=${action || 'create'}`;
+    if (action === 'inbox' && email) url += `&email=${encodeURIComponent(email)}`;
+    
+    const r = await fetch(url);
+    const data = await r.json();
+    res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
