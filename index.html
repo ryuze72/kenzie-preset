@@ -1372,7 +1372,7 @@
       input.blur();
       if (mx.ctl) mx.ctl.abort();
       mx.ctl = new AbortController();
-      const timer = setTimeout(() => mx.ctl && mx.ctl.abort(), 25000);
+      const timer = setTimeout(() => mx.ctl && mx.ctl.abort(), 45000);
       mxShowRaw(false); mxSetStatus('Mencari "' + q + '"…'); mxSkeleton();
       mxEl('musicGo').disabled = true;
       try {
@@ -1389,7 +1389,7 @@
         mx.raw = e.raw !== undefined ? e.raw : String(e && e.message || e);
         mxEl('musicList').innerHTML = '';
         const aborted = e && e.name === 'AbortError';
-        mxSetStatus(aborted ? 'Pencarian terlalu lama / dibatalkan. Coba lagi.' : ('Gagal mencari: ' + ((e && e.message) || 'tidak bisa terhubung') + ' '), 'err');
+        mxSetStatus(aborted ? 'Server musik lambat. Coba lagi atau gunakan kata kunci lain.' : ('Gagal mencari: ' + ((e && e.message) || 'tidak bisa terhubung') + ' '), 'err');
       } finally { clearTimeout(timer); mxEl('musicGo').disabled = false; }
       return false;
     }
