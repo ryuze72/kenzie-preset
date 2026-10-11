@@ -215,18 +215,31 @@ async function checkInbox() {
     const data = await r.json();
     const list = data.messages || data.inbox || data.emails || [];
     const el = document.getElementById('mailList');
-    if (!list.length) { el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:12px">Menunggu email...</p>'; return; }
-    el.innerHTML = list.map((m, i) => `<div class="mail-item" onclick="readMail(${i})"><div class="mail-from">${m.from || m.sender || '-'}</div><div class="mail-subj">${m.subject || '(no subject)'}</div><div class="mail-time">${m.date || m.time || ''}</div></div>`).join('');
+    if (!list.length) { el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:12px">Menunggu email Alight Creative...</p>'; return; }
+    el.innerHTML = list.map((m, i) => {
+      const subj = (m.subject || '').toLowerCase();
+      const isAlight = subj.includes('alight') || subj.includes('sign in') || subj.includes('login') || subj.includes('verify');
+      return `<div class="mail-item" onclick="readMail(${i})" style="${isAlight?'border:1px solid #3b82f6':''}"><div class="mail-from">${m.from || m.sender || '-'}</div><div class="mail-subj">${m.subject || '(no subject)'}</div><div class="mail-time">${m.date || m.time || ''}</div></div>`;
+    }).join('');
     window._mailCache = list;
-    // Auto extract link if found
+    // Auto detect Alight Creative sign-in link
     for (const m of list) {
-      const text = m.body || m.text || m.content || m.subject || '';
-      const match = text.match(/https?:\/\/[^\s<>"]+/);
-      if (match && !document.getElementById('link').value) {
-        document.getElementById('link').value = match[0];
-        showPanel('am');
-        showMsg('msg', 'Link terdeteksi otomatis!', 'ok');
-        break;
+      const text = (m.body || m.text || m.content || m.subject || '').toLowerCase();
+      const fullText = m.body || m.text || m.content || m.subject || '';
+      const isAlight = text.includes('alight') || text.includes('sign in to alight') || text.includes('login to alight') || text.includes('alightcreative');
+      if (isAlight) {
+        const match = fullText.match(/https?:\/\/[^\s<>"]+/g);
+        if (match) {
+          const alightLink = match.find(l => l.includes('alight') || l.includes('verify') || l.includes('login') || l.includes('sign')) || match[0];
+          if (alightLink && !document.getElementById('link').value) {
+            document.getElementById('link').value = alightLink;
+            document.getElementById('email').value = tempAddress;
+            showPanel('am');
+            showMsg('msg', 'Link Alight Creative terdeteksi! Klik Verify.', 'ok');
+            if (window._inboxTimer) clearInterval(window._inboxTimer);
+            break;
+          }
+        }
       }
     }
   } catch(e) { console.warn(e); }
