@@ -136,7 +136,17 @@ body.fx-hard .tab.active { animation: glow 1.8s ease-in-out infinite alternate; 
   document.body.classList.add('fx-' + fx);
 })();
 
-const API = 'https://v2.api-varhad.my.id/tools/amprem/verif';
+const API = 'https://amprem.ran.my.id/api';   // POST /send {email}, POST /verify {email, link}
+const API_PROXY = '/api/amprem';              // cadangan lewat Vercel bila diblokir CORS
+async function amCall(path, body) {
+  const opts = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+  let r;
+  try { r = await fetch(API + '/' + path, opts); }
+  catch (e) { r = await fetch(API_PROXY + '?path=' + path, opts); }
+  const text = await r.text(); let d; try { d = JSON.parse(text); } catch { d = { ok: false, message: text.slice(0, 160) || 'HTTP ' + r.status }; }
+  if (!r.ok && d.ok !== true) d.ok = false;
+  return d;
+}
 const MAIL_API = '/api/tempmail';
 let visitors = 0, verified = 0;
 let tempToken = null, tempAddress = null;
@@ -160,13 +170,12 @@ async function sendLink() {
   const btn = document.getElementById('btnSend');
   btn.disabled = true; btn.textContent = 'Mengirim...';
   try {
-    const r = await fetch(API + '/email?email=' + encodeURIComponent(email));
-    const d = await r.json();
-    if (d.status && d.result?.success) {
-      showMsg('msg', d.result.message || 'Link dikirim!', 'ok');
+    const d = await amCall('send', { email });
+    if (d.ok) {
+      showMsg('msg', d.message || 'Link dikirim!', 'ok');
       visitors++; document.getElementById('visitors').textContent = visitors;
     } else {
-      showMsg('msg', d.message || 'Gagal', 'err');
+      showMsg('msg', d.message || d.error || 'Gagal', 'err');
     }
   } catch(e) { showMsg('msg', 'Error: ' + e.message, 'err'); }
   btn.disabled = false; btn.textContent = 'Send magic link →';
@@ -178,13 +187,12 @@ async function verifyLink() {
   const btn = document.getElementById('btnVerif');
   btn.disabled = true; btn.textContent = 'Memverifikasi...';
   try {
-    const r = await fetch(API + '/link?email=' + encodeURIComponent(email) + '&link=' + encodeURIComponent(link));
-    const d = await r.json();
-    if (d.status) {
-      showMsg('msg', d.result?.message || 'Berhasil!', 'ok');
+    const d = await amCall('verify', { email, link });
+    if (d.ok) {
+      showMsg('msg', d.message || ('Premium aktif' + (d.status ? ' (' + d.status + ')' : '') + (d.orderId ? ' · ' + d.orderId : '')), 'ok');
       verified++; document.getElementById('verified').textContent = verified;
     } else {
-      showMsg('msg', d.message || 'Gagal', 'err');
+      showMsg('msg', d.message || d.error || 'Gagal', 'err');
     }
   } catch(e) { showMsg('msg', 'Error: ' + e.message, 'err'); }
   btn.disabled = false; btn.textContent = 'Verify account →';
