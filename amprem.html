@@ -128,7 +128,7 @@ input:focus, textarea:focus { border-color:var(--blue); }
 
 <script>
 const API = 'https://v2.api-varhad.my.id/tools/amprem/verif';
-const MAIL_API = 'https://api.mail.tm';
+const MAIL_API = 'https://www.1secmail.com/api/v1';
 let visitors = 0, verified = 0;
 let tempToken = null, tempAddress = null;
 
@@ -185,37 +185,19 @@ async function verifyLink() {
 async function generateEmail() {
   showMsg('mailMsg', 'Membuat email...', '');
   try {
-    const domRes = await fetch(MAIL_API + '/domains');
-    if (!domRes.ok) throw new Error('API tidak tersedia');
-    const dom = await domRes.json();
-    if (!dom['hydra:member']?.length) throw new Error('Domain tidak ditemukan');
-    const domain = dom['hydra:member'][0].domain;
-    const user = 'u' + Date.now().toString(36);
-    const addr = user + '@' + domain;
-    const pass = Math.random().toString(36).slice(2, 14);
-    const accRes = await fetch(MAIL_API + '/accounts', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({address: addr, password: pass})
-    });
-    if (!accRes.ok) throw new Error('Gagal buat akun');
-    const tokRes = await fetch(MAIL_API + '/token', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({address: addr, password: pass})
-    });
-    if (!tokRes.ok) throw new Error('Gagal login');
-    const tok = await tokRes.json();
-    if (!tok.token) throw new Error('Token tidak valid');
-    tempToken = tok.token;
-    tempAddress = addr;
-    document.getElementById('tempEmail').textContent = addr;
+    const r = await fetch(MAIL_API + '/?action=genRandomMailbox&count=1');
+    if (!r.ok) throw new Error('API gagal');
+    const data = await r.json();
+    if (!data || !data[0]) throw new Error('Tidak ada email');
+    tempAddress = data[0];
+    tempToken = tempAddress;
+    document.getElementById('tempEmail').textContent = tempAddress;
     showMsg('mailMsg', 'Email dibuat!', 'ok');
     const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
-    saved.unshift({email: addr, time: new Date().toISOString()});
+    saved.unshift({email: tempAddress, time: new Date().toISOString()});
     localStorage.setItem('savedEmails', JSON.stringify(saved.slice(0, 20)));
     renderSaved();
-  } catch(e) { showMsg('mailMsg', 'Gagal: ' + e.message + '. Coba lagi.', 'err'); }
+  } catch(e) { showMsg('mailMsg', 'Gagal: ' + e.message, 'err'); }
 }
 function copyTempEmail() {
   const email = document.getElementById('tempEmail').textContent;
@@ -224,25 +206,23 @@ function copyTempEmail() {
   }
 }
 async function checkInbox() {
-  if (!tempToken) { showMsg('mailMsg', 'Generate email dulu', 'err'); return; }
+  if (!tempAddress) { showMsg('mailMsg', 'Generate email dulu', 'err'); return; }
   try {
-    const msgs = await fetch(MAIL_API + '/messages', {
-      headers: {'Authorization': 'Bearer ' + tempToken}
-    }).then(r => r.json());
-    const list = msgs['hydra:member'] || [];
+    const [login, domain] = tempAddress.split('@');
+    const r = await fetch(MAIL_API + '/?action=getMessages&login=' + login + '&domain=' + domain);
+    const list = await r.json();
     const el = document.getElementById('mailList');
-    if (!list.length) { el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px">Inbox kosong</p>'; return; }
-    el.innerHTML = list.map(m => `<div class="mail-item" onclick="readMail('${m.id}')"><div class="mail-from">${m.from?.address || '-'}</div><div class="mail-subj">${m.subject || '(no subject)'}</div><div class="mail-time">${new Date(m.createdAt).toLocaleString('id-ID')}</div></div>`).join('');
+    if (!list || !list.length) { el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px">Inbox kosong</p>'; return; }
+    el.innerHTML = list.map(m => `<div class="mail-item" onclick="readMail(${m.id})"><div class="mail-from">${m.from || '-'}</div><div class="mail-subj">${m.subject || '(no subject)'}</div><div class="mail-time">${m.date || ''}</div></div>`).join('');
   } catch(e) { showMsg('mailMsg', 'Gagal cek inbox', 'err'); }
 }
 async function readMail(id) {
   try {
-    const m = await fetch(MAIL_API + '/messages/' + id, {
-      headers: {'Authorization': 'Bearer ' + tempToken}
-    }).then(r => r.json());
-    const text = m.text || m.intro || 'Tidak ada isi';
+    const [login, domain] = tempAddress.split('@');
+    const r = await fetch(MAIL_API + '/?action=readMessage&login=' + login + '&domain=' + domain + '&id=' + id);
+    const m = await r.json();
+    const text = m.textBody || m.body || 'Tidak ada isi';
     alert(text);
-    // Auto extract link
     const match = text.match(/https?:\/\/[^\s<>"]+/);
     if (match) {
       document.getElementById('link').value = match[0];
