@@ -1,1 +1,346 @@
-PLACEHOLDER
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<style>html:not(.gate-ok) body>*:not(#kgate){display:none!important}html:not(.gate-ok){background:#000}</style>
+<script src="/gate.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AM Premium</title>
+<style>
+:root{color-scheme:dark;--ink:#f7f8ff;--muted:#9ba8c4;--blue:#6eb5ff;--green:#64e6b0;--red:#ff7188;--line:rgba(255,255,255,.13)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;color:var(--ink);min-height:100dvh;background:radial-gradient(ellipse at 10% 0%,#4e6fff3d,transparent 40%),radial-gradient(ellipse at 100% 28%,#ae5eff2e,transparent 35%),linear-gradient(160deg,#080b17,#10162a 60%,#080b16);background-attachment:fixed;padding-bottom:32px}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.2;background-image:radial-gradient(#ffffff38 .6px,transparent .6px);background-size:5px 5px;mask-image:linear-gradient(to bottom,black,transparent 70%)}
+.header{position:sticky;top:0;z-index:10;padding:calc(12px + env(safe-area-inset-top)) 14px 12px;display:flex;align-items:center;gap:12px;background:#0a0e1d9e;backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px) saturate(180%);border-bottom:1px solid #ffffff17}
+.logo{flex:0 0 42px;width:42px;height:42px;border-radius:15px;background:linear-gradient(145deg,#fff,#b0c7ff);color:#10152a;display:grid;place-items:center;font-weight:900;font-size:20px;box-shadow:0 8px 24px #6c8cff30}
+.tabs{display:flex;gap:6px;flex:1;overflow-x:auto;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
+.tab{padding:10px 13px;border-radius:999px;border:1px solid transparent;background:#ffffff0e;color:#aeb8d0;font-size:11px;font-weight:750;white-space:nowrap;cursor:pointer;transition:.22s}
+.tab.active{background:linear-gradient(135deg,#ffffff38,#9bb1ff21);border-color:#ffffff38;color:#fff;box-shadow:inset 0 1px 0 #ffffff20,0 5px 18px #0002}
+.stats{padding:14px 18px 10px;font-size:12px;color:var(--muted);display:flex;gap:16px}.stats span{display:flex;align-items:center;gap:6px}.dot{width:7px;height:7px;border-radius:50%;box-shadow:0 0 10px currentColor}.dot.green{background:var(--green);color:var(--green)}
+.desc{padding:5px 19px 18px;font-size:13px;color:#aeb9d2;line-height:1.6}
+.card{margin:0 13px 16px;padding:21px 17px;border-radius:28px;background:linear-gradient(145deg,#ffffff1b,#ffffff0b);border:1px solid var(--line);box-shadow:inset 0 1px 0 #ffffff1c,0 18px 45px #0002;backdrop-filter:blur(24px) saturate(150%);-webkit-backdrop-filter:blur(24px) saturate(150%)}
+.card-title{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:760;letter-spacing:-.5px;margin-bottom:7px}.card-title:before{content:"";width:9px;height:25px;border-radius:8px;background:linear-gradient(180deg,#9bd5ff,#a99aff);box-shadow:0 0 16px #91a9ff55}
+.card-sub{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.5}
+.label{font-size:10px;font-weight:800;color:#b4c1dc;letter-spacing:.12em;margin:4px 0 8px;display:flex;align-items:center;gap:7px}.label:before{content:"";width:5px;height:5px;border-radius:50%;background:var(--blue);box-shadow:0 0 8px var(--blue)}
+input,textarea{width:100%;padding:15px 16px;border-radius:18px;border:1px solid #ffffff20;background:#04081461;color:var(--ink);font-size:16px;outline:none;margin-bottom:13px;box-shadow:inset 0 1px 4px #0002;transition:border .2s,box-shadow .2s}
+input:focus,textarea:focus{border-color:#8dbdff;box-shadow:0 0 0 3px #6ea8ff20}textarea{min-height:100px;resize:vertical}
+.btn{width:100%;min-height:49px;border:1px solid #ffffff26;border-radius:999px;font-weight:750;font-size:14px;cursor:pointer;margin-bottom:10px;transition:transform .16s,filter .16s;touch-action:manipulation}.btn:active,.copy-btn:active,.tab:active{transform:scale(.98)}.btn:disabled{opacity:.55}
+.btn-send{background:linear-gradient(115deg,#6baeff,#8c8aff 58%,#c2a1ff);color:#081126;box-shadow:0 8px 24px #719bff25}.btn-verify{background:linear-gradient(115deg,#a18aff,#e09bff);color:#170c2b}.btn-copy{background:#ffffff12;color:var(--ink)}
+.legend{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}.legend span{font-size:11px;padding:7px 11px;border-radius:999px;background:#ffffff0f;border:1px solid #ffffff0d;display:flex;align-items:center;gap:6px}
+.msg{margin-top:12px;padding:12px 14px;border-radius:15px;font-size:13px;text-align:center;display:none;border:1px solid transparent}.msg.ok{display:block;background:#4ee5aa14;color:var(--green);border-color:#4ee5aa30}.msg.err{display:block;background:#ff718814;color:var(--red);border-color:#ff718830}
+.mail-list{display:flex;flex-direction:column;gap:9px;max-height:360px;overflow-y:auto}.mail-item{background:#05091659;border:1px solid #ffffff16;border-radius:18px;padding:13px;cursor:pointer;overflow-wrap:anywhere}.mail-item:hover{background:#ffffff12}
+.mail-from{font-size:12px;color:#9fcaff;font-weight:700;overflow-wrap:anywhere}.mail-subj{font-size:14px;margin:5px 0;color:#f4f6ff;font-weight:600}.mail-time{font-size:11px;color:var(--muted);margin-top:5px}
+.panel{display:none;animation:rise .28s ease both}.panel.active{display:block}@keyframes rise{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+.email-box{background:#04081461;border:1px solid #ffffff18;border-radius:18px;padding:13px;font-family:ui-monospace,monospace;font-size:13px;word-break:break-all;margin-bottom:13px;display:flex;gap:10px;justify-content:space-between;align-items:center}.copy-btn{flex-shrink:0;background:#85b1ff33;border:1px solid #8dbdff40;color:#dceaff;padding:9px 13px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer}
+.email-view{background:#04081466;border:1px solid #ffffff18;border-radius:18px;padding:14px;margin-top:10px;display:none;overflow-wrap:anywhere}.email-view.show{display:block}.email-view .ev-from{font-size:12px;color:#9fcaff;margin-bottom:5px}.email-view .ev-subj{font-size:15px;font-weight:750;margin-bottom:9px}.email-view .ev-body{font-size:13px;line-height:1.7;color:#e7ebf7;overflow-wrap:anywhere}.email-view .ev-body a{color:#9bcaff;text-decoration:underline;word-break:break-all}.copy-link-btn{background:#7ea9ff38;border:1px solid #9bcaff40;color:#e5eeff;padding:9px 13px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;margin-top:12px}
+.saved-actions{display:flex;gap:8px;margin-top:12px}.saved-actions .btn{width:auto;flex:1;margin:0;min-height:39px;padding:8px 10px;font-size:12px}.saved-inbox{margin-top:10px}.empty-state{color:var(--muted);text-align:center;padding:22px 10px;font-size:13px}
+@media(min-width:700px){.panel{max-width:620px;margin:0 auto}.header{padding-left:max(18px,calc((100vw - 900px)/2));padding-right:max(18px,calc((100vw - 900px)/2))}.stats,.desc{max-width:660px;margin-left:auto;margin-right:auto}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+
+/* Effect levels synced with kenzie-preset */
+body.fx-low { --blur: 14px; }
+body.fx-med { --blur: 22px; }
+body.fx-med .card, body.fx-med .header { box-shadow: 0 0 0 1px rgba(255,255,255,.1), 0 8px 32px rgba(100,150,255,.15); }
+body.fx-hard { --blur: 40px; }
+body.fx-hard .card, body.fx-hard .header { 
+  box-shadow: 0 0 0 1px rgba(255,255,255,.15), 0 12px 40px rgba(100,150,255,.25), inset 0 1px 0 rgba(255,255,255,.2); 
+  animation: glow 2s ease-in-out infinite alternate;
+}
+body.fx-hard .btn-send, body.fx-hard .btn-verify { animation: pulse 1.5s ease-in-out infinite; }
+body.fx-hard .tab.active { animation: glow 1.8s ease-in-out infinite alternate; }
+@keyframes glow { from { box-shadow: 0 0 0 1px rgba(255,255,255,.1), 0 8px 24px rgba(100,150,255,.15); } to { box-shadow: 0 0 0 1px rgba(255,255,255,.2), 0 12px 40px rgba(120,160,255,.35); } }
+@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">R</div>
+  <div class="tabs">
+    <button class="tab active" onclick="showPanel('am',this)">AM PREMIUM</button>
+    <button class="tab" onclick="showPanel('mail',this)">Temp Mail</button>
+    <button class="tab" onclick="showPanel('saved',this)">Saved</button>
+    <button class="tab" onclick="showPanel('guide',this)">Guide</button>
+  </div>
+</div>
+<div class="stats">
+  <span><span class="dot green"></span> <b id="visitors">0</b> visitors</span>
+  <span><span class="dot green"></span> <b id="verified">0</b> verified</span>
+</div>
+
+<!-- AM Premium Panel -->
+<div class="panel active" id="panel-am">
+  <p class="desc">Masukkan email, kirim magic link, lalu verifikasi dari link yang kamu terima.</p>
+  <div class="card">
+    <div class="card-title">Verify your account</div>
+    <p class="card-sub">Gunakan email yang kamu miliki atau berhak kamu akses.</p>
+    <div class="label">ACCOUNT EMAIL</div>
+    <input id="email" type="email" placeholder="you@example.com" />
+    <button class="btn btn-send" id="btnSend" onclick="sendLink()">Send magic link →</button>
+    <div class="label">VERIFICATION LINK</div>
+    <textarea id="link" placeholder="Paste verification link di sini..."></textarea>
+    <button class="btn btn-verify" id="btnVerif" onclick="verifyLink()">Verify account →</button>
+    <div class="legend">
+      <span style="color:var(--red)">● Merah = Error</span>
+      <span style="color:var(--green)">● Hijau = Berhasil</span>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+</div>
+
+<!-- Temp Mail Panel -->
+<div class="panel" id="panel-mail">
+  <p class="desc">Email sementara untuk menerima magic link.</p>
+  <div class="card">
+    <div class="card-title">Temp Mail</div>
+    <p class="card-sub">Buat email sementara, lalu cek inbox.</p>
+    <div class="email-box">
+      <span id="tempEmail">Klik Generate</span>
+      <button class="copy-btn" onclick="copyTempEmail()">Salin</button>
+    </div>
+    <button class="btn btn-send" onclick="generateEmail()">Generate Email</button>
+    <button class="btn btn-copy" onclick="checkInbox()">Refresh Inbox</button>
+    <div class="mail-list" id="mailList"></div><div class="email-view" id="emailView"></div>
+    <div class="msg" id="mailMsg"></div>
+  </div>
+</div>
+
+<!-- Saved Panel -->
+<div class="panel" id="panel-saved">
+  <p class="desc">Email yang tersimpan.</p>
+  <div class="card">
+    <div class="card-title">Saved</div>
+    <div class="mail-list" id="savedList"><p style="color:var(--muted);text-align:center;padding:20px">Belum ada</p></div>
+  </div>
+</div>
+
+<!-- Guide Panel -->
+<div class="panel" id="panel-guide">
+  <p class="desc">Cara pakai.</p>
+  <div class="card">
+    <div class="card-title">Guide</div>
+    <ol style="padding-left:20px;line-height:1.8;color:var(--muted);font-size:14px">
+      <li>Buka tab Temp Mail, klik Generate Email</li>
+      <li>Salin email, tempel di AM Premium</li>
+      <li>Klik Send magic link</li>
+      <li>Kembali ke Temp Mail, klik Refresh Inbox</li>
+      <li>Buka email, salin link verifikasi</li>
+      <li>Tempel di Verification Link, klik Verify</li>
+    </ol>
+  </div>
+</div>
+
+<script>
+// Sync effect with kenzie-preset
+(function() {
+  const fx = localStorage.getItem('kenzie_fx') || 'low';
+  document.body.classList.add('fx-' + fx);
+})();
+
+const API = 'https://amprem.ran.my.id/api';   // POST /send {email}, POST /verify {email, link}
+const API_PROXY = '/api/amprem';              // cadangan lewat Vercel bila diblokir CORS
+async function amCall(path, body) {
+  const opts = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+  // Prefer Vercel proxy (correct query: action=send|verify), fallback to external
+  let r, text;
+  try {
+    r = await fetch(API_PROXY + '?action=' + encodeURIComponent(path), opts);
+    text = await r.text();
+  } catch (e1) {
+    try {
+      r = await fetch(API + '/' + path, opts);
+      text = await r.text();
+    } catch (e2) {
+      return { ok: false, message: 'Tidak bisa terhubung ke server (' + (e2.message || e1.message || 'network') + ')' };
+    }
+  }
+  let d;
+  try { d = JSON.parse(text); } catch { d = { ok: false, message: (text || '').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0, 160) || ('HTTP ' + r.status) }; }
+  if (!d || typeof d !== 'object') d = { ok: false, message: String(d) };
+  if (d.ok === undefined) d.ok = !!(r.ok && d.error == null && d.success !== false);
+  // Never leave message/error as object (prevents [object Object] in UI)
+  for (const k of ['message', 'error', 'msg']) {
+    if (d[k] != null && typeof d[k] === 'object') {
+      try { d[k] = JSON.stringify(d[k]).slice(0, 300); } catch { d[k] = String(d[k]); }
+    }
+  }
+  return d;
+}
+const MAIL_API = '/api/tempmail';
+let visitors = 0, verified = 0;
+let tempToken = null, tempAddress = null;
+
+function showPanel(name, tab) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  if (tab) tab.classList.add('active');
+}
+function toMsg(v) {
+  if (v == null || v === '') return '';
+  if (typeof v === 'string') return v;
+  if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+  if (typeof v === 'object') {
+    if (typeof v.message === 'string') return v.message;
+    if (typeof v.error === 'string') return v.error;
+    if (typeof v.msg === 'string') return v.msg;
+    try { return JSON.stringify(v); } catch (e) { return String(v); }
+  }
+  return String(v);
+}
+function showMsg(id, text, type) {
+  const el = document.getElementById(id);
+  el.textContent = toMsg(text) || '';
+  el.className = 'msg' + (type ? ' ' + type : '');
+}
+function apiErr(d) {
+  return toMsg(d && (d.message || d.error || d.msg)) || 'Gagal';
+}
+
+// AM Premium
+async function sendLink() {
+  const email = document.getElementById('email').value.trim();
+  if (!email || !email.includes('@')) { showMsg('msg', 'Email tidak valid', 'err'); return; }
+  const btn = document.getElementById('btnSend');
+  btn.disabled = true; btn.textContent = 'Mengirim...';
+  try {
+    const d = await amCall('send', { email });
+    if (d.ok) {
+      showMsg('msg', toMsg(d.message) || 'Link dikirim!', 'ok');
+      visitors++; document.getElementById('visitors').textContent = visitors;
+    } else {
+      showMsg('msg', apiErr(d), 'err');
+    }
+  } catch(e) { showMsg('msg', 'Error: ' + e.message, 'err'); }
+  btn.disabled = false; btn.textContent = 'Send magic link →';
+}
+async function verifyLink() {
+  const email = document.getElementById('email').value.trim();
+  const link = document.getElementById('link').value.trim();
+  if (!email || !link) { showMsg('msg', 'Isi email dan link', 'err'); return; }
+  const btn = document.getElementById('btnVerif');
+  btn.disabled = true; btn.textContent = 'Memverifikasi...';
+  try {
+    const d = await amCall('verify', { email, link });
+    if (d.ok) {
+      showMsg('msg', toMsg(d.message) || ('Premium aktif' + (d.status ? ' (' + d.status + ')' : '') + (d.orderId ? ' · ' + d.orderId : '')), 'ok');
+      verified++; document.getElementById('verified').textContent = verified;
+    } else {
+      showMsg('msg', apiErr(d), 'err');
+    }
+  } catch(e) { showMsg('msg', 'Error: ' + e.message, 'err'); }
+  btn.disabled = false; btn.textContent = 'Verify account →';
+}
+
+// Temp Mail
+async function generateEmail() {
+  showMsg('mailMsg', 'Membuat email...', '');
+  try {
+    const r = await fetch(MAIL_API + '?action=create');
+    if (!r.ok) throw new Error('API gagal');
+    const data = await r.json();
+    if (!data.status || !data.email) throw new Error(data.error || 'Gagal buat email');
+    tempAddress = data.email;
+    tempToken = data.token;
+    document.getElementById('tempEmail').textContent = tempAddress;
+    showMsg('mailMsg', 'Email dibuat! Auto-cek inbox...', 'ok');
+    const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
+    saved.unshift({email: tempAddress, time: new Date().toISOString()});
+    localStorage.setItem('savedEmails', JSON.stringify(saved.slice(0, 20)));
+    
+function deleteSavedEmail(index) {
+  const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
+  saved.splice(index, 1);
+  localStorage.setItem('savedEmails', JSON.stringify(saved));
+  renderSaved();
+}
+renderSaved();
+    // Auto check inbox every 5 seconds
+    if (window._inboxTimer) clearInterval(window._inboxTimer);
+    window._inboxTimer = setInterval(checkInbox, 5000);
+    checkInbox();
+  } catch(e) { showMsg('mailMsg', 'Gagal: ' + e.message, 'err'); }
+}
+function copyTempEmail() {
+  const email = document.getElementById('tempEmail').textContent;
+  if (email && email !== 'Klik Generate') {
+    navigator.clipboard.writeText(email).then(() => showMsg('mailMsg', 'Disalin!', 'ok'));
+  }
+}
+async function checkInbox() {
+  if (!tempAddress) return;
+  try {
+    const r = await fetch(MAIL_API + '?action=inbox&email=' + encodeURIComponent(tempAddress));
+    const data = await r.json();
+    console.log('Inbox response:', data); const list = data.messages || data.inbox || data.emails || [];
+    const el = document.getElementById('mailList');
+    if (!list.length) { 
+      el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:12px">Inbox kosong. Kirim email ke ' + (tempAddress || '') + '</p>'; 
+      return; 
+    }
+    el.innerHTML = list.map((m, i) => {
+      const subj = (m.subject || '').toLowerCase();
+      const isAlight = subj.includes('alight') || subj.includes('sign in') || subj.includes('login') || subj.includes('verify');
+      return `<div class="mail-item" onclick="readMail(${i})" style="${isAlight?'border:1px solid #3b82f6':''}"><div class="mail-from">${m.from || m.sender || '-'}</div><div class="mail-subj">${m.subject || '(no subject)'}</div><div class="mail-time">${m.date || m.time || ''}</div></div>`;
+    }).join('');
+    window._mailCache = list;
+    // Auto detect and paste Alight Creative sign-in link
+    for (const m of list) {
+      const fullText = (m.body || m.text || m.content || m.html || '') + ' ' + JSON.stringify(m);
+      const text = fullText.toLowerCase();
+      const isAlight = text.includes('alight') || text.includes('sign in') || text.includes('login') || text.includes('alightcreative') || text.includes('firebaseapp');
+      if (isAlight) {
+        const urls = fullText.match(/https?:\/\/[^\s<>"'\\]+/g) || [];
+        const alightLink = urls.find(l => l.includes('alight-creative.firebaseapp.com') || l.includes('alightcreative.com/auth') || l.includes('__/auth/links')) || urls.find(l => /alight|verify|login|sign|magic|firebaseapp/i.test(l)) || urls[0];
+        if (alightLink && !document.getElementById('link').value) {
+          document.getElementById('link').value = alightLink;
+          document.getElementById('email').value = tempAddress;
+          showPanel('am',this);
+          showMsg('msg', 'Link Alight Creative otomatis ditempel! Klik Verify.', 'ok');
+          if (window._inboxTimer) clearInterval(window._inboxTimer);
+          break;
+        }
+      }
+    }
+  } catch(e) { console.warn(e); }
+}
+function readMail(idx) {
+  const m = window._mailCache && window._mailCache[idx];
+  if (!m) return;
+  const text = m.body || m.text || m.content || m.html || '';
+  const subj = m.subject || '(no subject)';
+  const from = m.from || m.sender || '-';
+  const allText = text + ' ' + (m.html || '') + ' ' + JSON.stringify(m);
+  const urls = allText.match(/https?:\/\/[^\s<>"'\\]+/g) || [];
+  const alightUrl = urls.find(u => u.includes('alight-creative') || u.includes('firebaseapp') || /verify|login|sign|magic/i.test(u)) || urls[0];
+  const view = document.getElementById('emailView');
+  view.className = 'email-view show';
+  view.innerHTML = '<div class="ev-from">' + from + '</div><div class="ev-subj">' + subj + '</div><div class="ev-body">' + (text || '(kosong)').slice(0, 2000) + '</div>' +
+    (alightUrl ? '<button class="copy-link-btn" onclick="navigator.clipboard.writeText(\'' + alightUrl.replace(/'/g,"\\'") + '\').then(()=>showMsg(\'mailMsg\',\'Link disalin!\',\'ok\'))">Salin link verifikasi</button>' : '');
+}
+function renderSaved() {
+  const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
+  const el = document.getElementById('savedList');
+  if (!saved.length) { el.innerHTML = '<p class="empty-state">Belum ada</p>'; return; }
+  el.innerHTML = saved.map((item, i) =>
+    '<div class="mail-item"><div class="mail-from">' + (item.email || '') + '</div><div class="mail-time">' + (item.time ? new Date(item.time).toLocaleString('id-ID') : '') + '</div>' +
+    '<div class="saved-actions"><button class="btn btn-copy" onclick="useSaved(' + i + ')">Pakai</button><button class="btn btn-copy" onclick="copySaved(' + i + ')">Salin</button><button class="btn btn-copy" onclick="deleteSavedEmail(' + i + ')">Hapus</button></div></div>'
+  ).join('');
+}
+function useSaved(i) {
+  const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
+  const item = saved[i]; if (!item) return;
+  document.getElementById('email').value = item.email;
+  tempAddress = item.email;
+  showPanel('am');
+  showMsg('msg', 'Email dimasukkan. Siap kirim magic link.', 'ok');
+}
+async function copySaved(i) {
+  const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
+  const item = saved[i]; if (!item) return;
+  try { await navigator.clipboard.writeText(item.email); showMsg('mailMsg','Email berhasil disalin','ok'); }
+  catch(e) { showMsg('mailMsg','Gagal menyalin. Salin email secara manual.','err'); }
+}
+renderSaved();
+</script>
+</body>
+</html>
