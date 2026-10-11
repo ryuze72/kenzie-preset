@@ -3,13 +3,21 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
   
-  const { action, email } = req.query;
-  const APIKEY = '_mvCAp4042xedZVW';
-  const BASE = 'https://api.jerexd.my.id/api/tools/tempmail';
+  const { action, token } = req.query;
+  const APIKEY = 'zelapi-4e3c73fc46bb468d';
+  const BASE = 'https://zelapi.eu.cc/tempmail';
   
   try {
-    let url = `${BASE}?apikey=${APIKEY}&action=${action || 'create'}`;
-    if (action === 'inbox' && email) url += `&email=${encodeURIComponent(email)}`;
+    let url = '';
+    if (action === 'create' || action === 'generate') {
+      url = `${BASE}/generate?apikey=${APIKEY}`;
+    } else if (action === 'inbox' && token) {
+      url = `${BASE}/inbox?apikey=${APIKEY}&token=${token}`;
+    } else if (action === 'inbox') {
+      url = `${BASE}/inbox?apikey=${APIKEY}`;
+    } else {
+      return res.status(400).json({ error: 'Invalid action' });
+    }
     
     const r = await fetch(url);
     const data = await r.json();
