@@ -226,9 +226,9 @@ function copyTempEmail() {
 async function checkInbox() {
   if (!tempAddress) return;
   try {
-    const r = await fetch(MAIL_API + '?action=inbox&token=' + (tempToken || ''));
+    const r = await fetch(MAIL_API + '?action=inbox&email=' + encodeURIComponent(tempAddress) + '&token=' + (tempToken || ''));
     const data = await r.json();
-    const list = data.messages || data.inbox || data.emails || [];
+    const list = data.inbox_data || data.messages || data.inbox || data.emails || [];
     const el = document.getElementById('mailList');
     if (!list.length) { el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:12px">Menunggu email Alight Creative...</p>'; return; }
     el.innerHTML = list.map((m, i) => {
