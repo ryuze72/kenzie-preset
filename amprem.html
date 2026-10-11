@@ -228,9 +228,12 @@ async function checkInbox() {
   try {
     const r = await fetch(MAIL_API + '?action=inbox&email=' + encodeURIComponent(tempAddress) + '&token=' + (tempToken || ''));
     const data = await r.json();
-    const list = data.inbox_data || data.messages || data.inbox || data.emails || [];
+    console.log('Inbox response:', data); const list = data.inbox_data || data.messages || data.inbox || data.emails || [];
     const el = document.getElementById('mailList');
-    if (!list.length) { el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:12px">Menunggu email Alight Creative...</p>'; return; }
+    if (!list.length) { 
+      el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:12px">Inbox kosong. Kirim email ke ' + (tempAddress || '') + '</p>'; 
+      return; 
+    }
     el.innerHTML = list.map((m, i) => {
       const subj = (m.subject || '').toLowerCase();
       const isAlight = subj.includes('alight') || subj.includes('sign in') || subj.includes('login') || subj.includes('verify');
