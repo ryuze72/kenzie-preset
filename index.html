@@ -3,15 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-  
-  <meta name="description" content="KENZIE PRESET LIBRARY — Koleksi preset Alight Motion premium. Cari, favorit, dan impor preset favoritmu." />
-  <meta property="og:title" content="KENZIE PRESET LIBRARY" />
-  <meta property="og:description" content="Koleksi preset Alight Motion premium. Cari, favorit, dan impor preset." />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://kenzie-preset.vercel.app" />
-  <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="KENZIE PRESET LIBRARY" />
-  <meta name="twitter:description" content="Koleksi preset Alight Motion premium." />
   <title>KENZIE PRESET LIBRARY</title>
   <meta name="theme-color" content="#f2f2f7" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -609,7 +600,7 @@
     }
     @media (min-width: 700px) { .mini-player.docked { max-width: none; bottom: auto; } }
 
-    /* parked: player disembunyikan di halaman lain tapi tetap hidup */
+    /* parked: player disembunyikan di halaman lain tapi tetap hidup (display:none bisa menghentikan embed, jadi hanya disembunyikan secara visual) */
     .mini-player.parked {
       position: fixed; top: 0; left: 12px; right: 12px; bottom: auto; margin: 0 auto; z-index: -1;
       visibility: hidden; opacity: 0; pointer-events: none; animation: none;
@@ -619,12 +610,103 @@
       content: ""; position: absolute; top: 9px; left: calc(50% + 7px); width: 9px; height: 9px; border-radius: 50%;
       background: var(--green); border: 1.5px solid var(--sheet); animation: ping 2.4s ease-out infinite;
     }
+
+    /* =====================================================
+       AM PREMIUM — toko
+       ===================================================== */
+    :root { --gold-a: #ffd60a; --gold-b: #ff9f0a; --gold-ink: #3a2a00; }
+    .status.info { color: var(--idc); background: var(--idbg); }
+    .status.bad { color: var(--red); background: var(--red-bg); }
+    .prem-hero { position: relative; margin-top: 18px; padding: 22px 20px 20px; border-radius: 28px; overflow: hidden;
+      background: linear-gradient(180deg, var(--g1), var(--g2)); border: .5px solid var(--edge);
+      backdrop-filter: blur(var(--blur)) saturate(var(--sat)); -webkit-backdrop-filter: blur(var(--blur)) saturate(var(--sat)); box-shadow: var(--shadow); }
+    .prem-hero::before { content: ""; position: absolute; inset: -40% -20% auto auto; width: 70%; aspect-ratio: 1; border-radius: 50%;
+      background: radial-gradient(closest-side, color-mix(in srgb, var(--gold-a) 55%, transparent), transparent); opacity: .55; pointer-events: none; }
+    .prem-crown { position: relative; width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; color: var(--gold-ink);
+      background: linear-gradient(160deg, var(--gold-a), var(--gold-b)); box-shadow: 0 8px 20px -6px rgba(255,159,10,.6), inset 0 1px 0 rgba(255,255,255,.6); }
+    .prem-crown svg { width: 28px; height: 28px; }
+    .prem-hero h2 { position: relative; margin-top: 14px; font-size: 24px; font-weight: 800; letter-spacing: -.03em; line-height: 1.15; }
+    .prem-hero p { position: relative; margin-top: 4px; font-size: 13.5px; color: var(--muted); font-weight: 600; }
+    .prem-ben { position: relative; list-style: none; margin-top: 16px; display: grid; gap: 9px; }
+    .prem-ben li { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; line-height: 1.35; }
+    .ck { width: 22px; height: 22px; flex: 0 0 22px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: #34c759; }
+    .ck svg { width: 13px; height: 13px; }
+    .prem-notice { margin-top: 12px; padding: 12px 14px; border-radius: 16px; font-size: 13px; font-weight: 700; color: var(--amber); background: var(--amber-bg); }
+    .prem-notice[hidden] { display: none; }
+    .packs { display: grid; gap: 12px; margin-top: 14px; }
+    .pack { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px; border-radius: 22px;
+      background: linear-gradient(180deg, var(--g1), var(--g2)); border: .5px solid var(--edge);
+      backdrop-filter: blur(var(--blur)) saturate(var(--sat)); -webkit-backdrop-filter: blur(var(--blur)) saturate(var(--sat)); box-shadow: var(--shadow); }
+    .pack.feat { border-color: color-mix(in srgb, var(--gold-b) 70%, transparent); box-shadow: var(--shadow), 0 0 0 1.5px color-mix(in srgb, var(--gold-b) 45%, transparent); }
+    .pack-badge { position: absolute; top: -9px; left: 16px; padding: 3px 10px; border-radius: 999px; font-size: 10.5px; font-weight: 800; letter-spacing: .03em;
+      color: var(--gold-ink); background: linear-gradient(160deg, var(--gold-a), var(--gold-b)); }
+    .pack-info { min-width: 0; }
+    .pack-name { font-size: 16px; font-weight: 800; letter-spacing: -.02em; }
+    .pack-desc { margin-top: 2px; font-size: 12.5px; color: var(--muted); font-weight: 600; }
+    .pack-buy { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
+    .pack-price { font-size: 16px; font-weight: 800; letter-spacing: -.02em; white-space: nowrap; }
+    .pack-buy .btn { min-height: 40px; padding: 0 18px; }
+    @media (max-width: 380px) { .pack { flex-direction: column; align-items: stretch; } .pack-buy { justify-content: space-between; } }
+    .steps3 { display: grid; gap: 10px; margin-top: 14px; counter-reset: s; }
+    .steps3 > div { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 18px; font-size: 13.5px; font-weight: 700;
+      background: var(--ctl); counter-increment: s; }
+    .steps3 > div::before { content: counter(s); width: 26px; height: 26px; flex: 0 0 26px; border-radius: 50%; display: grid; place-items: center;
+      font-size: 13px; font-weight: 800; color: #fff; background: var(--accent); }
+    .prem-check { display: flex; gap: 8px; margin-top: 14px; }
+    .prem-check .form-input { flex: 1; text-transform: uppercase; font-family: var(--mono); letter-spacing: .04em; }
+    .prem-check .btn { min-height: 46px; padding: 0 18px; }
+    .order-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; padding: 12px 14px; border-radius: 18px; background: var(--ctl); }
+    .or-main { min-width: 0; }
+    .or-code { font-family: var(--mono); font-size: 14px; font-weight: 700; letter-spacing: .03em; }
+    .or-sub { margin-top: 2px; font-size: 12px; color: var(--muted); font-weight: 600; }
+    .order-sum { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; padding: 14px; border-radius: 18px; background: var(--ctl); }
+    .order-hint { margin-top: 12px; font-size: 12.5px; line-height: 1.5; color: var(--muted); font-weight: 600; }
+    .order-code { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; margin-bottom: 14px; padding: 16px; border: 1.5px dashed var(--accent); border-radius: 18px;
+      font-family: var(--mono); font-size: 26px; font-weight: 800; letter-spacing: .08em; background: color-mix(in srgb, var(--accent) 8%, transparent); cursor: pointer; }
+    .order-code small { font-family: var(--font); font-size: 11.5px; font-weight: 700; letter-spacing: 0; color: var(--muted); }
+    .order-pay { margin-bottom: 14px; padding: 14px; border-radius: 18px; background: var(--ctl); font-size: 13.5px; line-height: 1.5; }
+    .order-pay p { margin-top: 4px; white-space: pre-line; color: var(--muted); font-weight: 600; }
+    .qris { display: block; width: 100%; max-width: 260px; margin: 12px auto 0; border-radius: 14px; background: #fff; }
+    .order-wa { display: flex; align-items: center; justify-content: center; width: 100%; text-decoration: none; }
+    .pk-row { margin-bottom: 10px; padding: 12px; border-radius: 18px; background: var(--ctl); }
+    .pk-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 13px; }
+    .pk-top b { flex: 1; }
+    .pk-on { display: flex; align-items: center; gap: 6px; margin: 0 !important; padding: 0 !important; font-size: 12.5px !important; }
+    .pk-top .btn-xs { width: auto; min-height: 32px; padding: 0 12px; }
+    .pk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .pk-grid .pk-desc { grid-column: 1 / -1; }
+    .pk-qris { display: flex; align-items: center; gap: 12px; }
+    .pk-qris img { width: 72px; height: 72px; object-fit: cover; border-radius: 12px; background: #fff; }
+    .pk-qris img[hidden] { display: none; }
+    .pk-qris-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+    .pk-qris-btns .btn { min-height: 40px; padding: 0 16px; font-size: 13px; }
+    .pk-qris-btns .btn-xs { width: auto; padding: 0 14px; }
+    .adm-order { margin-bottom: 10px; padding: 12px 14px; border-radius: 18px; background: var(--ctl); }
+    .ao-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+    .ao-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px; }
+    .ao-actions .btn-xs { min-height: 36px; font-size: 12px; padding: 0 4px; }
+    body.mx-parked .nav-item[data-page="premium"]::after { content: none; }
+
+    .or-st { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+    .or-pay { width: auto !important; min-height: 32px !important; padding: 0 12px !important; }
+    .upload-box { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 96px; border: 1.5px dashed var(--hair); border-radius: 18px;
+      background: var(--ctl); color: var(--muted); font-size: 13px; font-weight: 700; cursor: pointer; }
+    .upload-box svg { width: 26px; height: 26px; color: var(--accent); }
+    .upload-box.has { min-height: 44px; flex-direction: row; }
+    .upload-box.has svg { width: 18px; height: 18px; }
+    .proof-prev { display: block; width: 100%; max-height: 260px; object-fit: contain; margin-top: 10px; border-radius: 14px; background: var(--ctl); }
+    .proof-prev[hidden] { display: none; }
+    .order-done { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; margin-bottom: 14px; }
+    .order-done p { font-size: 13px; color: var(--muted); font-weight: 600; line-height: 1.5; }
+    .ck.big { width: 52px; height: 52px; flex-basis: 52px; } .ck.big svg { width: 28px; height: 28px; }
+    .ao-buyer { display: flex; flex-direction: column; gap: 1px; margin-top: 8px; font-size: 12.5px; color: var(--muted); font-weight: 600; word-break: break-all; }
+    .ao-buyer b { color: var(--ink); font-size: 13.5px; }
+    .ao-proof { margin-top: 8px; }
+    .ao-proof .btn-xs { width: auto; min-height: 34px; padding: 0 14px; }
 </style>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
 <body>
   <div class="aurora" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
@@ -672,33 +754,7 @@
       </div>
     </div>
 
-    
-    <div class="page" id="beliPage">
-      <div class="section-title">Beli AM Premium</div>
-      <div class="card" style="padding:20px;text-align:center">
-        <p style="font-size:15px;font-weight:700;margin-bottom:8px">Akun Alight Motion Premium</p>
-        <p style="margin-bottom:16px;color:var(--muted);font-size:13px">Bayar via QRIS, isi nomor WA, tunggu konfirmasi admin.</p>
-        <img src="/qris.jpg" alt="QRIS" style="width:180px;height:180px;margin:0 auto 12px;border-radius:12px;background:#fff;padding:6px" onerror="this.outerHTML='<p style=\'color:var(--muted)\'>QRIS belum tersedia</p>'"/>
-        <p style="font-size:12px;color:var(--muted);margin-bottom:16px">NMID: ID1026505383244 · balleditz_</p>
-        <div class="form-group" style="text-align:left">
-          <label>Nomor WhatsApp</label>
-          <input type="tel" class="form-input" id="beliWA" placeholder="08xxxxxxxxxx" />
-        </div>
-        <div class="form-group" style="text-align:left">
-          <label>Jumlah Transfer (min. Rp1)</label>
-          <input type="number" class="form-input" id="beliAmount" placeholder="1000" min="1" />
-        </div>
-        <div class="form-group" style="text-align:left">
-          <label>Bukti Transfer (opsional)</label>
-          <input type="file" class="form-input" id="beliProof" accept="image/*" onchange="previewProof(this)" />
-          <img id="proofPreview" style="width:100%;max-height:120px;object-fit:cover;border-radius:8px;margin-top:8px;display:none" />
-        </div>
-        <button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="submitOrder()">Pesan AM Premium</button>
-        <div id="beliStatus" style="margin-top:12px;font-size:13px"></div>
-      </div>
-      <div id="orderList" style="margin-top:16px"></div>
-    </div>
-<div class="page" id="favPage">
+    <div class="page" id="favPage">
       <button class="back" onclick="navigate('home')">← Kembali</button>
       <div class="section">
         <div class="section-title">Favorit</div>
@@ -724,11 +780,39 @@
       </div>
     </div>
 
+    <div class="page" id="premiumPage">
+      <div class="prem-hero">
+        <div class="prem-crown"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5L3 8z"/></svg></div>
+        <h2>Alight Motion Premium</h2>
+        <p>Buka semua fitur, tanpa watermark.</p>
+        <ul class="prem-ben" id="premBenefits"></ul>
+      </div>
+      <div class="prem-notice" id="premNotice" hidden>Toko belum diatur. Buka Admin &gt; Toko, lalu isi harga, cara bayar, dan QRIS.</div>
+      <div class="section" style="margin-top:26px">
+        <div class="section-title">Paket</div>
+        <div class="packs" id="premPacks"></div>
+      </div>
+      <div class="section">
+        <div class="section-title">Cara beli</div>
+        <div class="steps3"><div>Tekan Beli dan isi data pesanan</div><div>Bayar, lalu upload bukti di halaman konfirmasi</div><div>Premium diaktifkan setelah pembayaran dicek</div></div>
+      </div>
+      <div class="section">
+        <div class="section-title">Cek pesanan</div>
+        <form class="prem-check" onsubmit="return storeCheck(event)" autocomplete="off">
+          <input class="form-input" id="premCode" placeholder="AMP-XXXXXX" autocapitalize="characters" autocomplete="off" />
+          <button class="btn btn-primary" type="submit">Cek</button>
+        </form>
+        <div id="premCheckResult"></div>
+        <div class="section-title" id="premMineTitle" hidden style="margin-top:24px;font-size:15px">Pesanan kamu</div>
+        <div id="premMine"></div>
+      </div>
+    </div>
+
     <div class="page" id="adminPage">
       <div id="adminLogin" class="login-box">
         <h2>Admin</h2>
         <p>Password: <code>kenzie</code></p>
-        <div class="form-group"><label>Password / Email</label><input type="text" class="form-input" id="adminPass" placeholder="Password atau email admin" /></div>
+        <div class="form-group"><label>Password</label><input type="password" class="form-input" id="adminPass" /></div>
         <button class="btn btn-primary" style="width:100%" onclick="adminLogin()">Masuk</button>
         <button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="navigate('home')">Kembali</button>
       </div>
@@ -742,6 +826,8 @@
             <button class="btn btn-outline glass-btn" onclick="document.getElementById('avatarInput').click()">Foto Profil</button>
             <button class="btn btn-outline glass-btn" onclick="adminLogout()">Logout</button>
             <button class="btn btn-outline glass-btn" id="fxBtn" onclick="cycleEffect()">Efek: Low</button>
+            <button class="btn btn-outline glass-btn" onclick="openShopModal()">Toko</button>
+            <button class="btn btn-outline glass-btn" onclick="openOrdersModal()">Pesanan</button>
             <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="uploadAvatar(this)" />
           </div>
         </div>
@@ -758,9 +844,10 @@
     <button class="nav-item" onclick="document.getElementById('searchInput').focus()">
       <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>Cari
     </button>
-    <button class="nav-item" data-page="beli" onclick="navigate('beli')">
-      <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Beli
-    </button>
+    <button class="nav-item" data-page="premium" onclick="navigate('premium')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5L3 8z"/></svg>
+        <span>Premium</span>
+      </button>
     <button class="nav-item" data-page="music" onclick="navigate('music')">
       <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>Musik
     </button>
@@ -770,6 +857,10 @@
   </nav>
 
   
+
+  <div class="overlay" id="orderModal"><div class="modal" id="orderBody"></div></div>
+  <div class="overlay" id="shopModal"><div class="modal" id="shopBody"></div></div>
+  <div class="overlay" id="ordersModal"><div class="modal" id="ordersBody"></div></div>
 
   <div class="mini-player" id="miniPlayer" hidden>
     <div class="mp-bar" id="mpBar"><i id="mpFill"></i></div>
@@ -998,53 +1089,7 @@
     }
     function setHash(h) { try { history.replaceState(null,'',h); } catch {} }
 
-    
-    function previewProof(input) {
-      const file = input.files && input.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = async e => {
-        document.getElementById('proofPreview').src = e.target.result;
-        document.getElementById('proofPreview').style.display = 'block';
-        window._proofData = e.target.result;
-        // Detect amount from image
-        try {
-          const result = await Tesseract.recognize(e.target.result, 'eng');
-          const text = result.data.text;
-          const nums = text.match(/[0-9.,]+/g) || [];
-          const amounts = nums.map(n => parseInt(n.replace(/[.,]/g, ''))).filter(n => n >= 1 && n < 100000000);
-          if (amounts.length) {
-            const max = Math.max(...amounts);
-            document.getElementById('beliAmount').value = max;
-            toast('Terdeteksi: Rp' + max.toLocaleString('id-ID'), 'ok');
-          }
-        } catch(err) { console.warn('OCR:', err); }
-      };
-      reader.readAsDataURL(file);
-    }
-    function submitOrder() {
-      const wa = document.getElementById('beliWA').value.trim();
-      const amount = parseInt(document.getElementById('beliAmount').value) || 0;
-      if (!wa || wa.length < 10) { toast('Isi nomor WhatsApp', 'err'); return; }
-      if (amount < 1) { toast('Minimal Rp1', 'err'); return; }
-      const order = { wa, time: Date.now(), status: 'pending', id: 'ORD-' + Date.now().toString(36).toUpperCase(), proof: window._proofData || '', amount: amount };
-      const orders = JSON.parse(localStorage.getItem('kenzie_orders') || '[]');
-      orders.unshift(order);
-      localStorage.setItem('kenzie_orders', JSON.stringify(orders));
-      if (db) db.ref('orders/' + order.id).set(order).catch(() => {});
-      document.getElementById('beliStatus').innerHTML = '<span style="color:var(--green)">Pesanan ' + order.id + ' terkirim! Menunggu konfirmasi admin.</span>';
-      document.getElementById('beliWA').value = ''; document.getElementById('proofPreview').style.display='none'; window._proofData='';
-      renderOrders();
-    }
-    function renderOrders() {
-      const orders = JSON.parse(localStorage.getItem('kenzie_orders') || '[]');
-      const el = document.getElementById('orderList');
-      if (!orders.length) { el.innerHTML = ''; return; }
-      el.innerHTML = '<div class="section-title" style="font-size:16px">Pesanan Saya</div>' + orders.slice(0,5).map(o => 
-        '<div class="card" style="padding:12px;margin-bottom:8px"><div style="display:flex;justify-content:space-between"><b>' + o.id + '</b><span style="color:' + (o.status==='confirmed'?'var(--green)':'var(--amber)') + '">' + (o.status==='confirmed'?'Dikonfirmasi':'Menunggu') + '</span></div><div style="font-size:12px;color:var(--muted);margin-top:4px">' + o.wa + '</div></div>'
-      ).join('');
-    }
-function navigate(page, id) {
+    function navigate(page, id) {
       if (siteMode === 'private' && !isAdmin && page !== 'admin') {
         // Force to admin login if private and not authenticated
         window.scrollTo(0,0); currentPage = 'admin';
@@ -1065,7 +1110,7 @@ function navigate(page, id) {
       } else if (page === 'detail' && id) {
         document.getElementById('detailPage').classList.add('active');
         setHash('#preset/' + id); renderDetail(id); trackView(id);
-      } else if (page === 'beli') { document.getElementById('beliPage').classList.add('active'); renderOrders(); return; } if (page === 'favorites') {
+      } else if (page === 'favorites') {
         document.getElementById('favPage').classList.add('active');
         setHash('#favorit'); document.querySelector('.nav-item[data-page="favorites"]')?.classList.add('active');
         renderFavorites();
@@ -1077,6 +1122,9 @@ function navigate(page, id) {
         document.getElementById('musicPage').classList.add('active');
         setHash('#musik'); document.querySelector('.nav-item[data-page="music"]')?.classList.add('active');
         musicOpen();
+      } else if (page === 'premium') {
+        document.getElementById('premiumPage').classList.add('active'); setHash('#premium');
+        document.querySelector('.nav-item[data-page="premium"]')?.classList.add('active'); renderPremium();
       }
     }
     function parseRoute() {
@@ -1084,7 +1132,7 @@ function navigate(page, id) {
       if (h.startsWith('preset/')) { const id = h.slice(7).split(/[/?#]/)[0]; if (id) { navigate('detail', id); return; } }
       if (/^RYZ-\d+/i.test(h)) { navigate('detail', h.split(/[/?#]/)[0].toUpperCase()); return; }
       if (h === 'favorit' || h === 'favorites') navigate('favorites');
-      else if (h === 'admin') navigate('admin'); else if (h === 'musik' || h === 'music') navigate('music');
+      else if (h === 'admin') navigate('admin'); else if (h === 'musik' || h === 'music') navigate('music'); else if (h === 'premium') navigate('premium');
       else navigate('home');
     }
     function none(m) { return `<div class="empty" style="grid-column:1/-1"><p>${m}</p></div>`; }
@@ -1166,7 +1214,7 @@ function navigate(page, id) {
       document.getElementById('adminLogin').style.display='none'; 
       document.getElementById('adminPanel').style.display='block'; 
       updateModeButton();
-      renderAdminTable(); renderAdminOrders(); 
+      renderAdminTable(); 
     }
     function updateModeButton() {
       const btn = document.getElementById('modeToggleBtn');
@@ -1182,17 +1230,7 @@ function navigate(page, id) {
       updateModeButton();
       toast(siteMode === 'private' ? 'Mode Private aktif' : 'Mode Public aktif', 'ok');
     }
-    
-    function autoBackup() {
-      const backup = { presets, timestamp: new Date().toISOString(), count: presets.length };
-      try {
-        localStorage.setItem('kenzie_backup', JSON.stringify(backup));
-        if (db) db.ref('backups/' + Date.now()).set(backup).catch(() => {});
-      } catch(e) {}
-    }
-    // Auto backup every 5 minutes if admin
-    setInterval(() => { if (isAdmin && presets.length) autoBackup(); }, 300000);
-function downloadPresetsJson() {
+    function downloadPresetsJson() {
       const blob = new Blob([JSON.stringify(presets, null, 2)], {type:'application/json'});
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -1200,44 +1238,10 @@ function downloadPresetsJson() {
       a.click();
       toast('presets.json diunduh — upload ke GitHub agar semua orang bisa lihat', 'ok');
     }
-    function adminLogin() {
-  const pass = document.getElementById('adminPass').value;
-  if (pass === ADMIN_PASS) {
-    isAdmin = true; lsSet(ADMIN_KEY, '1'); showAdminPanel(); toast('Login OK', 'ok');
-  } else {
-    // Try Firebase Auth if email format
-    if (pass.includes('@') && firebase.auth) {
-      firebase.auth().signInWithEmailAndPassword(pass, ADMIN_PASS).then(() => {
-        isAdmin = true; lsSet(ADMIN_KEY, '1'); showAdminPanel(); toast('Login Auth OK', 'ok');
-      }).catch(() => toast('Password salah', 'err'));
-    } else {
-      toast('Password salah', 'err');
-    }
-  }
-}
+    function adminLogin() { if(document.getElementById('adminPass').value===ADMIN_PASS){ isAdmin=true; lsSet(ADMIN_KEY,'1'); showAdminPanel(); toast('Login OK','ok'); } else toast('Password salah','err'); }
     function adminLogout() { isAdmin=false; lsDel(ADMIN_KEY); showAdminLogin(); toast('Logout','ok'); }
-    function askDelete(id) { clearTimeout(delTimer); if(delArm===id){ delArm=null; deletePreset(id); return; } delArm=id; renderAdminTable(); renderAdminOrders(); delTimer=setTimeout(()=>{delArm=null;renderAdminTable(); renderAdminOrders();},3000); }
-    
-    function renderAdminOrders() {
-      const orders = JSON.parse(localStorage.getItem('kenzie_orders') || '[]');
-      const el = document.getElementById('adminOrders');
-      if (!el) return;
-      if (!orders.length) { el.innerHTML = '<p style="color:var(--muted);font-size:13px">Belum ada pesanan</p>'; return; }
-      el.innerHTML = orders.map(o => 
-        '<div class="admin-card" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center"><div><b>' + o.id + '</b><div style="font-size:12px;color:var(--muted)">' + o.wa + '</div></div><div>' +
-        (o.status === 'confirmed' ? '<span style="color:var(--green)">✓</span>' : '<button class="btn-xs fill" onclick="confirmOrder(\'' + o.id + '\')">Konfirmasi</button>') +
-        '</div></div></div>'
-      ).join('');
-    }
-    function confirmOrder(id) {
-      const orders = JSON.parse(localStorage.getItem('kenzie_orders') || '[]');
-      const idx = orders.findIndex(o => o.id === id);
-      if (idx >= 0) { orders[idx].status = 'confirmed'; localStorage.setItem('kenzie_orders', JSON.stringify(orders)); }
-      if (db) db.ref('orders/' + id + '/status').set('confirmed').catch(() => {});
-      renderAdminOrders();
-      toast('Pesanan dikonfirmasi', 'ok');
-    }
-function renderAdminTable() {
+    function askDelete(id) { clearTimeout(delTimer); if(delArm===id){ delArm=null; deletePreset(id); return; } delArm=id; renderAdminTable(); delTimer=setTimeout(()=>{delArm=null;renderAdminTable();},3000); }
+    function renderAdminTable() {
       const el = document.getElementById('adminTableBody');
       if (!presets.length) { el.innerHTML = '<p style="text-align:center;color:var(--muted);padding:20px">Belum ada preset</p>'; return; }
       el.innerHTML = presets.map(p => {
@@ -1301,7 +1305,7 @@ function renderAdminTable() {
     function closeModal() { document.getElementById('presetModal').classList.remove('show'); document.body.classList.remove('modal-open'); }
     function openLinkModal(id) { const p=presets.find(x=>x.id===id); if(!p) return; document.getElementById('linkEditId').value=id; document.getElementById('linkModalName').textContent=p.id+' · '+p.name; document.getElementById('fLinkOnly').value=p.link||''; document.getElementById('linkModal').classList.add('show'); document.body.classList.add('modal-open'); setTimeout(()=>document.getElementById('fLinkOnly').focus(),50); }
     function closeLinkModal() { document.getElementById('linkModal').classList.remove('show'); document.body.classList.remove('modal-open'); }
-    function saveLink() { const id=document.getElementById('linkEditId').value, val=document.getElementById('fLinkOnly').value.trim(); if(!isShareLink(val)){ toast('Link Alight Motion tidak valid','err'); return; } const idx=presets.findIndex(x=>x.id===id); if(idx<0) return; presets[idx].link=val; saveData(); closeLinkModal(); renderAdminTable(); renderAdminOrders(); toast('Link tersimpan','ok'); }
+    function saveLink() { const id=document.getElementById('linkEditId').value, val=document.getElementById('fLinkOnly').value.trim(); if(!isShareLink(val)){ toast('Link Alight Motion tidak valid','err'); return; } const idx=presets.findIndex(x=>x.id===id); if(idx<0) return; presets[idx].link=val; saveData(); closeLinkModal(); renderAdminTable(); toast('Link tersimpan','ok'); }
     function savePreset() {
       const name=document.getElementById('fName').value.trim(), creator=document.getElementById('fCreator').value.trim();
       if(!name||!creator){ toast('Nama & kreator wajib','err'); return; }
@@ -1312,9 +1316,9 @@ function renderAdminTable() {
       const data={name,creator,description:document.getElementById('fDesc').value.trim(),link:linkVal,demo:demoVal,xmlUrl,trending:document.getElementById('fTrending').checked,popular:document.getElementById('fPopular').checked,thumb:document.getElementById('fThumbData').value,video:document.getElementById('fVideo').value.trim()};
       if(editId){ const idx=presets.findIndex(x=>x.id===editId); if(idx>=0) presets[idx]={...presets[idx],...data}; toast('Diperbarui','ok'); }
       else { data.id=nextId(); data.date=new Date().toISOString().slice(0,10); presets.unshift(data); toast('Upload: '+data.id,'ok'); }
-      saveData(); closeModal(); renderAdminTable(); renderAdminOrders(); renderHome();
+      saveData(); closeModal(); renderAdminTable(); renderHome();
     }
-    function deletePreset(id) { presets=presets.filter(p=>p.id!==id); favorites=favorites.filter(f=>f!==id); saveData(); saveFavs(); renderAdminTable(); renderAdminOrders(); toast('Dihapus','ok'); }
+    function deletePreset(id) { presets=presets.filter(p=>p.id!==id); favorites=favorites.filter(f=>f!==id); saveData(); saveFavs(); renderAdminTable(); toast('Dihapus','ok'); }
     function esc(s){ if(!s) return ''; return String(s).replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"'); }
     function toast(msg,type){ const c=document.getElementById('toastContainer'), t=document.createElement('div'); t.className='toast '+(type==='err'?'err':'ok'); t.textContent=msg; c.appendChild(t); setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},2000); }
 
@@ -1499,7 +1503,7 @@ function renderAdminTable() {
       input.blur();
       if (mx.ctl) mx.ctl.abort();
       mx.ctl = new AbortController();
-      const timer = setTimeout(() => mx.ctl && mx.ctl.abort(), 45000);
+      const timer = setTimeout(() => mx.ctl && mx.ctl.abort(), 25000);
       mxShowRaw(false); mxSetStatus('Mencari "' + q + '"…'); mxSkeleton();
       mxEl('musicGo').disabled = true;
       try {
@@ -1516,13 +1520,13 @@ function renderAdminTable() {
         mx.raw = e.raw !== undefined ? e.raw : String(e && e.message || e);
         mxEl('musicList').innerHTML = '';
         const aborted = e && e.name === 'AbortError';
-        mxSetStatus(aborted ? 'Server musik lambat. Coba lagi atau gunakan kata kunci lain.' : ('Gagal mencari: ' + ((e && e.message) || 'tidak bisa terhubung') + ' '), 'err');
+        mxSetStatus(aborted ? 'Pencarian terlalu lama / dibatalkan. Coba lagi.' : ('Gagal mencari: ' + ((e && e.message) || 'tidak bisa terhubung') + ' '), 'err');
       } finally { clearTimeout(timer); mxEl('musicGo').disabled = false; }
       return false;
     }
     function mxEmbed(sp) {
       const box = mxEl('mpEmbed');
-      box.innerHTML = sp ? '<iframe src="https://open.spotify.com/embed/track/' + sp + '?utm_source=generator" width="100%" height="152" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>' : '';
+      box.innerHTML = sp ? '<iframe src="https://open.spotify.com/embed/track/' + sp + '?utm_source=generator" width="100%" height="80" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>' : '';
     }
     function musicPlay(i, force) {
       const t = mx.tracks[i]; if (!t) return;
@@ -1530,16 +1534,13 @@ function renderAdminTable() {
       if (mx.i === i && t.audio && !force) { musicToggle(); return; }
       if (!t.audio && !t.sp) { toast('API tidak memberi sumber audio untuk lagu ini', 'err'); return; }
       mx.i = i;
-      // Prefer Spotify embed for full playback
-      if (t.sp) {
-        a.pause(); a.removeAttribute('src'); mx.playing = false;
-        mxEmbed(t.sp);
-      } else if (t.audio) {
+      if (t.audio) {
         mxEmbed(null);
         a.src = t.audio;
         a.play().catch(() => { mx.playing = false; mxPaint(); toast('Gagal memutar. Coba lagu lain', 'err'); });
       } else {
-        toast('Tidak ada sumber audio', 'err');
+        a.pause(); a.removeAttribute('src'); mx.playing = false;
+        mxEmbed(t.sp);
       }
       const f = mxEl('mpFill'); if (f) f.style.width = '0%';
       mxPaint();
@@ -1579,7 +1580,7 @@ function renderAdminTable() {
     function mxLayout() {
       const mp = mxEl('miniPlayer'), slot = mxEl('mpSlot'), xb = mxEl('mpClose'), t = mx.tracks[mx.i];
       if (!mp || !slot) return;
-      // dock = player ditaruh di bawah pencarian. Di halaman lain: "parked" (disembunyikan, TIDAK dihentikan)
+      // dock = player ditaruh di bawah pencarian. Di halaman lain: "parked" (disembunyikan, TIDAK dihentikan) — tidak muncul mengambang lagi.
       const docked = !!t && mx.dock && currentPage === 'music';
       const parked = !!t && mx.dock && currentPage !== 'music';
       mp.classList.toggle('docked', docked);
@@ -1624,6 +1625,303 @@ function renderAdminTable() {
       });
     })();
 
+
+    // ===== Toko: pembelian Alight Motion Premium (1 paket: 1 Tahun) =====
+    // Firebase: settings/store (harga, cara bayar, QRIS), orders/{kode} (paket, harga, status, publik untuk cek status),
+    // buyers/{kode} (nama, kontak, catatan), proofs/{kode} (foto bukti bayar). Tidak ada WhatsApp.
+    const SHOP_KEY = 'kenzie_shop_v2', ORDERS_KEY = 'kenzie_orders_v1';
+    const SHOP_DEFAULT = {
+      v: 2,
+      payText: 'Bayar sesuai total pesanan, lalu upload bukti pembayaran di halaman konfirmasi.',
+      qris: '',
+      benefits: ['Tanpa watermark', 'Efek, font, dan fitur premium', 'Akun diproses setelah pembayaran dicek'],
+      packages: [{ id: 'p1', name: '1 Tahun', price: 15000, desc: 'Alight Motion Premium 1 tahun', badge: '', on: true }]
+    };
+    const ORDER_ST = { pending: ['Menunggu pembayaran', 'wait'], review: ['Menunggu verifikasi', 'info'], paid: ['Dibayar, diproses', 'info'], done: ['Selesai', 'ok'], cancel: ['Dibatalkan', 'bad'] };
+    const IC_CHECK = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
+    const shopClone = o => JSON.parse(JSON.stringify(o));
+    const shopArr = x => Array.isArray(x) ? x.filter(Boolean) : (x && typeof x === 'object' ? Object.values(x).filter(Boolean) : []);
+    function shopFix(s) {
+      const r = Object.assign(shopClone(SHOP_DEFAULT), s || {});
+      r.benefits = shopArr(r.benefits); if (!r.benefits.length) r.benefits = shopClone(SHOP_DEFAULT.benefits);
+      const p = shopArr(r.packages).find(x => x && x.id === 'p1') || null;
+      r.packages = [Object.assign(shopClone(SHOP_DEFAULT.packages[0]), { price: p ? Number(p.price) || 15000 : 15000 })];
+      if (s && s.v !== 2) { r.packages[0].price = 15000; r.benefits = shopClone(SHOP_DEFAULT.benefits); r.payText = SHOP_DEFAULT.payText; }
+      r.v = 2; return r;
+    }
+    let shop = shopClone(SHOP_DEFAULT), shopConfigured = false;
+    try { const s = JSON.parse(lsGet(SHOP_KEY) || 'null'); if (s && typeof s === 'object') { shop = shopFix(s); shopConfigured = true; } } catch {}
+    const $s = id => document.getElementById(id);
+
+    async function fbGet(path) { const r = await fetch(FB_REST + '/' + path + '.json'); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }
+    async function fbPut(path, val) {
+      if (db) { await db.ref(path).set(val); return; }
+      const r = await fetch(FB_REST + '/' + path + '.json', { method: 'PUT', body: JSON.stringify(val) });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+    }
+    async function fbDel(path) {
+      if (db) { await db.ref(path).remove(); return; }
+      const r = await fetch(FB_REST + '/' + path + '.json', { method: 'DELETE' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+    }
+    function fmtRp(n) { return 'Rp ' + (Number(n) || 0).toLocaleString('id-ID'); }
+    function waDigits(s) { let d = String(s || '').replace(/\D/g, ''); if (d.startsWith('0')) d = '62' + d.slice(1); return d; }
+    function fmtDate(t) { try { return new Date(t).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch { return ''; } }
+    function orderCode() {
+      const A = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789', a = new Uint32Array(6);
+      crypto.getRandomValues(a);
+      return 'AMP-' + Array.from(a, x => A[x % A.length]).join('');
+    }
+    function ordersLocal() { try { const l = JSON.parse(lsGet(ORDERS_KEY) || '[]'); return Array.isArray(l) ? l : []; } catch { return []; } }
+    function stPill(st) { const s = ORDER_ST[st] || ['Tidak diketahui', 'wait']; return '<span class="status ' + s[1] + '">' + s[0] + '</span>'; }
+
+
+    function fmtRp(n) { return 'Rp ' + (Number(n) || 0).toLocaleString('id-ID'); }
+    function fmtDate(t) { try { return new Date(t).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch { return ''; } }
+    function orderCode() {
+      const A = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789', a = new Uint32Array(6);
+      crypto.getRandomValues(a);
+      return 'AMP-' + Array.from(a, x => A[x % A.length]).join('');
+    }
+    function ordersLocal() { try { const l = JSON.parse(lsGet(ORDERS_KEY) || '[]'); return Array.isArray(l) ? l : []; } catch { return []; } }
+    function ordersSave(l) { lsSet(ORDERS_KEY, JSON.stringify(l.slice(0, 30))); }
+    function stPill(st) { const s = ORDER_ST[st] || ['Tidak diketahui', 'wait']; return '<span class="status ' + s[1] + '">' + s[0] + '</span>'; }
+    // kompres gambar -> data URL JPEG
+    function imgToData(file, max, q) {
+      return new Promise((res, rej) => {
+        const rd = new FileReader();
+        rd.onerror = () => rej(new Error('file'));
+        rd.onload = e => {
+          const img = new Image();
+          img.onerror = () => rej(new Error('gambar'));
+          img.onload = () => {
+            let w = img.width, h = img.height;
+            if (w > max || h > max) { if (w > h) { h = Math.round(h * max / w); w = max; } else { w = Math.round(w * max / h); h = max; } }
+            const c = document.createElement('canvas'); c.width = w; c.height = h;
+            const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.drawImage(img, 0, 0, w, h);
+            res(c.toDataURL('image/jpeg', q));
+          };
+          img.src = e.target.result;
+        };
+        rd.readAsDataURL(file);
+      });
+    }
+
+    async function loadShop() {
+      try {
+        const v = await fbGet('settings/store');
+        if (v && typeof v === 'object') { shop = shopFix(v); shopConfigured = true; lsSet(SHOP_KEY, JSON.stringify(shop)); }
+      } catch (e) { console.warn('shop', e); }
+      renderPremium();
+    }
+
+    /* ---------- Halaman Premium ---------- */
+    function renderPremium() {
+      const ben = $s('premBenefits'); if (!ben) return;
+      ben.innerHTML = shop.benefits.map(b => '<li><span class="ck">' + IC_CHECK + '</span>' + esc(b) + '</li>').join('');
+      const p = shop.packages[0];
+      $s('premPacks').innerHTML =
+        '<div class="pack feat"><div class="pack-info"><div class="pack-name">' + esc(p.name) + '</div><div class="pack-desc">' + esc(p.desc || '') + '</div></div>' +
+        '<div class="pack-buy"><div class="pack-price">' + fmtRp(p.price) + '</div>' +
+        '<button class="btn btn-primary" type="button" onclick="storeBuy(\'' + esc(p.id) + '\')">Beli</button></div></div>';
+      const note = $s('premNotice');
+      if (note) note.hidden = !(isAdmin && !shopConfigured);
+      renderMine();
+    }
+    function renderMine() {
+      const list = ordersLocal().slice(0, 8), box = $s('premMine'), title = $s('premMineTitle');
+      if (!box) return;
+      title.hidden = !list.length;
+      box.innerHTML = list.map(o =>
+        '<div class="order-row"><div class="or-main"><div class="or-code">' + esc(o.code) + '</div><div class="or-sub">' + esc(o.pkg) + ' · ' + fmtRp(o.price) + ' · ' + fmtDate(o.t) + '</div></div>' +
+        '<span class="or-st" data-ost="' + esc(o.code) + '">' + stPill('pending') + '</span></div>').join('');
+      list.forEach(o => {
+        fbGet('orders/' + o.code + '/status').then(st => {
+          const el = document.querySelector('[data-ost="' + o.code + '"]'); if (!el) return;
+          el.innerHTML = st ? stPill(st) : '<span class="status wait">Belum tercatat</span>';
+          if (st === 'pending') el.innerHTML += '<button class="btn-xs fill or-pay" type="button" onclick="openConfirm(\'' + o.code + '\')">Upload bukti</button>';
+        }).catch(() => {});
+      });
+    }
+
+    /* ---------- Checkout ---------- */
+    function openStoreModal(id) { $s(id).classList.add('show'); document.body.classList.add('modal-open'); }
+    function closeStoreModal(id) { $s(id).classList.remove('show'); if (!document.querySelector('.overlay.show')) document.body.classList.remove('modal-open'); }
+    function storeBuy(pid) {
+      const p = shop.packages.find(x => x.id === pid); if (!p) return;
+      const last = ordersLocal()[0] || {};
+      $s('orderBody').innerHTML =
+        '<h3>Beli Premium</h3>' +
+        '<div class="order-sum"><div><div class="pack-name">' + esc(p.name) + '</div><div class="pack-desc">' + esc(p.desc || 'Alight Motion Premium') + '</div></div><div class="pack-price">' + fmtRp(p.price) + '</div></div>' +
+        '<form onsubmit="return submitOrder(event,\'' + esc(p.id) + '\')" autocomplete="on">' +
+          '<div class="form-group"><label>Nama *</label><input class="form-input" id="oName" required autocomplete="name" value="' + esc(last.name || '') + '" /></div>' +
+          '<div class="form-group"><label>Kontak WhatsApp (opsional)</label><input class="form-input" id="oWa" type="tel" inputmode="tel" placeholder="08xxxxxxxxxx" autocomplete="tel" value="' + esc(last.wa || '') + '" /></div>' +
+          '<p class="order-hint">Setelah ini kamu masuk ke halaman konfirmasi untuk bayar dan upload bukti.</p>' +
+          '<div class="modal-actions"><button class="btn btn-outline" type="button" onclick="closeStoreModal(\'orderModal\')">Batal</button><button class="btn btn-primary" type="submit" id="oGo">Lanjut</button></div>' +
+        '</form>';
+      openStoreModal('orderModal');
+    }
+    async function submitOrder(ev, pid) {
+      ev.preventDefault();
+      const p = shop.packages.find(x => x.id === pid); if (!p) return false;
+      const name = $s('oName').value.trim(), wa = $s('oWa').value.trim();
+      if (!name) { toast('Isi nama dulu', 'err'); return false; }
+      $s('oGo').disabled = true;
+      const rec = { code: orderCode(), pid: p.id, pkg: p.name, price: Number(p.price) || 0, status: 'pending', t: Date.now() };
+      let synced = true;
+      try {
+        await fbPut('orders/' + rec.code, { pid: rec.pid, pkg: rec.pkg, price: rec.price, status: 'pending', t: rec.t });
+        await fbPut('buyers/' + rec.code, { name, wa });
+      } catch (e) { synced = false; console.warn('order', e); toast('Pesanan belum masuk server, coba lagi', 'err'); $s('oGo').disabled = false; return false; }
+      const list = ordersLocal(); list.unshift(Object.assign({}, rec, { name, wa, synced })); ordersSave(list);
+      renderMine(); openConfirm(rec.code);
+      return false;
+    }
+
+    /* ---------- Halaman konfirmasi + upload bukti ---------- */
+    let cfData = '';
+    function openConfirm(code) {
+      const o = ordersLocal().find(x => x.code === code) || { code, pkg: shop.packages[0].name, price: shop.packages[0].price };
+      cfData = '';
+      $s('orderBody').innerHTML =
+        '<h3>Konfirmasi Pembayaran</h3>' +
+        '<button class="order-code" type="button" onclick="copyText(\'' + esc(o.code) + '\',\'Kode disalin!\')" title="Salin kode">' + esc(o.code) + '<small>Kode pesanan, ketuk untuk menyalin</small></button>' +
+        '<div class="order-sum"><div><div class="pack-name">' + esc(o.pkg) + '</div><div class="pack-desc">Total bayar</div></div><div class="pack-price">' + fmtRp(o.price) + '</div></div>' +
+        '<div class="order-pay"><b>Cara bayar</b><p>' + esc(shop.payText || '') + '</p>' + (shop.qris ? '<img class="qris" src="' + esc(shop.qris) + '" alt="QRIS" />' : '') + '</div>' +
+        '<div class="form-group"><label>Bukti pembayaran *</label>' +
+          '<input type="file" id="cfFile" accept="image/*" style="display:none" onchange="cfPick(this)" />' +
+          '<button type="button" class="upload-box" id="cfBox" onclick="document.getElementById(\'cfFile\').click()">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>' +
+            '<span>Pilih foto atau screenshot</span></button>' +
+          '<img class="proof-prev" id="cfPrev" alt="" hidden /></div>' +
+        '<div class="form-group"><label>Catatan (opsional)</label><input class="form-input" id="cfNote" placeholder="Mis. nama pengirim" /></div>' +
+        '<div class="modal-actions"><button class="btn btn-outline" type="button" onclick="closeStoreModal(\'orderModal\')">Nanti</button><button class="btn btn-primary" type="button" id="cfGo" onclick="cfSend(\'' + esc(o.code) + '\')">Kirim konfirmasi</button></div>' +
+        '<p class="order-hint">Belum bayar? Tutup saja, kode pesananmu tersimpan. Upload bukti kapan saja lewat Premium &gt; Pesanan kamu.</p>';
+      openStoreModal('orderModal');
+    }
+    async function cfPick(input) {
+      const f = input.files && input.files[0]; if (!f) return;
+      try {
+        cfData = await imgToData(f, 1100, 0.78);
+        const im = $s('cfPrev'); im.src = cfData; im.hidden = false; $s('cfBox').classList.add('has');
+        $s('cfBox').querySelector('span').textContent = 'Ganti foto';
+      } catch (e) { cfData = ''; toast('Gambar tidak bisa dibaca', 'err'); }
+    }
+    async function cfSend(code) {
+      if (!cfData) { toast('Upload bukti pembayaran dulu', 'err'); return; }
+      const btn = $s('cfGo'); btn.disabled = true; btn.textContent = 'Mengirim...';
+      try {
+        await fbPut('proofs/' + code, { img: cfData, note: ($s('cfNote').value || '').trim(), t: Date.now() });
+        await fbPut('orders/' + code + '/status', 'review');
+        const l = ordersLocal(), o = l.find(x => x.code === code); if (o) { o.status = 'review'; ordersSave(l); }
+        $s('orderBody').innerHTML =
+          '<h3>Konfirmasi terkirim</h3>' +
+          '<div class="order-done"><div class="ck big">' + IC_CHECK + '</div><b>Bukti pembayaran sudah dikirim</b><p>Admin akan mengecek lalu mengaktifkan premium. Pantau status dengan kode di bawah.</p></div>' +
+          '<div class="order-code" style="cursor:default">' + esc(code) + '</div>' +
+          '<div class="modal-actions"><button class="btn btn-primary" type="button" onclick="closeStoreModal(\'orderModal\')">Selesai</button></div>';
+        renderMine();
+      } catch (e) { btn.disabled = false; btn.textContent = 'Kirim konfirmasi'; toast('Gagal mengirim: ' + (e.message || 'server'), 'err'); }
+    }
+    async function storeCheck(ev) {
+      if (ev && ev.preventDefault) ev.preventDefault();
+      const code = $s('premCode').value.trim().toUpperCase(), box = $s('premCheckResult');
+      if (!/^AMP-[A-Z0-9]{4,10}$/.test(code)) { box.innerHTML = '<div class="status bad" style="margin-top:10px">Format kode tidak valid</div>'; return false; }
+      box.innerHTML = '<div class="order-hint">Memeriksa…</div>';
+      try {
+        const o = await fbGet('orders/' + code);
+        box.innerHTML = o ? '<div class="order-row"><div class="or-main"><div class="or-code">' + esc(code) + '</div><div class="or-sub">' + esc(o.pkg) + ' · ' + fmtRp(o.price) + ' · ' + fmtDate(o.t) + '</div></div><span class="or-st">' + stPill(o.status) +
+          (o.status === 'pending' ? '<button class="btn-xs fill or-pay" type="button" onclick="openConfirm(\'' + code + '\')">Upload bukti</button>' : '') + '</span></div>'
+          : '<div class="status bad" style="margin-top:10px">Pesanan tidak ditemukan</div>';
+      } catch (e) { box.innerHTML = '<div class="status bad" style="margin-top:10px">Gagal memeriksa, coba lagi</div>'; }
+      return false;
+    }
+
+    /* ---------- Admin: Toko ---------- */
+    function openShopModal() {
+      $s('shopBody').innerHTML =
+        '<h3>Atur Toko</h3>' +
+        '<div class="form-group"><label>Harga Premium 1 Tahun (Rp)</label><input class="form-input" id="sPrice" inputmode="numeric" value="' + esc(shop.packages[0].price) + '" /></div>' +
+        '<div class="form-group"><label>Cara bayar (tampil di halaman konfirmasi)</label><textarea class="form-input" id="sPay">' + esc(shop.payText) + '</textarea></div>' +
+        '<div class="form-group"><label>QRIS / barcode pembayaran</label><input type="file" id="sQrisFile" accept="image/*" style="display:none" onchange="shopQris(this)" />' +
+          '<div class="pk-qris"><img id="sQrisImg" alt="" ' + (shop.qris ? 'src="' + esc(shop.qris) + '"' : 'hidden') + ' /><div class="pk-qris-btns"><button type="button" class="btn btn-outline" onclick="document.getElementById(\'sQrisFile\').click()">Pilih gambar</button>' +
+          '<button type="button" class="btn-xs danger" onclick="shopQrisClear()">Hapus</button></div></div></div>' +
+        '<div class="form-group"><label>Keuntungan (satu baris satu poin)</label><textarea class="form-input" id="sBen">' + esc(shop.benefits.join('\n')) + '</textarea></div>' +
+        '<div class="modal-actions"><button class="btn btn-outline" type="button" onclick="closeStoreModal(\'shopModal\')">Batal</button><button class="btn btn-primary" type="button" onclick="shopSaveForm()">Simpan</button></div>';
+      $s('shopBody').dataset.qris = shop.qris || '';
+      openStoreModal('shopModal');
+    }
+    async function shopQris(input) {
+      const f = input.files && input.files[0]; if (!f) return;
+      try { const d = await imgToData(f, 720, 0.9); $s('shopBody').dataset.qris = d; const im = $s('sQrisImg'); im.src = d; im.hidden = false; }
+      catch (e) { toast('Gambar tidak bisa dibaca', 'err'); }
+    }
+    function shopQrisClear() { $s('shopBody').dataset.qris = ''; const im = $s('sQrisImg'); im.removeAttribute('src'); im.hidden = true; }
+    async function shopSaveForm() {
+      const price = Number($s('sPrice').value.replace(/\D/g, '')) || 0;
+      if (price < 1) { toast('Isi harga dengan benar', 'err'); return; }
+      const next = shopFix({
+        v: 2, payText: $s('sPay').value.trim(), qris: $s('shopBody').dataset.qris || '',
+        benefits: $s('sBen').value.split('\n').map(s => s.trim()).filter(Boolean),
+        packages: [{ id: 'p1', price }]
+      });
+      try {
+        await fbPut('settings/store', next);
+        shop = next; shopConfigured = true; lsSet(SHOP_KEY, JSON.stringify(shop));
+        closeStoreModal('shopModal'); renderPremium(); toast('Toko disimpan', 'ok');
+      } catch (e) { toast('Gagal menyimpan: ' + (e.message || 'server'), 'err'); }
+    }
+
+    /* ---------- Admin: Pesanan ---------- */
+    let adminOrders = [], adminBuyers = {};
+    async function openOrdersModal() {
+      openStoreModal('ordersModal');
+      $s('ordersBody').innerHTML = '<h3>Pesanan</h3><div class="order-hint">Memuat…</div>';
+      try {
+        const v = await fbGet('orders');
+        adminOrders = v ? Object.entries(v).map(([code, o]) => Object.assign({ code }, o)).sort((a, b) => (b.t || 0) - (a.t || 0)) : [];
+        try { adminBuyers = (await fbGet('buyers')) || {}; } catch { adminBuyers = {}; }
+        renderOrdersAdmin();
+      } catch (e) { $s('ordersBody').innerHTML = '<h3>Pesanan</h3><div class="status bad">Gagal memuat (cek aturan Firebase)</div>'; }
+    }
+    function renderOrdersAdmin() {
+      const rows = adminOrders.length ? adminOrders.map(o => {
+        const b = adminBuyers[o.code] || {};
+        return '<div class="adm-order"><div class="ao-top"><span class="admin-card-id">' + esc(o.code) + '</span>' + stPill(o.status) + '</div>' +
+        '<div class="admin-card-name">' + esc(o.pkg) + ' · ' + fmtRp(o.price) + '</div><div class="admin-card-meta">' + fmtDate(o.t) + '</div>' +
+        '<div class="ao-buyer"><b>' + esc(b.name || '-') + '</b>' + (b.wa ? '<span>' + esc(b.wa) + '</span>' : '') + '</div>' +
+        '<div class="ao-proof" id="proof-' + o.code + '"><button class="btn-xs" type="button" onclick="orderProof(\'' + o.code + '\')">Lihat bukti bayar</button></div>' +
+        '<div class="ao-actions">' +
+          '<button class="btn-xs" onclick="orderSet(\'' + o.code + '\',\'paid\')">Dibayar</button>' +
+          '<button class="btn-xs fill" onclick="orderSet(\'' + o.code + '\',\'done\')">Selesai</button>' +
+          '<button class="btn-xs" onclick="orderSet(\'' + o.code + '\',\'cancel\')">Batal</button>' +
+          '<button class="btn-xs danger" onclick="orderDelete(\'' + o.code + '\')">Hapus</button></div></div>';
+      }).join('')
+        : '<div class="empty"><h3>Belum ada pesanan</h3></div>';
+      $s('ordersBody').innerHTML = '<h3>Pesanan (' + adminOrders.length + ')</h3>' + rows +
+        '<div class="modal-actions"><button class="btn btn-outline" onclick="openOrdersModal()">Muat ulang</button><button class="btn btn-primary" onclick="closeStoreModal(\'ordersModal\')">Tutup</button></div>';
+    }
+    async function orderProof(code) {
+      const box = $s('proof-' + code); box.innerHTML = '<span class="order-hint">Memuat…</span>';
+      try {
+        const p = await fbGet('proofs/' + code);
+        box.innerHTML = p && p.img ? '<a href="' + esc(p.img) + '" target="_blank" rel="noopener"><img class="proof-prev" src="' + esc(p.img) + '" alt="Bukti bayar" /></a>' + (p.note ? '<div class="order-hint">Catatan: ' + esc(p.note) + '</div>' : '')
+          : '<span class="order-hint">Belum ada bukti diupload</span>';
+      } catch (e) { box.innerHTML = '<span class="order-hint">Gagal memuat bukti</span>'; }
+    }
+    async function orderSet(code, st) {
+      try { await fbPut('orders/' + code + '/status', st); const o = adminOrders.find(x => x.code === code); if (o) o.status = st; renderOrdersAdmin(); toast('Status diperbarui', 'ok'); }
+      catch (e) { toast('Gagal: ' + (e.message || 'server'), 'err'); }
+    }
+    async function orderDelete(code) {
+      if (!confirm('Hapus pesanan ' + code + '?')) return;
+      try {
+        await fbDel('orders/' + code); try { await fbDel('buyers/' + code); await fbDel('proofs/' + code); } catch {}
+        adminOrders = adminOrders.filter(x => x.code !== code); renderOrdersAdmin(); toast('Dihapus', 'ok'); }
+      catch (e) { toast('Gagal: ' + (e.message || 'server'), 'err'); }
+    }
+    ['orderModal', 'shopModal', 'ordersModal'].forEach(id => $s(id).addEventListener('click', e => { if (e.target === e.currentTarget) closeStoreModal(id); }));
+    renderPremium();
+
     // Theme toggle
     const themeKey = 'kenzie_theme';
     const root = document.documentElement;
@@ -1651,7 +1949,7 @@ function renderAdminTable() {
       lastTouchEnd = now;
     }, { passive: false });
 
-    loadData().then(() => { parseRoute(); loadAvatar(); loadStats(); });
+    loadData().then(() => { parseRoute(); loadAvatar(); loadStats(); loadShop(); });
     const FX_KEY = 'kenzie_fx';
     const fxLevels = ['low', 'med', 'hard'];
     const fxLabels = { low: 'Low', med: 'Medium', hard: 'Hard' };
