@@ -192,7 +192,7 @@ async function verifyLink() {
 async function generateEmail() {
   showMsg('mailMsg', 'Membuat email...', '');
   try {
-    const r = await fetch(MAIL_API + '?action=generate');
+    const r = await fetch(MAIL_API + '?action=create');
     if (!r.ok) throw new Error('API gagal');
     const data = await r.json();
     if (!data.status || !data.email) throw new Error(data.error || 'Gagal buat email');
@@ -201,7 +201,7 @@ async function generateEmail() {
     document.getElementById('tempEmail').textContent = tempAddress;
     showMsg('mailMsg', 'Email dibuat! Auto-cek inbox...', 'ok');
     const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
-    saved.unshift({email: tempAddress, token: tempToken, time: new Date().toISOString()});
+    saved.unshift({email: tempAddress, time: new Date().toISOString()});
     localStorage.setItem('savedEmails', JSON.stringify(saved.slice(0, 20)));
     
 function deleteSavedEmail(index) {
@@ -226,9 +226,9 @@ function copyTempEmail() {
 async function checkInbox() {
   if (!tempAddress) return;
   try {
-    const r = await fetch(MAIL_API + '?action=inbox&email=' + encodeURIComponent(tempAddress) + '&token=' + (tempToken || ''));
+    const r = await fetch(MAIL_API + '?action=inbox&email=' + encodeURIComponent(tempAddress));
     const data = await r.json();
-    console.log('Inbox response:', data); const list = data.inbox_data || data.messages || data.inbox || data.emails || [];
+    console.log('Inbox response:', data); const list = data.messages || data.inbox || data.emails || [];
     const el = document.getElementById('mailList');
     if (!list.length) { 
       el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:12px">Inbox kosong. Kirim email ke ' + (tempAddress || '') + '</p>'; 
