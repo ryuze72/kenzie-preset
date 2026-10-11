@@ -624,6 +624,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
 <body>
   <div class="aurora" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
@@ -682,6 +683,10 @@
         <div class="form-group" style="text-align:left">
           <label>Nomor WhatsApp</label>
           <input type="tel" class="form-input" id="beliWA" placeholder="08xxxxxxxxxx" />
+        </div>
+        <div class="form-group" style="text-align:left">
+          <label>Jumlah Transfer (min. Rp1)</label>
+          <input type="number" class="form-input" id="beliAmount" placeholder="1000" min="1" />
         </div>
         <div class="form-group" style="text-align:left">
           <label>Bukti Transfer (opsional)</label>
@@ -998,17 +1003,31 @@
       const file = input.files && input.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = e => {
+      reader.onload = async e => {
         document.getElementById('proofPreview').src = e.target.result;
         document.getElementById('proofPreview').style.display = 'block';
         window._proofData = e.target.result;
+        // Detect amount from image
+        try {
+          const result = await Tesseract.recognize(e.target.result, 'eng');
+          const text = result.data.text;
+          const nums = text.match(/[0-9.,]+/g) || [];
+          const amounts = nums.map(n => parseInt(n.replace(/[.,]/g, ''))).filter(n => n >= 1 && n < 100000000);
+          if (amounts.length) {
+            const max = Math.max(...amounts);
+            document.getElementById('beliAmount').value = max;
+            toast('Terdeteksi: Rp' + max.toLocaleString('id-ID'), 'ok');
+          }
+        } catch(err) { console.warn('OCR:', err); }
       };
       reader.readAsDataURL(file);
     }
     function submitOrder() {
       const wa = document.getElementById('beliWA').value.trim();
+      const amount = parseInt(document.getElementById('beliAmount').value) || 0;
       if (!wa || wa.length < 10) { toast('Isi nomor WhatsApp', 'err'); return; }
-      const order = { wa, time: Date.now(), status: 'pending', id: 'ORD-' + Date.now().toString(36).toUpperCase(), proof: window._proofData || '' };
+      if (amount < 1) { toast('Minimal Rp1', 'err'); return; }
+      const order = { wa, time: Date.now(), status: 'pending', id: 'ORD-' + Date.now().toString(36).toUpperCase(), proof: window._proofData || '', amount: amount };
       const orders = JSON.parse(localStorage.getItem('kenzie_orders') || '[]');
       orders.unshift(order);
       localStorage.setItem('kenzie_orders', JSON.stringify(orders));
