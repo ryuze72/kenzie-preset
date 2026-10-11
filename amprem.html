@@ -185,31 +185,37 @@ async function verifyLink() {
 async function generateEmail() {
   showMsg('mailMsg', 'Membuat email...', '');
   try {
-    const dom = await fetch(MAIL_API + '/domains').then(r => r.json());
+    const domRes = await fetch(MAIL_API + '/domains');
+    if (!domRes.ok) throw new Error('API tidak tersedia');
+    const dom = await domRes.json();
+    if (!dom['hydra:member']?.length) throw new Error('Domain tidak ditemukan');
     const domain = dom['hydra:member'][0].domain;
-    const user = 'user' + Math.random().toString(36).slice(2, 8);
+    const user = 'u' + Date.now().toString(36);
     const addr = user + '@' + domain;
-    const pass = Math.random().toString(36).slice(2, 12);
-    await fetch(MAIL_API + '/accounts', {
+    const pass = Math.random().toString(36).slice(2, 14);
+    const accRes = await fetch(MAIL_API + '/accounts', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({address: addr, password: pass})
     });
-    const tok = await fetch(MAIL_API + '/token', {
+    if (!accRes.ok) throw new Error('Gagal buat akun');
+    const tokRes = await fetch(MAIL_API + '/token', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({address: addr, password: pass})
-    }).then(r => r.json());
+    });
+    if (!tokRes.ok) throw new Error('Gagal login');
+    const tok = await tokRes.json();
+    if (!tok.token) throw new Error('Token tidak valid');
     tempToken = tok.token;
     tempAddress = addr;
     document.getElementById('tempEmail').textContent = addr;
     showMsg('mailMsg', 'Email dibuat!', 'ok');
-    // Save
     const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
     saved.unshift({email: addr, time: new Date().toISOString()});
     localStorage.setItem('savedEmails', JSON.stringify(saved.slice(0, 20)));
     renderSaved();
-  } catch(e) { showMsg('mailMsg', 'Gagal: ' + e.message, 'err'); }
+  } catch(e) { showMsg('mailMsg', 'Gagal: ' + e.message + '. Coba lagi.', 'err'); }
 }
 function copyTempEmail() {
   const email = document.getElementById('tempEmail').textContent;
