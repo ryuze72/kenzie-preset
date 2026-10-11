@@ -1403,13 +1403,16 @@
       if (mx.i === i && t.audio && !force) { musicToggle(); return; }
       if (!t.audio && !t.sp) { toast('API tidak memberi sumber audio untuk lagu ini', 'err'); return; }
       mx.i = i;
-      if (t.audio) {
+      // Prefer Spotify embed for full playback
+      if (t.sp) {
+        a.pause(); a.removeAttribute('src'); mx.playing = false;
+        mxEmbed(t.sp);
+      } else if (t.audio) {
         mxEmbed(null);
         a.src = t.audio;
         a.play().catch(() => { mx.playing = false; mxPaint(); toast('Gagal memutar. Coba lagu lain', 'err'); });
       } else {
-        a.pause(); a.removeAttribute('src'); mx.playing = false;
-        mxEmbed(t.sp);
+        toast('Tidak ada sumber audio', 'err');
       }
       const f = mxEl('mpFill'); if (f) f.style.width = '0%';
       mxPaint();
