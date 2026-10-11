@@ -1,79 +1,52 @@
 /* Gerbang password halaman admin. Password tidak disimpan polos (PBKDF2-SHA256).
-   Catatan: ini proteksi klien-sisi + hash; untuk production gunakan backend auth. */
+   Catatan: ini pengaman sisi-browser, bukan pengganti keamanan server. */
 (function () {
-  const SALT = 'kenzie-preset|gate|v1';
-  const ITER = 150000;
-  const HASH_HEX = 'abad49864f84d54b53cc83071acd0033da673b63701de655f1735c819138a48e';
-  const KEY = 'kenzie_gate_ok_v1';
-
-  async function pbkdf2(password) {
-    const enc = new TextEncoder();
-    const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
-    const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: enc.encode(SALT), iterations: ITER, hash: 'SHA-256' }, keyMaterial, 256);
-    return Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2, '0')).join('');
+  var SALT = 'kenzie-preset|gate|v1', ITER = 150000, HASH = 'abad49864f84d54b53cc83071acd0033da673b63701de655f1735c819138a48e';
+  var KEY = 'kenzie_gate_v1', TTL = 12 * 3600 * 1000, de = document.documentElement;
+  function ls(f) { try { return f(); } catch (e) { return null; } }
+  function ok() { var v = ls(function () { return JSON.parse(localStorage.getItem(KEY) || 'null'); }); return !!(v && v.h === HASH && Date.now() - v.t < TTL); }
+  function hex(b) { return Array.prototype.map.call(new Uint8Array(b), function (x) { return ('0' + x.toString(16)).slice(-2); }).join(''); }
+  async function derive(pw) {
+    var enc = new TextEncoder(), k = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveBits']);
+    return hex(await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: enc.encode(SALT), iterations: ITER }, k, 256));
   }
-
+  if (ok()) { de.classList.add('gate-ok'); return; }
+  var dark = ls(function () { return localStorage.getItem('kenzie_theme'); });
+  if (!dark) dark = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  var css = document.createElement('style');
+  css.textContent = '#kgate{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;padding:20px;font-family:"Plus Jakarta Sans",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;background:' + (dark === 'dark' ? '#000' : '#f2f2f7') + ';color:' + (dark === 'dark' ? '#fff' : '#000') + '}' +
+    '#kgate i{position:absolute;width:60vmax;height:60vmax;border-radius:50%;filter:blur(70px);opacity:' + (dark === 'dark' ? '.4' : '.5') + ';animation:kg 24s ease-in-out infinite alternate}#kgate i:nth-child(1){background:' + (dark === 'dark' ? '#64d2ff' : '#5ac8fa') + ';top:-20vmax;left:-18vmax}#kgate i:nth-child(2){background:#0a84ff;bottom:-24vmax;right:-20vmax;animation-delay:-8s}' +
+    '@keyframes kg{to{transform:translate3d(6vmax,4vmax,0) scale(1.1)}}' +
+    '#kgate form{position:relative;width:100%;max-width:360px;padding:26px 22px 22px;border-radius:30px;text-align:center;border:.5px solid ' + (dark === 'dark' ? 'rgba(255,255,255,.14)' : 'rgba(255,255,255,.9)') + ';background:' + (dark === 'dark' ? 'linear-gradient(180deg,rgba(255,255,255,.11),rgba(255,255,255,.04))' : 'linear-gradient(180deg,rgba(255,255,255,.8),rgba(255,255,255,.5))') + ';box-shadow:0 24px 64px -24px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.12);backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%)}' +
+    '#kgate .ic{width:56px;height:56px;margin:0 auto 14px;border-radius:18px;display:grid;place-items:center;background:linear-gradient(145deg,#0a84ff,#64d2ff);box-shadow:0 10px 28px -10px rgba(10,132,255,.55)}' +
+    '#kgate .ic svg{width:28px;height:28px;color:#fff}' +
+    '#kgate h1{margin:0 0 6px;font-size:20px;font-weight:800;letter-spacing:-.3px}' +
+    '#kgate p{margin:0 0 18px;font-size:13.5px;opacity:.72;line-height:1.45}' +
+    '#kgate input{width:100%;height:50px;padding:0 16px;border-radius:16px;border:.5px solid ' + (dark === 'dark' ? 'rgba(255,255,255,.14)' : 'rgba(0,0,0,.1)') + ';background:' + (dark === 'dark' ? 'rgba(255,255,255,.06)' : 'rgba(255,255,255,.7)') + ';color:inherit;font:inherit;font-size:16px;outline:0;transition:border-color .2s,box-shadow .2s}' +
+    '#kgate input::placeholder{color:' + (dark === 'dark' ? 'rgba(255,255,255,.35)' : 'rgba(0,0,0,.35)') + '}' +
+    '#kgate input:focus{border-color:#0a84ff;box-shadow:0 0 0 4px rgba(10,132,255,.22)}' +
+    '#kgate button{width:100%;height:50px;margin-top:12px;border:0;border-radius:999px;font:inherit;font-size:15px;font-weight:800;color:#fff;cursor:pointer;background:linear-gradient(180deg,#1a8aff,#007aff);box-shadow:0 8px 20px -8px rgba(0,122,255,.6)}#kgate button:disabled{opacity:.6}' +
+    '#kgate .er{min-height:18px;margin-top:10px;font-size:12.5px;font-weight:700;color:#ff453a}#kgate form.sh{animation:ksh .35s}@keyframes ksh{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}';
+  document.head.appendChild(css);
   function build() {
-    if (sessionStorage.getItem(KEY) === '1') {
-      document.documentElement.classList.add('gate-ok');
-      return;
-    }
-    const overlay = document.createElement('div');
-    overlay.id = 'gate-overlay';
-    overlay.innerHTML = `
-      <div class="gate-box">
-        <h2>🔒 Admin Gate</h2>
-        <p>Masukkan password untuk mengakses panel admin.</p>
-        <input type="password" id="gate-pw" placeholder="Password" autocomplete="current-password" />
-        <button id="gate-btn">Masuk</button>
-        <p id="gate-err" style="color:#f66;display:none;margin-top:8px;"></p>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-    const style = document.createElement('style');
-    style.textContent = `
-      #gate-overlay{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif}
-      .gate-box{background:#1a1a2e;color:#eee;padding:2rem;border-radius:12px;max-width:340px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.4)}
-      .gate-box h2{margin:0 0 .5rem;font-size:1.25rem}
-      .gate-box p{margin:0 0 1rem;opacity:.8;font-size:.9rem}
-      #gate-pw{width:100%;padding:.6rem .8rem;border:1px solid #333;border-radius:8px;background:#0f0f1a;color:#fff;font-size:1rem;box-sizing:border-box;margin-bottom:.75rem}
-      #gate-btn{width:100%;padding:.65rem;border:0;border-radius:8px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-weight:600;cursor:pointer;font-size:1rem}
-      #gate-btn:hover{filter:brightness(1.1)}
-      html:not(.gate-ok) body>*:not(#gate-overlay){visibility:hidden!important}
-    `;
-    document.head.appendChild(style);
-
-    const btn = document.getElementById('gate-btn');
-    const inp = document.getElementById('gate-pw');
-    const err = document.getElementById('gate-err');
-    async function tryLogin() {
-      const pw = inp.value;
-      if (!pw) return;
-      btn.disabled = true;
-      btn.textContent = 'Memeriksa...';
+    var g = document.createElement('div'); g.id = 'kgate';
+    g.innerHTML = '<i></i><i></i><form autocomplete="off"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10.5" width="16" height="10" rx="3"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg></div><h1>Halaman Admin</h1><p>Masukkan password untuk melanjutkan</p><input type="password" id="kgp" placeholder="Password" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false" /><button type="submit">Masuk</button><div class="er" id="kge"></div></form>';
+    document.body.appendChild(g);
+    var f = g.querySelector('form'), inp = g.querySelector('input'), btn = g.querySelector('button'), er = g.querySelector('.er'), fails = 0, until = 0;
+    setTimeout(function () { inp.focus(); }, 50);
+    f.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      if (Date.now() < until) { er.textContent = 'Terlalu banyak percobaan. Tunggu ' + Math.ceil((until - Date.now()) / 1000) + ' detik.'; return; }
+      if (!inp.value) return;
+      btn.disabled = true; er.textContent = '';
       try {
-        const h = await pbkdf2(pw);
-        if (h === HASH_HEX) {
-          sessionStorage.setItem(KEY, '1');
-          document.documentElement.classList.add('gate-ok');
-          overlay.remove();
-        } else {
-          err.style.display = 'block';
-          err.textContent = 'Password salah.';
-          btn.disabled = false;
-          btn.textContent = 'Masuk';
-        }
-      } catch (e) {
-        err.style.display = 'block';
-        err.textContent = 'Error: ' + e.message;
-        btn.disabled = false;
-        btn.textContent = 'Masuk';
-      }
-    }
-    btn.addEventListener('click', tryLogin);
-    inp.addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
-    inp.focus();
+        var h = await derive(inp.value);
+        if (h === HASH) { ls(function () { localStorage.setItem(KEY, JSON.stringify({ h: HASH, t: Date.now() })); }); de.classList.add('gate-ok'); g.remove(); return; }
+        fails++; if (fails >= 5) { until = Date.now() + 30000; fails = 0; }
+        er.textContent = 'Password salah'; inp.value = ''; f.classList.remove('sh'); void f.offsetWidth; f.classList.add('sh'); inp.focus();
+      } catch (x) { er.textContent = 'Browser tidak mendukung (butuh HTTPS)'; }
+      btn.disabled = false;
+    });
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build);
-  else build();
+  if (document.body) build(); else document.addEventListener('DOMContentLoaded', build);
 })();
