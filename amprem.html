@@ -128,7 +128,7 @@ input:focus, textarea:focus { border-color:var(--blue); }
 
 <script>
 const API = 'https://v2.api-varhad.my.id/tools/amprem/verif';
-const MAIL_API = 'https://www.1secmail.com/api/v1';
+const MAIL_API = '/api/tempmail';
 let visitors = 0, verified = 0;
 let tempToken = null, tempAddress = null;
 
@@ -185,7 +185,7 @@ async function verifyLink() {
 async function generateEmail() {
   showMsg('mailMsg', 'Membuat email...', '');
   try {
-    const r = await fetch(MAIL_API + '/?action=genRandomMailbox&count=1');
+    const r = await fetch(MAIL_API + '?action=gen');
     if (!r.ok) throw new Error('API gagal');
     const data = await r.json();
     if (!data || !data[0]) throw new Error('Tidak ada email');
@@ -209,7 +209,7 @@ async function checkInbox() {
   if (!tempAddress) { showMsg('mailMsg', 'Generate email dulu', 'err'); return; }
   try {
     const [login, domain] = tempAddress.split('@');
-    const r = await fetch(MAIL_API + '/?action=getMessages&login=' + login + '&domain=' + domain);
+    const r = await fetch(MAIL_API + '?action=inbox&login=' + login + '&domain=' + domain);
     const list = await r.json();
     const el = document.getElementById('mailList');
     if (!list || !list.length) { el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px">Inbox kosong</p>'; return; }
@@ -219,7 +219,7 @@ async function checkInbox() {
 async function readMail(id) {
   try {
     const [login, domain] = tempAddress.split('@');
-    const r = await fetch(MAIL_API + '/?action=readMessage&login=' + login + '&domain=' + domain + '&id=' + id);
+    const r = await fetch(MAIL_API + '?action=read&login=' + login + '&domain=' + domain + '&id=' + id);
     const m = await r.json();
     const text = m.textBody || m.body || 'Tidak ada isi';
     alert(text);
