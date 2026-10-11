@@ -731,8 +731,8 @@
     <button class="nav-item" onclick="document.getElementById('searchInput').focus()">
       <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>Cari
     </button>
-    <button class="nav-item" data-page="favorites" onclick="navigate('favorites')">
-      <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>Favorit
+    <button class="nav-item" data-page="beli" onclick="navigate('beli')">
+      <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Beli
     </button>
     <button class="nav-item" data-page="music" onclick="navigate('music')">
       <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>Musik
@@ -971,7 +971,28 @@
     }
     function setHash(h) { try { history.replaceState(null,'',h); } catch {} }
 
-    function navigate(page, id) {
+    
+    function submitOrder() {
+      const wa = document.getElementById('beliWA').value.trim();
+      if (!wa || wa.length < 10) { toast('Isi nomor WhatsApp', 'err'); return; }
+      const order = { wa, time: Date.now(), status: 'pending', id: 'ORD-' + Date.now().toString(36).toUpperCase() };
+      const orders = JSON.parse(localStorage.getItem('kenzie_orders') || '[]');
+      orders.unshift(order);
+      localStorage.setItem('kenzie_orders', JSON.stringify(orders));
+      if (db) db.ref('orders/' + order.id).set(order).catch(() => {});
+      document.getElementById('beliStatus').innerHTML = '<span style="color:var(--green)">Pesanan ' + order.id + ' terkirim! Menunggu konfirmasi admin.</span>';
+      document.getElementById('beliWA').value = '';
+      renderOrders();
+    }
+    function renderOrders() {
+      const orders = JSON.parse(localStorage.getItem('kenzie_orders') || '[]');
+      const el = document.getElementById('orderList');
+      if (!orders.length) { el.innerHTML = ''; return; }
+      el.innerHTML = '<div class="section-title" style="font-size:16px">Pesanan Saya</div>' + orders.slice(0,5).map(o => 
+        '<div class="card" style="padding:12px;margin-bottom:8px"><div style="display:flex;justify-content:space-between"><b>' + o.id + '</b><span style="color:' + (o.status==='confirmed'?'var(--green)':'var(--amber)') + '">' + (o.status==='confirmed'?'Dikonfirmasi':'Menunggu') + '</span></div><div style="font-size:12px;color:var(--muted);margin-top:4px">' + o.wa + '</div></div>'
+      ).join('');
+    }
+function navigate(page, id) {
       if (siteMode === 'private' && !isAdmin && page !== 'admin') {
         // Force to admin login if private and not authenticated
         window.scrollTo(0,0); currentPage = 'admin';
@@ -992,7 +1013,7 @@
       } else if (page === 'detail' && id) {
         document.getElementById('detailPage').classList.add('active');
         setHash('#preset/' + id); renderDetail(id); trackView(id);
-      } else if (page === 'favorites') {
+      } else if (page === 'beli') { document.getElementById('beliPage').classList.add('active'); renderOrders(); return; } if (page === 'favorites') {
         document.getElementById('favPage').classList.add('active');
         setHash('#favorit'); document.querySelector('.nav-item[data-page="favorites"]')?.classList.add('active');
         renderFavorites();
