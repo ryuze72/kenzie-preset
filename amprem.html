@@ -182,7 +182,14 @@ async function generateEmail() {
     const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
     saved.unshift({email: tempAddress, time: new Date().toISOString()});
     localStorage.setItem('savedEmails', JSON.stringify(saved.slice(0, 20)));
-    renderSaved();
+    
+function deleteSavedEmail(index) {
+  const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
+  saved.splice(index, 1);
+  localStorage.setItem('savedEmails', JSON.stringify(saved));
+  renderSaved();
+}
+renderSaved();
     // Auto check inbox every 5 seconds
     if (window._inboxTimer) clearInterval(window._inboxTimer);
     window._inboxTimer = setInterval(checkInbox, 5000);
@@ -269,6 +276,7 @@ function renderSaved() {
     <div class="saved-actions">
       <button class="btn btn-send" onclick="checkSavedInbox(${i},this)">Cek inbox</button>
       <button class="btn btn-copy" onclick="copySavedEmail(${i})">Salin email</button>
+      <button class="btn" style="background:#ff718820;color:#ff7188;border-color:#ff718840" onclick="deleteSavedEmail(${i})">Hapus</button>
     </div>
     <div class="saved-inbox" id="savedInbox${i}"></div>
   </div>`).join('');
@@ -315,6 +323,13 @@ function readSavedMail(index, messageIndex) {
   const safeBody = escapeHTML(body).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>').replace(/\n/g,'<br>');
   view.innerHTML = '<div class="ev-from">Dari: ' + escapeHTML(m.from || m.sender || '-') + '</div><div class="ev-subj">' + escapeHTML(m.subject || '(Tanpa subjek)') + '</div><div class="ev-body">' + safeBody + '</div>';
   view.classList.add('show');
+}
+
+function deleteSavedEmail(index) {
+  const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
+  saved.splice(index, 1);
+  localStorage.setItem('savedEmails', JSON.stringify(saved));
+  renderSaved();
 }
 renderSaved();
 </script>
