@@ -671,7 +671,24 @@
       </div>
     </div>
 
-    <div class="page" id="favPage">
+    
+    <div class="page" id="beliPage">
+      <div class="section-title">Beli AM Premium</div>
+      <div class="card" style="padding:20px;text-align:center">
+        <p style="font-size:15px;font-weight:700;margin-bottom:8px">Akun Alight Motion Premium</p>
+        <p style="margin-bottom:16px;color:var(--muted);font-size:13px">Bayar via QRIS, isi nomor WA, tunggu konfirmasi admin.</p>
+        <img src="/qris.jpg" alt="QRIS" style="width:180px;height:180px;margin:0 auto 12px;border-radius:12px;background:#fff;padding:6px" onerror="this.outerHTML='<p style=\'color:var(--muted)\'>QRIS belum tersedia</p>'"/>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:16px">NMID: ID1026505383244 · balleditz_</p>
+        <div class="form-group" style="text-align:left">
+          <label>Nomor WhatsApp</label>
+          <input type="tel" class="form-input" id="beliWA" placeholder="08xxxxxxxxxx" />
+        </div>
+        <button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="submitOrder()">Pesan AM Premium</button>
+        <div id="beliStatus" style="margin-top:12px;font-size:13px"></div>
+      </div>
+      <div id="orderList" style="margin-top:16px"></div>
+    </div>
+<div class="page" id="favPage">
       <button class="back" onclick="navigate('home')">← Kembali</button>
       <div class="section">
         <div class="section-title">Favorit</div>
