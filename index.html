@@ -264,7 +264,11 @@
       width: 100%; margin: 8px 0 3px; font-size: 14.5px; font-weight: 800; line-height: 1.25; letter-spacing: -.01em; cursor: pointer;
       overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
     }
-    .card-meta { width: 100%; margin-bottom: 12px; font-size: 12px; font-weight: 500; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .card-meta { width: 100%; margin-bottom: 8px; font-size: 12px; font-weight: 500; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .card-stats { width: 100%; display: flex; align-items: center; gap: 14px; margin-bottom: 12px; font-size: 11.5px; font-weight: 700; line-height: 1; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .card-stats .stat { display: inline-flex; align-items: center; gap: 5px; }
+    .card-stats svg { flex: 0 0 14px; display: block; opacity: .85; }
+    .chip [data-stat-id] { font-variant-numeric: tabular-nums; }
     .card-actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; }
 
     /* ---------- Buttons ---------- */
@@ -836,7 +840,7 @@
         renderHome();
       } else if (page === 'detail' && id) {
         document.getElementById('detailPage').classList.add('active');
-        setHash('#preset/' + id); renderDetail(id);
+        setHash('#preset/' + id); renderDetail(id); trackView(id);
       } else if (page === 'favorites') {
         document.getElementById('favPage').classList.add('active');
         setHash('#favorit'); document.querySelector('.nav-item[data-page="favorites"]')?.classList.add('active');
@@ -879,8 +883,8 @@
       const badge = currentCat === 'XML' ? 'XML' : (p.link ? '5MB' : 'XML');
       const main = currentCat === 'XML'
         ? (p.xmlUrl ? '<a class="btn-sm primary" href="' + esc(p.xmlUrl) + '" target="_blank" onclick="event.stopPropagation()">Buka XML</a>' : '<button class="btn-sm primary" disabled>XML</button>')
-        : (p.link ? '<a class="btn-sm primary" href="' + esc(p.link) + '" onclick="event.stopPropagation()">Impor</a>' : '<button class="btn-sm primary" disabled>Belum</button>');
-      return '<div class="card"><div class="card-thumb" onclick="navigate(\'detail\',\'' + p.id + '\')">' + thumb + play + '<span class="card-badge">' + badge + '</span><button class="card-fav" onclick="event.stopPropagation();toggleFav(\'' + p.id + '\')">' + (isFav ? '❤️' : '🤍') + '</button></div><div class="card-body"><span class="card-id">' + p.id + '</span><div class="card-title" onclick="navigate(\'detail\',\'' + p.id + '\')">' + esc(p.name) + '</div><div class="card-meta">' + esc(p.creator) + '</div><div class="card-actions">' + main + '<button class="btn-sm" onclick="event.stopPropagation();copyWebLink(\'' + p.id + '\')">Salin</button></div></div></div>';
+        : (p.link ? '<a class="btn-sm primary" href="' + esc(p.link) + '" onclick="event.stopPropagation();trackUse(\'' + p.id + '\')">Impor</a>' : '<button class="btn-sm primary" disabled>Belum</button>');
+      return '<div class="card"><div class="card-thumb" onclick="navigate(\'detail\',\'' + p.id + '\')">' + thumb + play + '<span class="card-badge">' + badge + '</span><button class="card-fav" onclick="event.stopPropagation();toggleFav(\'' + p.id + '\')">' + (isFav ? '❤️' : '🤍') + '</button></div><div class="card-body"><span class="card-id">' + p.id + '</span><div class="card-title" onclick="navigate(\'detail\',\'' + p.id + '\')">' + esc(p.name) + '</div><div class="card-meta">' + esc(p.creator) + '</div>' + statsRow(p.id) + '<div class="card-actions">' + main + '<button class="btn-sm" onclick="event.stopPropagation();copyWebLink(\'' + p.id + '\')">Salin</button></div></div></div>';
     }
     function renderHome() {
       document.getElementById('totalCount').textContent = presets.length;
@@ -898,7 +902,7 @@
       document.getElementById('similarSection').style.display='block';
       const isFav = favorites.includes(p.id);
       const thumb = p.thumb ? `<img src="${esc(p.thumb)}" alt=""/>` : `<div style="width:100%;height:100%;display:grid;place-items:center;font-size:48px;opacity:.3">🎬</div>`;
-      el.innerHTML = `<div class="detail-thumb">${thumb}</div><div class="detail-info"><span class="detail-id" onclick="copyWebLink('${p.id}')">${p.id}</span><h1>${esc(p.name)}</h1><div class="detail-meta"><span class="chip"><b>Kreator</b> ${esc(p.creator)}</span><span class="chip"><b>Upload</b> ${esc(p.date||'-')}</span>${p.trending?'<span class="chip">Trending</span>':''}${p.popular?'<span class="chip">Populer</span>':''}</div>${p.description?`<p class="detail-desc">${esc(p.description)}</p>`:''}${p.link?`<div class="link-box"><code>${esc(p.link)}</code><div class="link-actions"><a class="btn-sm primary" href="${esc(p.link)}" target="_blank">Open Link</a><button class="btn-sm" onclick="copyAlightLink('${p.id}')">Salin</button></div></div>`:`<div class="warn">⏳ Menunggu link Alight Motion</div>`}${p.demo?`<div class="link-box"><code>${esc(p.demo)}</code><div class="link-actions"><a class="btn-sm primary" href="${esc(p.demo)}" target="_blank">Open Link</a><button class="btn-sm" onclick="copyDemoLink('${p.id}')">Salin</button></div></div>`:''}${p.xmlUrl?`<div class="link-box"><code>${esc(p.xmlUrl)}</code><div class="link-actions"><a class="btn-sm primary" href="${esc(p.xmlUrl)}" target="_blank">Open Link</a><button class="btn-sm" onclick="copyXMLLink('${p.id}')">Salin</button></div></div>`:''}${p.video && !p.video.startsWith('data:')?`<div class="link-box"><code>${esc(p.video)}</code><div class="link-actions"><a class="btn-sm primary" href="${esc(p.video)}" target="_blank">Open Link</a></div></div>`:''}<div class="detail-actions">${p.link?`<a class="btn btn-primary" href="${esc(p.link)}">Impor</a>`:'<button class="btn btn-primary" disabled>Impor</button>'}<button class="btn btn-outline" onclick="copyWebLink('${p.id}')">Salin Web</button><button class="btn btn-outline" onclick="sharePreset('${p.id}')">Bagikan</button><button class="btn btn-outline" onclick="toggleFav('${p.id}');renderDetail('${p.id}')">${isFav?'❤️':'🤍'}</button></div></div>`;
+      el.innerHTML = `<div class="detail-thumb">${thumb}</div><div class="detail-info"><span class="detail-id" onclick="copyWebLink('${p.id}')">${p.id}</span><h1>${esc(p.name)}</h1><div class="detail-meta"><span class="chip"><b>Kreator</b> ${esc(p.creator)}</span><span class="chip"><b>Upload</b> ${esc(p.date||'-')}</span>${statChips(p.id)}${p.trending?'<span class="chip">Trending</span>':''}${p.popular?'<span class="chip">Populer</span>':''}</div>${p.description?`<p class="detail-desc">${esc(p.description)}</p>`:''}${p.link?`<div class="link-box"><code>${esc(p.link)}</code><div class="link-actions"><a class="btn-sm primary" href="${esc(p.link)}" target="_blank" onclick="trackUse('${p.id}')">Open Link</a><button class="btn-sm" onclick="copyAlightLink('${p.id}')">Salin</button></div></div>`:`<div class="warn">⏳ Menunggu link Alight Motion</div>`}${p.demo?`<div class="link-box"><code>${esc(p.demo)}</code><div class="link-actions"><a class="btn-sm primary" href="${esc(p.demo)}" target="_blank">Open Link</a><button class="btn-sm" onclick="copyDemoLink('${p.id}')">Salin</button></div></div>`:''}${p.xmlUrl?`<div class="link-box"><code>${esc(p.xmlUrl)}</code><div class="link-actions"><a class="btn-sm primary" href="${esc(p.xmlUrl)}" target="_blank">Open Link</a><button class="btn-sm" onclick="copyXMLLink('${p.id}')">Salin</button></div></div>`:''}${p.video && !p.video.startsWith('data:')?`<div class="link-box"><code>${esc(p.video)}</code><div class="link-actions"><a class="btn-sm primary" href="${esc(p.video)}" target="_blank">Open Link</a></div></div>`:''}<div class="detail-actions">${p.link?`<a class="btn btn-primary" href="${esc(p.link)}" onclick="trackUse('${p.id}')">Impor</a>`:'<button class="btn btn-primary" disabled>Impor</button>'}<button class="btn btn-outline" onclick="copyWebLink('${p.id}')">Salin Web</button><button class="btn btn-outline" onclick="sharePreset('${p.id}')">Bagikan</button><button class="btn btn-outline" onclick="toggleFav('${p.id}');renderDetail('${p.id}')">${isFav?'❤️':'🤍'}</button></div></div>`;
       document.getElementById('gridSimilar').innerHTML = presets.filter(x=>x.id!==p.id).slice(0,4).map(cardHTML).join('') || '<p style="color:var(--muted)">Tidak ada</p>';
     }
     function renderFavorites() {
@@ -911,7 +915,7 @@
       if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(()=>toast(msg,'ok')).catch(fb); else fb();
     }
     function copyWebLink(id) { const p=presets.find(x=>x.id===id); if(p) copyText(webLink(p),'Link web disalin!'); }
-    function copyAlightLink(id) { const p=presets.find(x=>x.id===id); if(p?.link) copyText(p.link,'Link disalin!'); else toast('Belum diisi','err'); }
+    function copyAlightLink(id) { const p=presets.find(x=>x.id===id); if(p?.link) { copyText(p.link,'Link disalin!'); trackUse(id); } else toast('Belum diisi','err'); }
     function copyDemoLink(id) { const p=presets.find(x=>x.id===id); if(p?.demo) copyText(p.demo,'TikTok disalin!'); }
     function copyXMLLink(id) { const p=presets.find(x=>x.id===id); if(p?.xmlUrl) copyText(p.xmlUrl,'XML disalin!'); }
     function sharePreset(id) { const p=presets.find(x=>x.id===id); if(!p) return; const url=webLink(p), text=`${p.name} (${p.id})\n${url}`; if(navigator.share) navigator.share({title:p.name,text,url}).catch(()=>copyText(text,'Disalin!')); else copyText(text,'Disalin!'); }
@@ -971,7 +975,7 @@
         return '<div class="admin-card">' +
           '<div class="admin-card-top"><span class="admin-card-id">' + p.id + '</span>' + status + '</div>' +
           '<div class="admin-card-name">' + esc(p.name) + '</div>' +
-          '<div class="admin-card-meta">' + esc(p.creator) + ' · ' + tipe + flags + '</div>' +
+          '<div class="admin-card-meta">' + esc(p.creator) + ' · ' + tipe + flags + ' · ' + statText(p.id) + '</div>' +
           '<div class="admin-card-actions">' +
             '<button class="btn-xs ' + (p.link?'':'fill') + '" onclick="openLinkModal(\'' + p.id + '\')">' + (p.link?'Ubah Link':'Isi Link') + '</button>' +
             '<button class="btn-xs" onclick="openEditModal(\'' + p.id + '\')">Edit</button>' +
@@ -1042,6 +1046,73 @@
     function esc(s){ if(!s) return ''; return String(s).replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"'); }
     function toast(msg,type){ const c=document.getElementById('toastContainer'), t=document.createElement('div'); t.className='toast '+(type==='err'?'err':'ok'); t.textContent=msg; c.appendChild(t); setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},2000); }
 
+
+    // ===== Statistik: berapa kali dilihat & digunakan =====
+    // Disimpan di Firebase path /stats/{id}/{v|u}, terpisah dari data preset (tidak ketimpa saat Publish).
+    const STATS_KEY = 'kenzie_stats_v1', FB_REST = 'https://kenzie-preset-default-rtdb.firebaseio.com';
+    let stats = {};
+    try { stats = JSON.parse(lsGet(STATS_KEY) || '{}') || {}; } catch { stats = {}; }
+    const seenViews = new Set(), lastUse = {};
+    const IC_EYE = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+    const IC_USE = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-4-4m4 4 4-4M5 21h14"/></svg>';
+    function statVal(id, k) { return (stats[id] && Number(stats[id][k])) || 0; }
+    function fmtNum(n) {
+      n = Number(n) || 0;
+      if (n < 1000) return String(n);
+      if (n < 1e6) return (n / 1000).toFixed(n < 10000 ? 1 : 0).replace('.0', '') + 'K';
+      return (n / 1e6).toFixed(1).replace('.0', '') + 'M';
+    }
+    function statSpan(id, k, full) { return '<span data-stat-id="' + id + '" data-stat="' + k + '"' + (full ? ' data-full="1"' : '') + '>' + (full ? statVal(id, k).toLocaleString('id-ID') + 'x' : fmtNum(statVal(id, k))) + '</span>'; }
+    function statsRow(id) {
+      return '<div class="card-stats"><span class="stat" title="Dilihat">' + IC_EYE + statSpan(id, 'v') + '</span><span class="stat" title="Digunakan">' + IC_USE + statSpan(id, 'u') + '</span></div>';
+    }
+    function statChips(id) {
+      return '<span class="chip"><b>Dilihat</b> ' + statSpan(id, 'v', true) + '</span><span class="chip"><b>Digunakan</b> ' + statSpan(id, 'u', true) + '</span>';
+    }
+    function statText(id) { return fmtNum(statVal(id, 'v')) + ' dilihat · ' + fmtNum(statVal(id, 'u')) + ' dipakai'; }
+    function refreshStatsDOM() {
+      document.querySelectorAll('[data-stat-id]').forEach(el => {
+        const n = statVal(el.dataset.statId, el.dataset.stat);
+        el.textContent = el.dataset.full ? n.toLocaleString('id-ID') + 'x' : fmtNum(n);
+      });
+    }
+    function bumpStat(id, k) {
+      if (!id) return;
+      stats[id] = stats[id] || {};
+      stats[id][k] = statVal(id, k) + 1;
+      lsSet(STATS_KEY, JSON.stringify(stats));
+      refreshStatsDOM();
+      try {
+        if (db) db.ref('stats/' + id + '/' + k).set(firebase.database.ServerValue.increment(1)).catch(() => {});
+        else fetch(FB_REST + '/stats/' + id + '/' + k + '.json', { method: 'PUT', body: JSON.stringify({ '.sv': { increment: 1 } }) }).catch(() => {});
+      } catch (e) { console.warn('stats', e); }
+    }
+    function trackView(id) {
+      if (!presets.find(x => x.id === id) || seenViews.has(id)) return;
+      seenViews.add(id);
+      try { if (sessionStorage.getItem('kenzie_seen_' + id)) return; sessionStorage.setItem('kenzie_seen_' + id, '1'); } catch {}
+      bumpStat(id, 'v');
+    }
+    function trackUse(id) {
+      const now = Date.now();
+      if (lastUse[id] && now - lastUse[id] < 3000) return;
+      lastUse[id] = now;
+      bumpStat(id, 'u');
+    }
+    async function loadStats() {
+      try {
+        const r = await fetch(FB_REST + '/stats.json');
+        if (r.ok) {
+          const v = await r.json();
+          if (v && typeof v === 'object') {
+            for (const id in v) stats[id] = { v: Number(v[id] && v[id].v) || 0, u: Number(v[id] && v[id].u) || 0 };
+            lsSet(STATS_KEY, JSON.stringify(stats));
+          }
+        }
+      } catch (e) { console.warn('stats load', e); }
+      refreshStatsDOM();
+    }
+
     // Theme toggle
     const themeKey = 'kenzie_theme';
     const root = document.documentElement;
@@ -1069,7 +1140,7 @@
       lastTouchEnd = now;
     }, { passive: false });
 
-    loadData().then(() => { parseRoute(); loadAvatar(); });
+    loadData().then(() => { parseRoute(); loadAvatar(); loadStats(); });
     const FX_KEY = 'kenzie_fx';
     const fxLevels = ['low', 'med', 'hard'];
     const fxLabels = { low: 'Low', med: 'Medium', hard: 'Hard' };
