@@ -2,8 +2,6 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<style>html:not(.gate-ok) body>*:not(#kgate){display:none!important}html:not(.gate-ok){background:#000}</style>
-<script src="/gate.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>KENZIE Monitor</title>
@@ -152,12 +150,12 @@ function vOrd(){const O=ordList(),c=k=>O.filter(o=>o.status===k).length,rev=O.fi
 function vSys(){
   return'<div class="glass card"><h2>Halaman web</h2><div class="links">'+LINKS.map(([n,u,ic],i)=>{const r=st['p'+i];return'<a class="link" href="'+u+'" target="_blank" rel="noopener"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="'+ic+'"/></svg></div><div class="tx"><b>'+n+'</b><span class="u">'+u.replace('https://','')+'</span></div>'+(r?'<span class="pill '+(r.ok?'ok':'bad')+'">'+(r.ok?r.ms+' ms':'Gagal')+'</span>':'<span class="pill wait">...</span>')+'</a>'}).join('')+'</div></div>'+
   '<div class="glass card"><h2>Layanan<button class="btn" id="recheck">Cek ulang</button></h2>'+
-  svc('Database (Firebase)','kenzie-preset-default-rtdb',st.db)+svc('API pencarian lagu','api.jhx.my.id/sp-search',st.mus,'<button class="btn" id="testMus">Tes</button>')+
+  svc('Database (Firebase)','kenzie-preset-default-rtdb',st.db)+svc('API pencarian lagu (YouTube)','ytdlpyton.nvlgroup.my.id (via /api/yt-search)',st.mus,'<button class="btn" id="testMus">Tes</button>')+
   '<p class="note">Log aktivitas tersimpan di path <b>logs</b>, statistik preset di <b>stats</b>, pesanan di <b>orders</b>, <b>buyers</b>, dan <b>proofs</b>. Pastikan aturan Firebase mengizinkan baca/tulis untuk path tersebut.</p></div>'}
 function svc(n,u,r,extra){return'<div class="svc"><div>'+n+'<small>'+u+'</small></div><div style="display:flex;gap:8px;align-items:center">'+(extra||'')+(r?'<span class="pill '+(r.ok?'ok':'bad')+'">'+(r.ok?r.ms+' ms':'Gagal')+'</span>':'<span class="pill wait">...</span>')+'</div></div>'}
 async function ping(key,url,opt){const t=performance.now();try{await fetch(url,Object.assign({mode:'no-cors',cache:'no-store'},opt||{}));st[key]={ok:true,ms:Math.round(performance.now()-t)}}catch{st[key]={ok:false}}if(tab==='sys')render()}
 function checkAll(){LINKS.forEach((l,i)=>ping('p'+i,l[1]));ping('db',DB+'/logs.json?orderBy="$key"&limitToFirst=1',{mode:'cors'})}
-function testMusic(){st.mus=null;render();const t=performance.now();fetch('https://api.jhx.my.id/sp-search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({q:'a'})}).then(r=>{st.mus={ok:r.ok,ms:Math.round(performance.now()-t)};render()}).catch(()=>{st.mus={ok:false};render()})}
+function testMusic(){st.mus=null;render();const t=performance.now();fetch('/api/yt-search?query=a').then(r=>{st.mus={ok:r.ok,ms:Math.round(performance.now()-t)};render()}).catch(()=>{st.mus={ok:false};render()})}
 function render(){
   $('seg').innerHTML=TABS.map(([k,l])=>'<button class="'+(tab===k?'on':'')+'" data-t="'+k+'">'+l+'</button>').join('');
   $('view').innerHTML={ov:vOverview,act:vAct,pre:vPre,ord:vOrd,sys:vSys}[tab]();
