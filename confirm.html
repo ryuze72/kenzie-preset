@@ -154,12 +154,12 @@ async function load() {
   render();
 }
 function render() {
-  const cnt = k => k === 'all' ? orders.length : orders.filter(o => o.status === k).length;
+  const cnt = k => k === 'all' ? orders.filter(o => o.status !== 'done' && o.status !== 'cancel').length : orders.filter(o => o.status === k).length;
   $('sTotal').textContent = orders.length;
   $('sWait').textContent = orders.filter(o => o.status === 'review' || o.status === 'paid').length;
   $('sDone').textContent = cnt('done');
   $('chips').innerHTML = FILTERS.map(([k, l]) => '<button class="chip' + (filter === k ? ' on' : '') + '" data-f="' + k + '">' + l + ' ' + cnt(k) + '</button>').join('');
-  let rows = filter === 'all' ? orders : orders.filter(o => o.status === filter);
+  let rows = filter === 'all' ? orders.filter(o => o.status !== 'done' && o.status !== 'cancel') : orders.filter(o => o.status === filter);
   if (searchQ) rows = rows.filter(o => o.id.toLowerCase().includes(searchQ));
   if (!rows.length) { $('list').innerHTML = '<div class="glass empty">Tidak ada pesanan di sini</div>'; return; }
   $('list').innerHTML = rows.map((o, i) => {
