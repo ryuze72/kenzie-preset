@@ -192,11 +192,12 @@ async function verifyLink() {
 async function generateEmail() {
   showMsg('mailMsg', 'Membuat email...', '');
   try {
-    const r = await fetch(MAIL_API + '?action=create');
+    const r = await fetch(MAIL_API + '?action=generate');
     if (!r.ok) throw new Error('API gagal');
     const data = await r.json();
     if (!data.status || !data.email) throw new Error(data.error || 'Gagal buat email');
     tempAddress = data.email;
+    tempToken = data.token;
     document.getElementById('tempEmail').textContent = tempAddress;
     showMsg('mailMsg', 'Email dibuat! Auto-cek inbox...', 'ok');
     const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
@@ -225,7 +226,7 @@ function copyTempEmail() {
 async function checkInbox() {
   if (!tempAddress) return;
   try {
-    const r = await fetch(MAIL_API + '?action=inbox&email=' + encodeURIComponent(tempAddress));
+    const r = await fetch(MAIL_API + '?action=inbox&token=' + (tempToken || ''));
     const data = await r.json();
     const list = data.messages || data.inbox || data.emails || [];
     const el = document.getElementById('mailList');
