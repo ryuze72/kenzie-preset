@@ -185,18 +185,21 @@ async function verifyLink() {
 async function generateEmail() {
   showMsg('mailMsg', 'Membuat email...', '');
   try {
-    const r = await fetch(MAIL_API + '?action=gen');
+    const r = await fetch(MAIL_API + '?action=create');
     if (!r.ok) throw new Error('API gagal');
     const data = await r.json();
-    if (!data.email) throw new Error(data.error || 'Tidak ada email');
+    if (!data.status || !data.email) throw new Error(data.error || 'Gagal buat email');
     tempAddress = data.email;
-    tempToken = data.token;
     document.getElementById('tempEmail').textContent = tempAddress;
-    showMsg('mailMsg', 'Email dibuat!', 'ok');
+    showMsg('mailMsg', 'Email dibuat! Auto-cek inbox...', 'ok');
     const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
     saved.unshift({email: tempAddress, time: new Date().toISOString()});
     localStorage.setItem('savedEmails', JSON.stringify(saved.slice(0, 20)));
     renderSaved();
+    // Auto check inbox every 5 seconds
+    if (window._inboxTimer) clearInterval(window._inboxTimer);
+    window._inboxTimer = setInterval(checkInbox, 5000);
+    checkInbox();
   } catch(e) { showMsg('mailMsg', 'Gagal: ' + e.message, 'err'); }
 }
 function copyTempEmail() {
@@ -206,26 +209,38 @@ function copyTempEmail() {
   }
 }
 async function checkInbox() {
-  if (!tempToken) { showMsg('mailMsg', 'Generate email dulu', 'err'); return; }
+  if (!tempAddress) return;
   try {
-    const r = await fetch(MAIL_API + '?action=inbox&token=' + tempToken);
-    const list = await r.json();
+    const r = await fetch(MAIL_API + '?action=inbox&email=' + encodeURIComponent(tempAddress));
+    const data = await r.json();
+    const list = data.messages || data.inbox || data.emails || [];
     const el = document.getElementById('mailList');
-    if (!list || !list.length) { el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px">Inbox kosong</p>'; return; }
-    el.innerHTML = list.map((m, i) => `<div class="mail-item" onclick="readMail(${i})"><div class="mail-from">${m.from || '-'}</div><div class="mail-subj">${m.subject || '(no subject)'}</div><div class="mail-time">${m.date || ''}</div></div>`).join('');
+    if (!list.length) { el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:12px">Menunggu email...</p>'; return; }
+    el.innerHTML = list.map((m, i) => `<div class="mail-item" onclick="readMail(${i})"><div class="mail-from">${m.from || m.sender || '-'}</div><div class="mail-subj">${m.subject || '(no subject)'}</div><div class="mail-time">${m.date || m.time || ''}</div></div>`).join('');
     window._mailCache = list;
-  } catch(e) { showMsg('mailMsg', 'Gagal cek inbox', 'err'); }
+    // Auto extract link if found
+    for (const m of list) {
+      const text = m.body || m.text || m.content || m.subject || '';
+      const match = text.match(/https?:\/\/[^\s<>"]+/);
+      if (match && !document.getElementById('link').value) {
+        document.getElementById('link').value = match[0];
+        showPanel('am');
+        showMsg('msg', 'Link terdeteksi otomatis!', 'ok');
+        break;
+      }
+    }
+  } catch(e) { console.warn(e); }
 }
 function readMail(idx) {
   const m = window._mailCache && window._mailCache[idx];
   if (!m) return;
-  const text = m.body || m.subject || 'Tidak ada isi';
+  const text = m.body || m.text || m.content || m.subject || 'Tidak ada isi';
   alert(text);
   const match = text.match(/https?:\/\/[^\s<>"]+/);
   if (match) {
     document.getElementById('link').value = match[0];
     showPanel('am');
-    showMsg('msg', 'Link terdeteksi dan ditempel!', 'ok');
+    showMsg('msg', 'Link ditempel!', 'ok');
   }
 }
 function renderSaved() {
