@@ -34,6 +34,20 @@ input:focus,textarea:focus{border-color:#8dbdff;box-shadow:0 0 0 3px #6ea8ff20}t
 .saved-actions{display:flex;gap:8px;margin-top:12px}.saved-actions .btn{width:auto;flex:1;margin:0;min-height:39px;padding:8px 10px;font-size:12px}.saved-inbox{margin-top:10px}.empty-state{color:var(--muted);text-align:center;padding:22px 10px;font-size:13px}
 @media(min-width:700px){.panel{max-width:620px;margin:0 auto}.header{padding-left:max(18px,calc((100vw - 900px)/2));padding-right:max(18px,calc((100vw - 900px)/2))}.stats,.desc{max-width:660px;margin-left:auto;margin-right:auto}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+
+/* Effect levels synced with kenzie-preset */
+body.fx-low { --blur: 14px; }
+body.fx-med { --blur: 22px; }
+body.fx-med .card, body.fx-med .header { box-shadow: 0 0 0 1px rgba(255,255,255,.1), 0 8px 32px rgba(100,150,255,.15); }
+body.fx-hard { --blur: 40px; }
+body.fx-hard .card, body.fx-hard .header { 
+  box-shadow: 0 0 0 1px rgba(255,255,255,.15), 0 12px 40px rgba(100,150,255,.25), inset 0 1px 0 rgba(255,255,255,.2); 
+  animation: glow 2s ease-in-out infinite alternate;
+}
+body.fx-hard .btn-send, body.fx-hard .btn-verify { animation: pulse 1.5s ease-in-out infinite; }
+body.fx-hard .tab.active { animation: glow 1.8s ease-in-out infinite alternate; }
+@keyframes glow { from { box-shadow: 0 0 0 1px rgba(255,255,255,.1), 0 8px 24px rgba(100,150,255,.15); } to { box-shadow: 0 0 0 1px rgba(255,255,255,.2), 0 12px 40px rgba(120,160,255,.35); } }
+@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
 </style>
 </head>
 <body>
@@ -114,6 +128,12 @@ input:focus,textarea:focus{border-color:#8dbdff;box-shadow:0 0 0 3px #6ea8ff20}t
 </div>
 
 <script>
+// Sync effect with kenzie-preset
+(function() {
+  const fx = localStorage.getItem('kenzie_fx') || 'low';
+  document.body.classList.add('fx-' + fx);
+})();
+
 const API = 'https://v2.api-varhad.my.id/tools/amprem/verif';
 const MAIL_API = '/api/tempmail';
 let visitors = 0, verified = 0;
