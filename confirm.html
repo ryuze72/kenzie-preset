@@ -2,6 +2,8 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
+<style>html:not(.gate-ok) body>*:not(#kgate){display:none!important}html:not(.gate-ok){background:#000}</style>
+<script src="/gate.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>Konfirmasi Pesanan</title>
@@ -128,7 +130,7 @@ function filterByCode(q) {
 }
 
 const $ = id => document.getElementById(id);
-const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[c]));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const rp = n => 'Rp ' + (Number(n) || 0).toLocaleString('id-ID');
 const when = t => { try { return new Date(t).toLocaleString('id-ID', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }); } catch { return ''; } };
 const wa = s => { let d = String(s || '').replace(/\D/g, ''); if (d.startsWith('0')) d = '62' + d.slice(1); return d; };
