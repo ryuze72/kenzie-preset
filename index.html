@@ -3,6 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  
+  <meta name="description" content="KENZIE PRESET LIBRARY — Koleksi preset Alight Motion premium. Cari, favorit, dan impor preset favoritmu." />
+  <meta property="og:title" content="KENZIE PRESET LIBRARY" />
+  <meta property="og:description" content="Koleksi preset Alight Motion premium. Cari, favorit, dan impor preset." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://kenzie-preset.vercel.app" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="KENZIE PRESET LIBRARY" />
+  <meta name="twitter:description" content="Koleksi preset Alight Motion premium." />
   <title>KENZIE PRESET LIBRARY</title>
   <meta name="theme-color" content="#f2f2f7" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -1099,7 +1108,17 @@
       updateModeButton();
       toast(siteMode === 'private' ? 'Mode Private aktif' : 'Mode Public aktif', 'ok');
     }
-    function downloadPresetsJson() {
+    
+    function autoBackup() {
+      const backup = { presets, timestamp: new Date().toISOString(), count: presets.length };
+      try {
+        localStorage.setItem('kenzie_backup', JSON.stringify(backup));
+        if (db) db.ref('backups/' + Date.now()).set(backup).catch(() => {});
+      } catch(e) {}
+    }
+    // Auto backup every 5 minutes if admin
+    setInterval(() => { if (isAdmin && presets.length) autoBackup(); }, 300000);
+function downloadPresetsJson() {
       const blob = new Blob([JSON.stringify(presets, null, 2)], {type:'application/json'});
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
