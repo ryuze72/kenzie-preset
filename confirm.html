@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<style>html:not(.gate-ok) body>*:not(#kgate){display:none!important}html:not(.gate-ok){background:#000}</style>
+<script src="/gate.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Confirm Order · Kenzie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#000;--fg:#fff;--card:rgba(255,255,255,.08);--border:rgba(255,255,255,.12);--accent:#0a84ff;--ok:#30d158;--warn:#ff9f0a;--err:#ff453a}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Plus Jakarta Sans",system-ui,sans-serif;background:var(--bg);color:var(--fg);min-height:100dvh;padding:20px;line-height:1.5}
+.wrap{max-width:480px;margin:0 auto}
+h1{font-size:22px;font-weight:800;margin-bottom:8px;letter-spacing:-.3px}
+.sub{opacity:.7;font-size:14px;margin-bottom:24px}
+.card{background:var(--card);border:.5px solid var(--border);border-radius:20px;padding:20px;margin-bottom:16px;backdrop-filter:blur(20px)}
+.label{font-size:12px;font-weight:700;opacity:.6;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.val{font-size:16px;font-weight:600;word-break:break-all}
+.status{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:700}
+.status.pending{background:rgba(255,159,10,.15);color:var(--warn)}
+.status.paid{background:rgba(48,209,88,.15);color:var(--ok)}
+.status.rejected{background:rgba(255,69,58,.15);color:var(--err)}
+.btn{display:block;width:100%;height:50px;border:0;border-radius:14px;font:inherit;font-size:15px;font-weight:700;color:#fff;cursor:pointer;background:linear-gradient(180deg,#1a8aff,#007aff);margin-top:12px}
+.btn:disabled{opacity:.5}
+.proof{max-width:100%;border-radius:12px;margin-top:12px;border:.5px solid var(--border)}
+.err{color:var(--err);font-size:14px;margin-top:12px}
+.loading{text-align:center;padding:40px;opacity:.6}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="loading">Memuat...</div>
+</div>
+<script>
+const params = new URLSearchParams(location.search);
+const code = params.get("code") || params.get("order") || "";
+const FB = "https://kenzie-preset-default-rtdb.asia-southeast1.firebasedatabase.app";
+async function load() {
+  const app = document.getElementById("app");
+  if (!code) { app.innerHTML = "<h1>Kode order tidak ditemukan</h1><p class=sub>Gunakan link dari WhatsApp atau email.</p>"; return; }
+  try {
+    const r = await fetch(FB + "/orders/" + encodeURIComponent(code) + ".json");
+    const o = await r.json();
+    if (!o) { app.innerHTML = "<h1>Order tidak ditemukan</h1><p class=sub>Kode: " + code + "</p>"; return; }
+    const st = (o.status || "pending").toLowerCase();
+    const stClass = st === "paid" || st === "done" || st === "completed" ? "paid" : st === "rejected" || st === "cancel" ? "rejected" : "pending";
+    const stLabel = st === "paid" || st === "done" || st === "completed" ? "Sudah dibayar" : st === "rejected" || st === "cancel" ? "Ditolak" : "Menunggu konfirmasi";
+    app.innerHTML = `
+      <h1>Status Order</h1>
+      <p class="sub">Kode: <strong>${code}</strong></p>
+      <div class="card">
+        <div class="label">Status</div>
+        <div><span class="status ${stClass}">${stLabel}</span></div>
+      </div>
+      <div class="card">
+        <div class="label">Paket</div>
+        <div class="val">${o.package || o.plan || "-"}</div>
+      </div>
+      <div class="card">
+        <div class="label">Nama</div>
+        <div class="val">${o.name || "-"}</div>
+      </div>
+      <div class="card">
+        <div class="label">WhatsApp</div>
+        <div class="val">${o.wa || o.phone || "-"}</div>
+      </div>
+      ${o.amount ? `<div class="card"><div class="label">Total</div><div class="val">Rp ${Number(o.amount).toLocaleString("id-ID")}</div></div>` : ""}
+      ${o.proof ? `<div class="card"><div class="label">Bukti transfer</div><img class="proof" src="${o.proof}" alt="proof"></div>` : ""}
+      <div class="card">
+        <div class="label">Dibuat</div>
+        <div class="val">${o.createdAt ? new Date(o.createdAt).toLocaleString("id-ID") : "-"}</div>
+      </div>
+    `;
+  } catch (e) {
+    app.innerHTML = "<h1>Gagal memuat</h1><p class=err>" + e.message + "</p>";
+  }
+}
+load();
+setInterval(function(){ if(!document.hidden) load(); }, 60000);
+</script>
+</body>
+</html>
