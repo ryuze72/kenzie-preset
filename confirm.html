@@ -110,6 +110,9 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
     <div class="glass stat good"><b id="sDone">0</b><span>Selesai</span></div>
   </section>
   <nav class="chips" id="chips"></nav>
+  <div class="glass" style="padding:10px 14px;margin-bottom:14px;border-radius:16px">
+    <input type="text" id="searchCode" placeholder="Cari kode pesanan..." style="width:100%;border:none;background:transparent;font-size:14px;font-weight:600;outline:none;color:var(--ink)" oninput="filterByCode(this.value)" />
+  </div>
   <div id="msg"></div>
   <main class="list" id="list"><div class="glass empty">Memuat...</div></main>
 </div>
@@ -118,6 +121,12 @@ const DB = 'https://kenzie-preset-default-rtdb.firebaseio.com';
 const ST = { pending:['Menunggu bayar','wait'], review:['Perlu dicek','info'], paid:['Dibayar','info'], done:['Selesai','ok'], cancel:['Dibatalkan','bad'] };
 const FILTERS = [['all','Semua'],['review','Perlu dicek'],['pending','Menunggu bayar'],['paid','Dibayar'],['done','Selesai'],['cancel','Batal']];
 let orders = [], buyers = {}, filter = 'review', proofs = {};
+let searchQ = '';
+function filterByCode(q) {
+  searchQ = q.toLowerCase().trim();
+  render();
+}
+
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[c]));
 const rp = n => 'Rp ' + (Number(n) || 0).toLocaleString('id-ID');
@@ -150,7 +159,8 @@ function render() {
   $('sWait').textContent = orders.filter(o => o.status === 'review' || o.status === 'paid').length;
   $('sDone').textContent = cnt('done');
   $('chips').innerHTML = FILTERS.map(([k, l]) => '<button class="chip' + (filter === k ? ' on' : '') + '" data-f="' + k + '">' + l + ' ' + cnt(k) + '</button>').join('');
-  const rows = filter === 'all' ? orders : orders.filter(o => o.status === filter);
+  let rows = filter === 'all' ? orders : orders.filter(o => o.status === filter);
+  if (searchQ) rows = rows.filter(o => o.id.toLowerCase().includes(searchQ));
   if (!rows.length) { $('list').innerHTML = '<div class="glass empty">Tidak ada pesanan di sini</div>'; return; }
   $('list').innerHTML = rows.map((o, i) => {
     const b = buyers[o.id] || (o.wa || o.name ? { name: o.name, wa: o.wa } : {});
