@@ -1114,7 +1114,7 @@ function navigate(page, id) {
       document.getElementById('adminLogin').style.display='none'; 
       document.getElementById('adminPanel').style.display='block'; 
       updateModeButton();
-      renderAdminTable(); 
+      renderAdminTable(); renderAdminOrders(); 
     }
     function updateModeButton() {
       const btn = document.getElementById('modeToggleBtn');
@@ -1164,8 +1164,28 @@ function downloadPresetsJson() {
   }
 }
     function adminLogout() { isAdmin=false; lsDel(ADMIN_KEY); showAdminLogin(); toast('Logout','ok'); }
-    function askDelete(id) { clearTimeout(delTimer); if(delArm===id){ delArm=null; deletePreset(id); return; } delArm=id; renderAdminTable(); delTimer=setTimeout(()=>{delArm=null;renderAdminTable();},3000); }
-    function renderAdminTable() {
+    function askDelete(id) { clearTimeout(delTimer); if(delArm===id){ delArm=null; deletePreset(id); return; } delArm=id; renderAdminTable(); renderAdminOrders(); delTimer=setTimeout(()=>{delArm=null;renderAdminTable(); renderAdminOrders();},3000); }
+    
+    function renderAdminOrders() {
+      const orders = JSON.parse(localStorage.getItem('kenzie_orders') || '[]');
+      const el = document.getElementById('adminOrders');
+      if (!el) return;
+      if (!orders.length) { el.innerHTML = '<p style="color:var(--muted);font-size:13px">Belum ada pesanan</p>'; return; }
+      el.innerHTML = orders.map(o => 
+        '<div class="admin-card" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center"><div><b>' + o.id + '</b><div style="font-size:12px;color:var(--muted)">' + o.wa + '</div></div><div>' +
+        (o.status === 'confirmed' ? '<span style="color:var(--green)">✓</span>' : '<button class="btn-xs fill" onclick="confirmOrder(\'' + o.id + '\')">Konfirmasi</button>') +
+        '</div></div></div>'
+      ).join('');
+    }
+    function confirmOrder(id) {
+      const orders = JSON.parse(localStorage.getItem('kenzie_orders') || '[]');
+      const idx = orders.findIndex(o => o.id === id);
+      if (idx >= 0) { orders[idx].status = 'confirmed'; localStorage.setItem('kenzie_orders', JSON.stringify(orders)); }
+      if (db) db.ref('orders/' + id + '/status').set('confirmed').catch(() => {});
+      renderAdminOrders();
+      toast('Pesanan dikonfirmasi', 'ok');
+    }
+function renderAdminTable() {
       const el = document.getElementById('adminTableBody');
       if (!presets.length) { el.innerHTML = '<p style="text-align:center;color:var(--muted);padding:20px">Belum ada preset</p>'; return; }
       el.innerHTML = presets.map(p => {
@@ -1229,7 +1249,7 @@ function downloadPresetsJson() {
     function closeModal() { document.getElementById('presetModal').classList.remove('show'); document.body.classList.remove('modal-open'); }
     function openLinkModal(id) { const p=presets.find(x=>x.id===id); if(!p) return; document.getElementById('linkEditId').value=id; document.getElementById('linkModalName').textContent=p.id+' · '+p.name; document.getElementById('fLinkOnly').value=p.link||''; document.getElementById('linkModal').classList.add('show'); document.body.classList.add('modal-open'); setTimeout(()=>document.getElementById('fLinkOnly').focus(),50); }
     function closeLinkModal() { document.getElementById('linkModal').classList.remove('show'); document.body.classList.remove('modal-open'); }
-    function saveLink() { const id=document.getElementById('linkEditId').value, val=document.getElementById('fLinkOnly').value.trim(); if(!isShareLink(val)){ toast('Link Alight Motion tidak valid','err'); return; } const idx=presets.findIndex(x=>x.id===id); if(idx<0) return; presets[idx].link=val; saveData(); closeLinkModal(); renderAdminTable(); toast('Link tersimpan','ok'); }
+    function saveLink() { const id=document.getElementById('linkEditId').value, val=document.getElementById('fLinkOnly').value.trim(); if(!isShareLink(val)){ toast('Link Alight Motion tidak valid','err'); return; } const idx=presets.findIndex(x=>x.id===id); if(idx<0) return; presets[idx].link=val; saveData(); closeLinkModal(); renderAdminTable(); renderAdminOrders(); toast('Link tersimpan','ok'); }
     function savePreset() {
       const name=document.getElementById('fName').value.trim(), creator=document.getElementById('fCreator').value.trim();
       if(!name||!creator){ toast('Nama & kreator wajib','err'); return; }
@@ -1240,9 +1260,9 @@ function downloadPresetsJson() {
       const data={name,creator,description:document.getElementById('fDesc').value.trim(),link:linkVal,demo:demoVal,xmlUrl,trending:document.getElementById('fTrending').checked,popular:document.getElementById('fPopular').checked,thumb:document.getElementById('fThumbData').value,video:document.getElementById('fVideo').value.trim()};
       if(editId){ const idx=presets.findIndex(x=>x.id===editId); if(idx>=0) presets[idx]={...presets[idx],...data}; toast('Diperbarui','ok'); }
       else { data.id=nextId(); data.date=new Date().toISOString().slice(0,10); presets.unshift(data); toast('Upload: '+data.id,'ok'); }
-      saveData(); closeModal(); renderAdminTable(); renderHome();
+      saveData(); closeModal(); renderAdminTable(); renderAdminOrders(); renderHome();
     }
-    function deletePreset(id) { presets=presets.filter(p=>p.id!==id); favorites=favorites.filter(f=>f!==id); saveData(); saveFavs(); renderAdminTable(); toast('Dihapus','ok'); }
+    function deletePreset(id) { presets=presets.filter(p=>p.id!==id); favorites=favorites.filter(f=>f!==id); saveData(); saveFavs(); renderAdminTable(); renderAdminOrders(); toast('Dihapus','ok'); }
     function esc(s){ if(!s) return ''; return String(s).replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"'); }
     function toast(msg,type){ const c=document.getElementById('toastContainer'), t=document.createElement('div'); t.className='toast '+(type==='err'?'err':'ok'); t.textContent=msg; c.appendChild(t); setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},2000); }
 
