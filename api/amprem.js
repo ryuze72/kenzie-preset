@@ -1,6 +1,7 @@
 // Satu file untuk dua endpoint: POST /api/send  dan  POST /api/verify
-// (Vercel: [action] = send / verify). Meneruskan ke API AM Premium (amprem-ran.vercel.app).
-const BASE = 'https://amprem-ran.vercel.app/api/';
+// (Vercel: [action] = send / verify). Meneruskan (GET) ke API AM Premium api.theresav.eu.
+const BASE = 'https://api.theresav.eu/api/premium/alightmotion/';
+const API_KEY = process.env.AM_API_KEY || 'kenzie';
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -21,15 +22,17 @@ module.exports = async (req, res) => {
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), 20000);
   try {
-    const r = await fetch(BASE + action, {
-      method: 'POST', signal: ctl.signal,
-      headers: { 'Content-Type': 'application/json', accept: 'application/json', 'user-agent': 'Mozilla/5.0' },
-      body: JSON.stringify(payload),
+    const qs = '?email=' + encodeURIComponent(email) + (action === 'verify' ? '&link=' + encodeURIComponent(payload.link) : '');
+    const r = await fetch(BASE + action + qs, {
+      method: 'GET', signal: ctl.signal,
+      headers: { accept: 'application/json', 'x-apikey': API_KEY, 'user-agent': 'Mozilla/5.0' },
     });
     const text = await r.text();
     let data; try { data = JSON.parse(text); } catch { data = null; }
     if (data && typeof data === 'object' && !Array.isArray(data)) {
-      if (data.ok === undefined) data.ok = r.ok && data.error == null && data.success !== false;
+      if (data.ok === undefined) data.ok = r.ok && data.error == null && data.success !== false && data.status !== false && !/^(error|fail)/i.test(String(data.status || ''));
+      if (!data.message && data.result) data.message = typeof data.result === 'string' ? data.result : (data.result.message || data.result.msg || undefined);
+      if (!data.message && data.msg) data.message = data.msg;
       for (const k of ['message', 'error']) if (data[k] && typeof data[k] === 'object') data[k] = JSON.stringify(data[k]).slice(0, 300);
       return res.status(r.status).json(data);
     }
