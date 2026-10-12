@@ -1,0 +1,154 @@
+{
+  "name": "Alight Motion Premium API",
+  "description": "API untuk mengaktifkan akun Alight Motion Premium lewat magic link email. Alur: kirim link ke email, lalu verifikasi dengan link 'Sign in to Alight Creative' dari email tersebut.",
+  "version": "1.0.0",
+  "baseUrl": "https://api.theresav.eu/api/premium/alightmotion",
+  "authentication": {
+    "type": "API Key",
+    "in": "header",
+    "name": "x-apikey",
+    "example": "x-apikey: kenzie",
+    "required": true
+  },
+  "conventions": {
+    "method": "GET",
+    "encoding": "Semua parameter query harus di-URL-encode (mis. @ menjadi %40, link penuh di-encode seluruhnya).",
+    "responseFormat": "JSON"
+  },
+  "flow": [
+    {
+      "step": 1,
+      "action": "GET /send",
+      "detail": "Kirim magic link Alight Creative ke email yang akan dijadikan premium."
+    },
+    {
+      "step": 2,
+      "action": "Buka inbox email",
+      "detail": "Cari email berjudul 'Sign in to Alight Creative'. Abaikan email 'Login to Alight Creative'."
+    },
+    {
+      "step": 3,
+      "action": "Salin link dari email",
+      "detail": "Link ada di balik teks 'Sign in to Alight Creative' (bentuknya tautan, bukan teks biasa)."
+    },
+    {
+      "step": 4,
+      "action": "GET /verify",
+      "detail": "Kirim email + link tadi untuk mengaktifkan premium."
+    }
+  ],
+  "endpoints": [
+    {
+      "name": "Kirim magic link",
+      "method": "GET",
+      "path": "/send",
+      "url": "https://api.theresav.eu/api/premium/alightmotion/send",
+      "description": "Mengirim email berisi magic link Alight Creative ke alamat yang diberikan.",
+      "headers": {
+        "x-apikey": "string (wajib)"
+      },
+      "query": {
+        "email": {
+          "type": "string",
+          "required": true,
+          "description": "Alamat email tujuan. Wajib di-URL-encode.",
+          "example": "akunwarnet62%40gmail.com"
+        }
+      },
+      "example": {
+        "curl": "curl -X GET \"https://api.theresav.eu/api/premium/alightmotion/send?email=akunwarnet62%40gmail.com\" -H \"x-apikey: kenzie\"",
+        "response": {
+          "note": "CONTOH PERKIRAAN — format asli belum terverifikasi.",
+          "ok": true,
+          "email": "akunwarnet62@gmail.com",
+          "message": "Link verifikasi telah dikirim."
+        }
+      }
+    },
+    {
+      "name": "Verifikasi & aktivasi premium",
+      "method": "GET",
+      "path": "/verify",
+      "url": "https://api.theresav.eu/api/premium/alightmotion/verify",
+      "description": "Memverifikasi link magic link lalu mengaktifkan Alight Motion Premium pada email tersebut.",
+      "headers": {
+        "x-apikey": "string (wajib)"
+      },
+      "query": {
+        "email": {
+          "type": "string",
+          "required": true,
+          "description": "Email yang sama dengan yang dipakai pada /send. Wajib di-URL-encode.",
+          "example": "akunwarnet62%40gmail.com"
+        },
+        "link": {
+          "type": "string",
+          "required": true,
+          "description": "Link dari email 'Sign in to Alight Creative' (bukan 'Login to Alight Creative'). Wajib di-URL-encode seluruhnya.",
+          "example": "https%3A%2F%2Falight-creative.firebaseapp.com%2F__%2Fauth%2Flinks%3F..."
+        }
+      },
+      "example": {
+        "curl": "curl -X GET \"https://api.theresav.eu/api/premium/alightmotion/verify?email=akunwarnet62%40gmail.com&link=https%3A%2F%2F...\" -H \"x-apikey: kenzie\"",
+        "response": {
+          "note": "CONTOH PERKIRAAN — format asli belum terverifikasi.",
+          "ok": true,
+          "email": "akunwarnet62@gmail.com",
+          "status": "Active",
+          "message": "Akun Alight Motion berhasil dipremiumkan!"
+        }
+      }
+    }
+  ],
+  "errors": [
+    {
+      "when": "Header x-apikey kosong atau salah",
+      "expected": "HTTP 401/403",
+      "fix": "Pastikan header x-apikey terkirim dan nilainya benar."
+    },
+    {
+      "when": "Parameter email atau link kosong",
+      "expected": "HTTP 400",
+      "fix": "Isi semua parameter wajib."
+    },
+    {
+      "when": "Link bukan dari email 'Sign in to Alight Creative' / sudah kedaluwarsa",
+      "expected": "ok: false + pesan error",
+      "fix": "Kirim ulang magic link lalu pakai link terbaru dari email 'Sign in'."
+    },
+    {
+      "when": "Server API tidak merespons",
+      "expected": "HTTP 5xx / timeout",
+      "fix": "Coba lagi beberapa saat."
+    }
+  ],
+  "usedInThisSite": {
+    "description": "Halaman amprem.html memanggil proxy di situs sendiri, yang meneruskan ke API di atas (menghindari masalah CORS).",
+    "endpoints": [
+      {
+        "method": "POST",
+        "path": "/api/send",
+        "body": {
+          "email": "string"
+        },
+        "forwardsTo": "GET /send?email="
+      },
+      {
+        "method": "POST",
+        "path": "/api/verify",
+        "body": {
+          "email": "string",
+          "link": "string"
+        },
+        "forwardsTo": "GET /verify?email=&link="
+      }
+    ],
+    "proxyFile": "api/[action].js",
+    "envOverride": "AM_API_KEY (opsional; bila tidak diisi dipakai nilai bawaan)"
+  },
+  "notes": [
+    "Contoh respons ditandai 'PERKIRAAN' karena format asli API belum terverifikasi dari sisi server.",
+    "Hanya link 'Sign in to Alight Creative' yang valid untuk /verify.",
+    "Gunakan email yang kamu miliki atau berhak kamu akses."
+  ]
+}
