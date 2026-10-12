@@ -1,1 +1,445 @@
-PLACEHOLDER_WILL_REPLACE
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<style>html:not(.gate-ok) body>*:not(#kgate){display:none!important}html:not(.gate-ok){background:#000}</style>
+<script src="/gate.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AM Premium</title>
+<style>
+:root{color-scheme:dark;--ink:#f7f8ff;--muted:#9ba8c4;--blue:#6eb5ff;--green:#64e6b0;--red:#ff7188;--line:rgba(255,255,255,.13)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;color:var(--ink);min-height:100dvh;background:radial-gradient(ellipse at 10% 0%,#4e6fff3d,transparent 40%),radial-gradient(ellipse at 100% 28%,#ae5eff2e,transparent 35%),linear-gradient(160deg,#080b17,#10162a 60%,#080b16);background-attachment:fixed;padding-bottom:32px}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.2;background-image:radial-gradient(#ffffff38 .6px,transparent .6px);background-size:5px 5px;mask-image:linear-gradient(to bottom,black,transparent 70%)}
+.header{position:sticky;top:0;z-index:10;padding:calc(12px + env(safe-area-inset-top)) 14px 12px;display:flex;align-items:center;gap:12px;background:#0a0e1d9e;backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px) saturate(180%);border-bottom:1px solid #ffffff17}
+.logo{flex:0 0 42px;width:42px;height:42px;border-radius:15px;background:linear-gradient(145deg,#fff,#b0c7ff);color:#10152a;display:grid;place-items:center;font-weight:900;font-size:20px;box-shadow:0 8px 24px #6c8cff30}
+.tabs{display:flex;gap:6px;flex:1;overflow-x:auto;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
+.tab{padding:10px 13px;border-radius:999px;border:1px solid transparent;background:#ffffff0e;color:#aeb8d0;font-size:11px;font-weight:750;white-space:nowrap;cursor:pointer;transition:.22s}
+.tab.active{background:linear-gradient(135deg,#ffffff38,#9bb1ff21);border-color:#ffffff38;color:#fff;box-shadow:inset 0 1px 0 #ffffff20,0 5px 18px #0002}
+.stats{padding:14px 18px 10px;font-size:12px;color:var(--muted);display:flex;gap:16px}.stats span{display:flex;align-items:center;gap:6px}.dot{width:7px;height:7px;border-radius:50%;box-shadow:0 0 10px currentColor}.dot.green{background:var(--green);color:var(--green)}
+.desc{padding:5px 19px 18px;font-size:13px;color:#aeb9d2;line-height:1.6}
+.card{margin:0 13px 16px;padding:21px 17px;border-radius:28px;background:linear-gradient(145deg,#ffffff1b,#ffffff0b);border:1px solid var(--line);box-shadow:inset 0 1px 0 #ffffff1c,0 18px 45px #0002;backdrop-filter:blur(24px) saturate(150%);-webkit-backdrop-filter:blur(24px) saturate(150%)}
+.card-title{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:760;letter-spacing:-.5px;margin-bottom:7px}.card-title:before{content:"";width:9px;height:25px;border-radius:8px;background:linear-gradient(180deg,#9bd5ff,#a99aff);box-shadow:0 0 16px #91a9ff55}
+.card-sub{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.5}
+.label{font-size:10px;font-weight:800;color:#b4c1dc;letter-spacing:.12em;margin:4px 0 8px;display:flex;align-items:center;gap:7px}.label:before{content:"";width:5px;height:5px;border-radius:50%;background:var(--blue);box-shadow:0 0 8px var(--blue)}
+input,textarea{width:100%;padding:15px 16px;border-radius:18px;border:1px solid #ffffff20;background:#04081461;color:var(--ink);font-size:16px;outline:none;margin-bottom:13px;box-shadow:inset 0 1px 4px #0002;transition:border .2s,box-shadow .2s}
+input:focus,textarea:focus{border-color:#8dbdff;box-shadow:0 0 0 3px #6ea8ff20}textarea{min-height:100px;resize:vertical}
+.btn{width:100%;min-height:49px;border:1px solid #ffffff26;border-radius:999px;font-weight:750;font-size:14px;cursor:pointer;margin-bottom:10px;transition:transform .16s,filter .16s;touch-action:manipulation}.btn:active,.copy-btn:active,.tab:active{transform:scale(.98)}.btn:disabled{opacity:.55}
+.btn-send{background:linear-gradient(115deg,#6baeff,#8c8aff 58%,#c2a1ff);color:#081126;box-shadow:0 8px 24px #719bff25}.btn-verify{background:linear-gradient(115deg,#a18aff,#e09bff);color:#170c2b}.btn-copy{background:#ffffff12;color:var(--ink)}
+.legend{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}.legend span{font-size:11px;padding:7px 11px;border-radius:999px;background:#ffffff0f;border:1px solid #ffffff0d;display:flex;align-items:center;gap:6px}
+.msg{margin-top:12px;padding:12px 14px;border-radius:15px;font-size:13px;text-align:center;display:none;border:1px solid transparent}.msg.ok{display:block;background:#4ee5aa14;color:var(--green);border-color:#4ee5aa30}.msg.err{display:block;background:#ff718814;color:var(--red);border-color:#ff718830}
+.mail-list{display:flex;flex-direction:column;gap:9px;max-height:360px;overflow-y:auto}.mail-item{background:#05091659;border:1px solid #ffffff16;border-radius:18px;padding:13px;cursor:pointer;overflow-wrap:anywhere}.mail-item:hover{background:#ffffff12}
+.mail-from{font-size:12px;color:#9fcaff;font-weight:700;overflow-wrap:anywhere}.mail-subj{font-size:14px;margin:5px 0;color:#f4f6ff;font-weight:600}.mail-time{font-size:11px;color:var(--muted);margin-top:5px}
+.panel{display:none;animation:rise .28s ease both}.panel.active{display:block}@keyframes rise{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+.email-box{background:#04081461;border:1px solid #ffffff18;border-radius:18px;padding:13px;font-family:ui-monospace,monospace;font-size:13px;word-break:break-all;margin-bottom:13px;display:flex;gap:10px;justify-content:space-between;align-items:center}.copy-btn{flex-shrink:0;background:#85b1ff33;border:1px solid #8dbdff40;color:#dceaff;padding:9px 13px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer}
+.email-view{background:#04081466;border:1px solid #ffffff18;border-radius:18px;padding:14px;margin-top:10px;display:none;overflow-wrap:anywhere}.email-view.show{display:block}.email-view .ev-from{font-size:12px;color:#9fcaff;margin-bottom:5px}.email-view .ev-subj{font-size:15px;font-weight:750;margin-bottom:9px}.email-view .ev-body{font-size:13px;line-height:1.7;color:#e7ebf7;overflow-wrap:anywhere}.email-view .ev-body a{color:#9bcaff;text-decoration:underline;word-break:break-all}.copy-link-btn{background:#7ea9ff38;border:1px solid #9bcaff40;color:#e5eeff;padding:9px 13px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;margin-top:12px}
+.saved-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.saved-actions .btn{width:auto;flex:1;margin:0;min-height:39px;padding:8px 10px;font-size:12px}.saved-inbox{margin-top:10px}.empty-state{color:var(--muted);text-align:center;padding:22px 10px;font-size:13px}
+@media(min-width:700px){.panel{max-width:620px;margin:0 auto}.header{padding-left:max(18px,calc((100vw - 900px)/2));padding-right:max(18px,calc((100vw - 900px)/2))}.stats,.desc{max-width:660px;margin-left:auto;margin-right:auto}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+
+body.fx-low { --blur: 14px; }
+body.fx-med { --blur: 22px; }
+body.fx-med .card, body.fx-med .header { box-shadow: 0 0 0 1px rgba(255,255,255,.1), 0 8px 32px rgba(100,150,255,.15); }
+body.fx-hard { --blur: 40px; }
+body.fx-hard .card, body.fx-hard .header { 
+  box-shadow: 0 0 0 1px rgba(255,255,255,.15), 0 12px 40px rgba(100,150,255,.25), inset 0 1px 0 rgba(255,255,255,.2); 
+  animation: glow 2s ease-in-out infinite alternate;
+}
+body.fx-hard .btn-send, body.fx-hard .btn-verify { animation: pulse 1.5s ease-in-out infinite; }
+body.fx-hard .tab.active { animation: glow 1.8s ease-in-out infinite alternate; }
+@keyframes glow { from { box-shadow: 0 0 0 1px rgba(255,255,255,.1), 0 8px 24px rgba(100,150,255,.15); } to { box-shadow: 0 0 0 1px rgba(255,255,255,.2), 0 12px 40px rgba(120,160,255,.35); } }
+@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">R</div>
+  <div class="tabs">
+    <button class="tab active" onclick="showPanel('am',this)">AM PREMIUM</button>
+    <button class="tab" onclick="showPanel('mail',this)">Temp Mail</button>
+    <button class="tab" onclick="showPanel('saved',this)">Saved</button>
+    <button class="tab" onclick="showPanel('guide',this)">Guide</button>
+  </div>
+</div>
+<div class="stats">
+  <span><span class="dot green"></span> <b id="visitors">0</b> visitors</span>
+  <span><span class="dot green"></span> <b id="verified">0</b> verified</span>
+</div>
+
+<div class="panel active" id="panel-am">
+  <p class="desc">Masukkan email, kirim magic link, lalu verifikasi dari link yang kamu terima.</p>
+  <div class="card">
+    <div class="card-title">Verify your account</div>
+    <p class="card-sub">Gunakan email yang kamu miliki atau berhak kamu akses.</p>
+    <div class="label">ACCOUNT EMAIL</div>
+    <input id="email" type="email" placeholder="you@example.com" />
+    <button class="btn btn-send" id="btnSend" onclick="sendLink()">Send magic link →</button>
+    <div class="label">VERIFICATION LINK</div>
+    <textarea id="link" placeholder="Paste verification link di sini..."></textarea>
+    <button class="btn btn-copy" id="btnPull" onclick="pullLink()">Ambil link dari inbox</button>
+    <button class="btn btn-verify" id="btnVerif" onclick="verifyLink()">Verify account →</button>
+    <div class="legend">
+      <span style="color:var(--red)">● Merah = Error</span>
+      <span style="color:var(--green)">● Hijau = Berhasil</span>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+</div>
+
+<div class="panel" id="panel-mail">
+  <p class="desc">Email sementara untuk menerima magic link.</p>
+  <div class="card">
+    <div class="card-title">Temp Mail</div>
+    <p class="card-sub">Buat email sementara, lalu cek inbox.</p>
+    <div class="email-box">
+      <span id="tempEmail">Klik Generate</span>
+      <button class="copy-btn" onclick="copyTempEmail()">Salin</button>
+    </div>
+    <button class="btn btn-send" onclick="generateEmail()">Generate Email</button>
+    <button class="btn btn-copy" onclick="checkInbox()">Refresh Inbox</button>
+    <div class="mail-list" id="mailList"></div><div class="email-view" id="emailView"></div>
+    <div class="msg" id="mailMsg"></div>
+  </div>
+</div>
+
+<div class="panel" id="panel-saved">
+  <p class="desc">Email yang tersimpan.</p>
+  <div class="card">
+    <div class="card-title">Saved</div>
+    <div class="mail-list" id="savedList"><p style="color:var(--muted);text-align:center;padding:20px">Belum ada</p></div>
+  </div>
+</div>
+
+<div class="panel" id="panel-guide">
+  <p class="desc">Cara pakai.</p>
+  <div class="card">
+    <div class="card-title">Guide</div>
+    <ol style="padding-left:20px;line-height:1.8;color:var(--muted);font-size:14px">
+      <li>Buka tab Temp Mail, klik Generate Email</li>
+      <li>Salin email, tempel di AM Premium</li>
+      <li>Klik Send magic link</li>
+      <li>Kembali ke Temp Mail, klik Refresh Inbox</li>
+      <li>Buka email, salin link verifikasi</li>
+      <li>Tempel di Verification Link, klik Verify</li>
+    </ol>
+  </div>
+</div>
+
+<script>
+(function() {
+  const fx = localStorage.getItem('kenzie_fx') || 'low';
+  document.body.classList.add('fx-' + fx);
+})();
+
+const API = 'https://api.theresav.eu/api/premium/alightmotion';
+const API_KEY = 'kenzie';
+const API_PROXY = '/api/amprem';  // POST ?action=send|verify  (proxy CORS-safe)
+function amText(v) {
+  if (v == null || v === '') return '';
+  if (typeof v === 'string' || typeof v === 'number') return String(v);
+  if (Array.isArray(v)) return v.map(amText).filter(Boolean).join(', ');
+  if (typeof v === 'object') return amText(v.message || v.error || v.detail || v.msg || v.reason) || JSON.stringify(v).slice(0, 200);
+  return String(v);
+}
+async function amCall(path, body) {
+  const opts = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+  async function hit(url, o) {
+    const r = await fetch(url, o || opts);
+    const text = await r.text();
+    let d = null; try { d = JSON.parse(text); } catch {}
+    return { r, text, d };
+  }
+  let res = null, via = 'proxy';
+  // 1) Prefer own Vercel proxy (no CORS issues on mobile)
+  try {
+    res = await hit(API_PROXY + '?action=' + encodeURIComponent(path), opts);
+  } catch (e) {
+    res = null;
+  }
+  // 2) Fallback: direct to upstream (may fail on mobile due to CORS)
+  if (!res || (res.r.status === 404 && !(res.d && typeof res.d === 'object'))) {
+    via = 'langsung';
+    const qs = '?email=' + encodeURIComponent(body.email || '') + (path === 'verify' ? '&link=' + encodeURIComponent(body.link || '') : '');
+    try {
+      res = await hit(API + '/' + path + qs, { method: 'GET', headers: { 'x-apikey': API_KEY, 'accept': 'application/json' } });
+    } catch (e) {
+      return { ok: false, message: 'Tidak bisa terhubung ke API (' + (e.message || 'jaringan') + '). Cek koneksi, lalu coba lagi.' };
+    }
+  }
+  const { r, text } = res;
+  let d = res.d;
+  if (!d || typeof d !== 'object' || Array.isArray(d)) {
+    d = { ok: false, message: (text || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 160) || 'respons kosong' };
+  }
+  if (d.ok === undefined) {
+    d.ok = !!(r.ok && (d.status === true || d.success === true) && d.error == null && !/^(error|fail)/i.test(String(d.status || '')));
+  }
+  if (d.status === true && d.ok !== false) d.ok = true;
+  if (!d.message && d.result) d.message = amText(d.result.message || d.result.msg || (typeof d.result === 'string' ? d.result : ''));
+  if (!d.message && d.msg) d.message = amText(d.msg);
+  if (d.ok !== true) {
+    d.ok = false;
+    if (!d.message && !d.error && !d.detail) d.message = 'Gagal';
+    d.message = (amText(d.message) || amText(d.error) || amText(d.detail)) + ' [HTTP ' + r.status + ', ' + via + ']';
+  } else {
+    d.message = amText(d.message) || 'Berhasil';
+  }
+  return d;
+}
+const MAIL_API = '/api/tempmail';
+let visitors = 0, verified = 0;
+let tempToken = null, tempAddress = null;
+
+function showPanel(name, tab) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  if (tab) tab.classList.add('active');
+}
+function showMsg(id, text, type) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'msg' + (type ? ' ' + type : '');
+}
+
+async function sendLink() {
+  const email = document.getElementById('email').value.trim();
+  if (!email || !email.includes('@')) { showMsg('msg', 'Email tidak valid', 'err'); return; }
+  const btn = document.getElementById('btnSend');
+  btn.disabled = true; btn.textContent = 'Mengirim...';
+  try {
+    const d = await amCall('send', { email });
+    if (d.ok) {
+      showMsg('msg', amText(d.message) || 'Link dikirim!', 'ok');
+      visitors++; document.getElementById('visitors').textContent = visitors;
+      watchInbox(email);
+    } else {
+      showMsg('msg', amText(d.message) || amText(d.error) || amText(d.detail) || 'Gagal', 'err');
+    }
+  } catch(e) { showMsg('msg', 'Error: ' + e.message, 'err'); }
+  btn.disabled = false; btn.textContent = 'Send magic link →';
+}
+async function verifyLink() {
+  const email = document.getElementById('email').value.trim();
+  const link = document.getElementById('link').value.trim();
+  if (!email || !link) { showMsg('msg', 'Isi email dan link', 'err'); return; }
+  const btn = document.getElementById('btnVerif');
+  btn.disabled = true; btn.textContent = 'Memverifikasi...';
+  try {
+    const d = await amCall('verify', { email, link });
+    if (d.ok) {
+      showMsg('msg', amText(d.message) || ('Premium aktif' + (d.status ? ' (' + d.status + ')' : '') + (d.orderId ? ' · ' + d.orderId : '')), 'ok');
+      verified++; document.getElementById('verified').textContent = verified;
+    } else {
+      showMsg('msg', amText(d.message) || amText(d.error) || amText(d.detail) || 'Gagal', 'err');
+    }
+  } catch(e) { showMsg('msg', 'Error: ' + e.message, 'err'); }
+  btn.disabled = false; btn.textContent = 'Verify account →';
+}
+
+function goTab(name) {
+  document.querySelectorAll('.tab').forEach(t => { if ((t.getAttribute('onclick') || '').includes("'" + name + "'")) showPanel(name, t); });
+}
+function mailText(m) { return [m.subject, m.body, m.text, m.content, m.html, m.snippet].filter(Boolean).join(' '); }
+function isSignInMail(m) {
+  const subj = String(m.subject || ''), all = mailText(m);
+  const good = /sign[\s-]*in\s+to\s+alight\s+creative/i, bad = /log[\s-]*in\s+to\s+alight\s+creative/i;
+  if (good.test(subj)) return true;
+  if (bad.test(subj)) return false;
+  return good.test(all) && !bad.test(all);
+}
+function extractSignInLink(m) {
+  const raw = mailText(m).replace(/&/g, '&');
+  const urls = (raw.match(/https?:\/\/[^\s<>"'\\)]+/g) || []).map(u => u.replace(/[.,;]+$/, ''));
+  return urls.find(u => /__\/auth\/links|alight-creative\.firebaseapp\.com|alightcreative\.com\/auth|oobCode|mode=signIn/i.test(u))
+      || urls.find(u => /alight|firebaseapp|signin|sign-in|magic/i.test(u)) || '';
+}
+function findSignInLink(list) {
+  const ts = x => { const n = Date.parse(x.date || x.time || x.created_at || ''); return isNaN(n) ? 0 : n; };
+  const cands = list.filter(isSignInMail).sort((a, b) => ts(b) - ts(a));
+  for (const m of cands) { const u = extractSignInLink(m); if (u) return u; }
+  return '';
+}
+function pasteLink(url, addr, quiet) {
+  document.getElementById('link').value = url; window._autoLink = url;
+  if (addr) document.getElementById('email').value = addr;
+  if (!quiet) showMsg('msg', 'Link "Sign in to Alight Creative" otomatis ditempel. Klik Verify.', 'ok');
+}
+function tokenFor(email) {
+  const s = JSON.parse(localStorage.getItem('savedEmails') || '[]').find(x => x.email === email);
+  return (s && s.token) || (email === tempAddress ? tempToken : '') || '';
+}
+async function fetchInbox(email) {
+  const r = await fetch(MAIL_API + '?action=inbox&email=' + encodeURIComponent(email) + '&token=' + encodeURIComponent(tokenFor(email)));
+  if (!r.ok) throw new Error('Server merespons HTTP ' + r.status);
+  const d = await r.json();
+  return d.messages || d.inbox || d.emails || [];
+}
+async function pullLink() {
+  const email = document.getElementById('email').value.trim();
+  if (!email) { showMsg('msg', 'Isi Account Email dulu', 'err'); return; }
+  const btn = document.getElementById('btnPull'); btn.disabled = true; btn.textContent = 'Mengecek inbox…';
+  try {
+    const list = await fetchInbox(email);
+    const u = findSignInLink(list);
+    if (u) pasteLink(u, email);
+    else showMsg('msg', list.length ? 'Belum ada email "Sign in to Alight Creative" di inbox ini.' : 'Inbox masih kosong. Kirim magic link dulu, tunggu sebentar, lalu coba lagi.', 'err');
+  } catch (e) { showMsg('msg', 'Gagal membuka inbox: ' + e.message, 'err'); }
+  btn.disabled = false; btn.textContent = 'Ambil link dari inbox';
+}
+function watchInbox(email) {
+  if (window._watchTimer) clearInterval(window._watchTimer);
+  let n = 0;
+  window._watchTimer = setInterval(async () => {
+    if (++n > 30 || document.getElementById('email').value.trim() !== email) return clearInterval(window._watchTimer);
+    try {
+      const u = findSignInLink(await fetchInbox(email));
+      const cur = document.getElementById('link').value.trim();
+      if (u && u !== cur) { pasteLink(u, email); clearInterval(window._watchTimer); }
+    } catch (e) {}
+  }, 4000);
+}
+
+async function generateEmail() {
+  showMsg('mailMsg', 'Membuat email...', '');
+  try {
+    const r = await fetch(MAIL_API + '?action=create');
+    if (!r.ok) throw new Error('API gagal');
+    const data = await r.json();
+    if (!data.status || !data.email) throw new Error(data.error || 'Gagal buat email');
+    tempAddress = data.email;
+    tempToken = data.token;
+    document.getElementById('tempEmail').textContent = tempAddress;
+    showMsg('mailMsg', 'Email dibuat! Auto-cek inbox...', 'ok');
+    const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
+    saved.unshift({email: tempAddress, token: tempToken || '', time: new Date().toISOString()});
+    localStorage.setItem('savedEmails', JSON.stringify(saved.slice(0, 20)));
+    renderSaved();
+    if (window._inboxTimer) clearInterval(window._inboxTimer);
+    window._inboxTimer = setInterval(checkInbox, 5000);
+    checkInbox();
+  } catch(e) { showMsg('mailMsg', 'Gagal: ' + e.message, 'err'); }
+}
+function copyTempEmail() {
+  const email = document.getElementById('tempEmail').textContent;
+  if (email && email !== 'Klik Generate') {
+    navigator.clipboard.writeText(email).then(() => showMsg('mailMsg', 'Disalin!', 'ok'));
+  }
+}
+async function checkInbox() {
+  if (!tempAddress) return;
+  try {
+    const r = await fetch(MAIL_API + '?action=inbox&email=' + encodeURIComponent(tempAddress));
+    const data = await r.json();
+    const list = data.messages || data.inbox || data.emails || [];
+    const el = document.getElementById('mailList');
+    if (!list.length) { 
+      el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:12px">Inbox kosong. Kirim email ke ' + (tempAddress || '') + '</p>'; 
+      return; 
+    }
+    el.innerHTML = list.map((m, i) => {
+      const subj = (m.subject || '').toLowerCase();
+      const isAlight = subj.includes('alight') || subj.includes('sign in') || subj.includes('login') || subj.includes('verify');
+      return '<div class="mail-item" onclick="readMail(' + i + ')" style="' + (isAlight?'border:1px solid #3b82f6':'') + '"><div class="mail-from">' + (m.from || m.sender || '-') + '</div><div class="mail-subj">' + (m.subject || '(no subject)') + '</div><div class="mail-time">' + (m.date || m.time || '') + '</div></div>';
+    }).join('');
+    window._mailCache = list;
+    const su = findSignInLink(list), cur = document.getElementById('link').value.trim();
+    if (su && su !== cur && (!cur || cur === window._autoLink)) {
+      pasteLink(su, tempAddress); goTab('am');
+      if (window._inboxTimer) clearInterval(window._inboxTimer);
+    }
+  } catch(e) { console.warn(e); }
+}
+function readMail(idx) {
+  const m = window._mailCache && window._mailCache[idx];
+  if (!m) return;
+  const text = m.body || m.text || m.content || m.html || '';
+  const subj = m.subject || '(no subject)';
+  const from = m.from || m.sender || '-';
+  const allText = text + ' ' + (m.html || '') + ' ' + JSON.stringify(m);
+  const urls = allText.match(/https?:\/\/[^\s<>"'\\]+/g) || [];
+  const alightUrl = urls.find(u => u.includes('alight-creative.firebaseapp.com') || u.includes('alightcreative.com/auth')) || urls.find(u => /alight|verify|login|sign|magic/i.test(u)) || urls[0] || '';
+  let linked = text.replace(/(https?:\/\/[^\s<>"]+)/g, '<a href="$1" target="_blank" style="color:#60a5fa">$1</a>');
+  linked = linked.replace(/(Sign in to Alight Creative|Login ke Alight Creative)/gi, '<span style="color:#60a5fa;font-weight:600">$1</span>');
+  const view = document.getElementById('emailView');
+  const btn = alightUrl ? '<button class="copy-link-btn" onclick="copyAlightLink(\'' + alightUrl.replace(/'/g, "\\'") + '\')">Salin Link Alight Creative</button> <a class="copy-link-btn" href="' + alightUrl + '" target="_blank" style="text-decoration:none;display:inline-block;margin-left:8px">Open Link</a>' : '<button class="copy-link-btn" onclick="alert(\'Link tidak ditemukan\')">Salin Link Alight Creative</button>';
+  view.innerHTML = '<div class="ev-from">Dari: ' + from + '</div><div class="ev-subj">' + subj + '</div><div class="ev-body">' + linked.replace(/\n/g, '<br>') + '</div>' + btn;
+  view.classList.add('show');
+  if (alightUrl) {
+    document.getElementById('link').value = alightUrl;
+    document.getElementById('email').value = tempAddress || '';
+  }
+}
+function copyAlightLink(url) {
+  navigator.clipboard.writeText(url).then(() => showMsg('mailMsg', 'Link disalin!', 'ok'));
+  document.getElementById('link').value = url;
+}
+function escapeHTML(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[ch]));
+}
+function renderSaved() {
+  const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
+  const el = document.getElementById('savedList');
+  if (!saved.length) { el.innerHTML = '<p class="empty-state">Belum ada email tersimpan</p>'; return; }
+  el.innerHTML = saved.map((s, i) => '<div class="mail-item" style="cursor:default"><div class="mail-from">' + escapeHTML(s.email) + '</div><div class="mail-time">Tersimpan · ' + escapeHTML(new Date(s.time).toLocaleString('id-ID')) + '</div><div class="saved-actions"><button class="btn btn-verify" onclick="useSaved(' + i + ')">Pakai</button><button class="btn btn-send" onclick="checkSavedInbox(' + i + ',this)">Inbox</button><button class="btn btn-copy" onclick="copySavedEmail(' + i + ')">Salin</button><button class="btn" style="background:#ff718820;color:#ff7188;border-color:#ff718840" onclick="deleteSavedEmail(' + i + ')">Hapus</button></div><div class="saved-inbox" id="savedInbox' + i + '"></div></div>').join('');
+}
+function useSaved(index) {
+  const item = JSON.parse(localStorage.getItem('savedEmails') || '[]')[index]; if (!item) return;
+  document.getElementById('email').value = item.email; document.getElementById('link').value = ''; window._autoLink = '';
+  goTab('am'); showMsg('msg', 'Email dipakai. Klik Send magic link, link sign-in akan masuk otomatis.', 'ok');
+}
+async function copySavedEmail(index) {
+  const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
+  const item = saved[index]; if (!item) return;
+  try { await navigator.clipboard.writeText(item.email); showMsg('mailMsg','Email berhasil disalin','ok'); }
+  catch(e) { showMsg('mailMsg','Gagal menyalin. Salin email secara manual.','err'); }
+}
+async function checkSavedInbox(index, button) {
+  const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
+  const item = saved[index]; if (!item) return;
+  const output = document.getElementById('savedInbox' + index);
+  button.disabled = true; button.textContent = 'Memuat inbox…';
+  output.innerHTML = '<p class="empty-state">Mengambil pesan untuk ' + escapeHTML(item.email) + '…</p>';
+  try {
+    const messages = await fetchInbox(item.email);
+    window._savedMailCache = window._savedMailCache || {};
+    window._savedMailCache[index] = messages;
+    if (!messages.length) {
+      output.innerHTML = '<p class="empty-state">Inbox masih kosong. Coba cek lagi beberapa saat.</p>';
+      return;
+    }
+    const su = findSignInLink(messages);
+    if (su) pasteLink(su, item.email, true);
+    output.innerHTML = (su ? '<div class="msg ok" style="display:block;margin:0 0 10px">Link "Sign in to Alight Creative" ditemukan dan sudah ditempel di Verify. <a href="#" onclick="goTab(\'am\');return false" style="color:inherit;text-decoration:underline">Buka Verify</a></div>' : '') +
+      '<div class="mail-list">' + messages.map((m, i) =>
+      '<div class="mail-item" onclick="readSavedMail(' + index + ',' + i + ')" style="' + (isSignInMail(m) ? 'border:1px solid #3b82f6' : '') + '"><div class="mail-from">' + escapeHTML(m.from || m.sender || 'Pengirim tidak diketahui') + '</div><div class="mail-subj">' + escapeHTML(m.subject || '(Tanpa subjek)') + '</div><div class="mail-time">' + escapeHTML(m.date || m.time || '') + '</div></div>').join('') + '</div><div class="email-view" id="savedMailView' + index + '"></div>';
+  } catch(e) {
+    output.innerHTML = '<p class="empty-state" style="color:var(--red)">Gagal memuat inbox: ' + escapeHTML(e.message) + '</p>';
+  } finally {
+    button.disabled = false; button.textContent = 'Inbox';
+  }
+}
+function readSavedMail(index, messageIndex) {
+  const m = window._savedMailCache && window._savedMailCache[index] && window._savedMailCache[index][messageIndex]; if (!m) return;
+  const view = document.getElementById('savedMailView' + index); if (!view) return;
+  const body = m.body || m.text || m.content || m.html || 'Isi pesan tidak tersedia dari API.';
+  const safeBody = escapeHTML(body).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>').replace(/\n/g,'<br>');
+  view.innerHTML = '<div class="ev-from">Dari: ' + escapeHTML(m.from || m.sender || '-') + '</div><div class="ev-subj">' + escapeHTML(m.subject || '(Tanpa subjek)') + '</div><div class="ev-body">' + safeBody + '</div>';
+  const lk = isSignInMail(m) ? extractSignInLink(m) : '';
+  if (lk) {
+    const b = document.createElement('button'); b.className = 'copy-link-btn'; b.textContent = 'Tempel link ke Verify';
+    b.onclick = function() { const it = JSON.parse(localStorage.getItem('savedEmails') || '[]')[index]; pasteLink(lk, it && it.email); goTab('am'); };
+    view.appendChild(b);
+  }
+  view.classList.add('show');
+}
+function deleteSavedEmail(index) {
+  const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
+  saved.splice(index, 1);
+  localStorage.setItem('savedEmails', JSON.stringify(saved));
+  renderSaved();
+}
+renderSaved();
+</script>
+</body>
+</html>
