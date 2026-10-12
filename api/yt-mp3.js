@@ -1,5 +1,5 @@
 // Vercel Serverless Function — unduh MP3 dari video YouTube (dipakai tombol MP3 di menu Musik).
-// GET /api/yt-mp3?url=<link youtube>&bitrate=64k  →  https://api.theresav.eu/api/download/ytmp3
+// GET /api/yt-mp3?url=<link youtube>&bitrate=128k  →  https://api.theresav.eu/api/download/ytmp3
 //  - bila API membalas file audio  : file diteruskan langsung (stream)
 //  - bila API membalas JSON         : dikembalikan {ok:true, url:"<link mp3>"} untuk diunduh browser
 // Key bawaan 'kenzie'; env MUSIC_API_KEY (Vercel) bila diisi akan dipakai.
@@ -29,8 +29,8 @@ module.exports = async (req, res) => {
 
   const url = String((req.query && req.query.url) || '').trim();
   if (!/^https?:\/\/((www|m|music)\.)?(youtube\.com|youtu\.be)\//i.test(url)) return res.status(400).json({ ok: false, error: 'Parameter url harus link YouTube' });
-  let br = String((req.query && req.query.bitrate) || '64k').trim();
-  if (!/^\d{2,3}k$/.test(br)) br = '64k';
+  let br = String((req.query && req.query.bitrate) || '128k').trim();
+  if (!/^\d{2,3}k$/.test(br)) br = '128k';
 
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), 55000);
@@ -44,9 +44,12 @@ module.exports = async (req, res) => {
       res.status(200);
       res.setHeader('Content-Type', /^audio\//i.test(ct) ? ct : 'audio/mpeg');
       res.setHeader('Content-Disposition', 'attachment; filename="lagu.mp3"');
-      const buf = Buffer.from(await r.arrayBuffer());
-      res.setHeader('Content-Length', String(buf.length));
-      return res.end(buf);
+      const cl = r.headers.get('content-length'); if (cl) res.setHeader('Content-Length', cl);
+      clearTimeout(timer); // header sudah diterima; lagu penuh di-stream tanpa batas 4,5 MB
+      const { Readable } = require('stream');
+      const { pipeline } = require('stream/promises');
+      await pipeline(Readable.fromWeb(r.body), res);
+      return;
     }
     const text = await r.text();
     let data = null; try { data = JSON.parse(text); } catch {}
@@ -62,4 +65,4 @@ module.exports = async (req, res) => {
     return res.status(502).json({ ok: false, error: 'Gagal menghubungi API MP3 (' + why + ')' });
   } finally { clearTimeout(timer); }
 };
-module.exports.config = { maxDuration: 60 };
+module.exports.config = { maxDuration: 300 };
