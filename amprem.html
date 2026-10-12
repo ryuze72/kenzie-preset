@@ -6,7 +6,6 @@
 <script src="/gate.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>AM Premium</title>
-<!-- fix-redeploy-2026-10-12 -->
 <style>
 :root{color-scheme:dark;--ink:#f7f8ff;--muted:#9ba8c4;--blue:#6eb5ff;--green:#64e6b0;--red:#ff7188;--line:rgba(255,255,255,.13)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -34,10 +33,11 @@ input:focus,textarea:focus{border-color:#8dbdff;box-shadow:0 0 0 3px #6ea8ff20}t
 .panel{display:none;animation:rise .28s ease both}.panel.active{display:block}@keyframes rise{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
 .email-box{background:#04081461;border:1px solid #ffffff18;border-radius:18px;padding:13px;font-family:ui-monospace,monospace;font-size:13px;word-break:break-all;margin-bottom:13px;display:flex;gap:10px;justify-content:space-between;align-items:center}.copy-btn{flex-shrink:0;background:#85b1ff33;border:1px solid #8dbdff40;color:#dceaff;padding:9px 13px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer}
 .email-view{background:#04081466;border:1px solid #ffffff18;border-radius:18px;padding:14px;margin-top:10px;display:none;overflow-wrap:anywhere}.email-view.show{display:block}.email-view .ev-from{font-size:12px;color:#9fcaff;margin-bottom:5px}.email-view .ev-subj{font-size:15px;font-weight:750;margin-bottom:9px}.email-view .ev-body{font-size:13px;line-height:1.7;color:#e7ebf7;overflow-wrap:anywhere}.email-view .ev-body a{color:#9bcaff;text-decoration:underline;word-break:break-all}.copy-link-btn{background:#7ea9ff38;border:1px solid #9bcaff40;color:#e5eeff;padding:9px 13px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;margin-top:12px}
-.saved-actions{display:flex;gap:8px;margin-top:12px}.saved-actions .btn{width:auto;flex:1;margin:0;min-height:39px;padding:8px 10px;font-size:12px}.saved-inbox{margin-top:10px}.empty-state{color:var(--muted);text-align:center;padding:22px 10px;font-size:13px}
+.saved-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.saved-actions .btn{width:auto;flex:1;margin:0;min-height:39px;padding:8px 10px;font-size:12px}.saved-inbox{margin-top:10px}.empty-state{color:var(--muted);text-align:center;padding:22px 10px;font-size:13px}
 @media(min-width:700px){.panel{max-width:620px;margin:0 auto}.header{padding-left:max(18px,calc((100vw - 900px)/2));padding-right:max(18px,calc((100vw - 900px)/2))}.stats,.desc{max-width:660px;margin-left:auto;margin-right:auto}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
 
+/* Effect levels synced with kenzie-preset */
 body.fx-low { --blur: 14px; }
 body.fx-med { --blur: 22px; }
 body.fx-med .card, body.fx-med .header { box-shadow: 0 0 0 1px rgba(255,255,255,.1), 0 8px 32px rgba(100,150,255,.15); }
@@ -67,6 +67,7 @@ body.fx-hard .tab.active { animation: glow 1.8s ease-in-out infinite alternate; 
   <span><span class="dot green"></span> <b id="verified">0</b> verified</span>
 </div>
 
+<!-- AM Premium Panel -->
 <div class="panel active" id="panel-am">
   <p class="desc">Masukkan email, kirim magic link, lalu verifikasi dari link yang kamu terima.</p>
   <div class="card">
@@ -77,6 +78,7 @@ body.fx-hard .tab.active { animation: glow 1.8s ease-in-out infinite alternate; 
     <button class="btn btn-send" id="btnSend" onclick="sendLink()">Send magic link →</button>
     <div class="label">VERIFICATION LINK</div>
     <textarea id="link" placeholder="Paste verification link di sini..."></textarea>
+    <button class="btn btn-copy" id="btnPull" onclick="pullLink()">Ambil link dari inbox</button>
     <button class="btn btn-verify" id="btnVerif" onclick="verifyLink()">Verify account →</button>
     <div class="legend">
       <span style="color:var(--red)">● Merah = Error</span>
@@ -86,6 +88,7 @@ body.fx-hard .tab.active { animation: glow 1.8s ease-in-out infinite alternate; 
   </div>
 </div>
 
+<!-- Temp Mail Panel -->
 <div class="panel" id="panel-mail">
   <p class="desc">Email sementara untuk menerima magic link.</p>
   <div class="card">
@@ -102,6 +105,7 @@ body.fx-hard .tab.active { animation: glow 1.8s ease-in-out infinite alternate; 
   </div>
 </div>
 
+<!-- Saved Panel -->
 <div class="panel" id="panel-saved">
   <p class="desc">Email yang tersimpan.</p>
   <div class="card">
@@ -110,6 +114,7 @@ body.fx-hard .tab.active { animation: glow 1.8s ease-in-out infinite alternate; 
   </div>
 </div>
 
+<!-- Guide Panel -->
 <div class="panel" id="panel-guide">
   <p class="desc">Cara pakai.</p>
   <div class="card">
@@ -126,36 +131,39 @@ body.fx-hard .tab.active { animation: glow 1.8s ease-in-out infinite alternate; 
 </div>
 
 <script>
+// Sync effect with kenzie-preset
 (function() {
   const fx = localStorage.getItem('kenzie_fx') || 'low';
   document.body.classList.add('fx-' + fx);
 })();
 
-const API = 'https://amprem.ran.my.id/api';
-const API_PROXY = '/api/amprem';
+const API = 'https://amprem-ran.vercel.app/api';   // POST /send {email}, POST /verify {email, link}
+const API_PROXY = '/api';                     // cadangan lewat Vercel: /api/send dan /api/verify
+function amText(v) {
+  if (v == null || v === '') return '';
+  if (typeof v === 'string' || typeof v === 'number') return String(v);
+  if (Array.isArray(v)) return v.map(amText).filter(Boolean).join(', ');
+  if (typeof v === 'object') return amText(v.message || v.error || v.detail || v.msg || v.reason) || JSON.stringify(v).slice(0, 200);
+  return String(v);
+}
 async function amCall(path, body) {
   const opts = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
-  let r, text;
-  try {
-    r = await fetch(API_PROXY + '?action=' + encodeURIComponent(path), opts);
-    text = await r.text();
-  } catch (e1) {
-    try {
-      r = await fetch(API + '/' + path, opts);
-      text = await r.text();
-    } catch (e2) {
-      return { ok: false, message: 'Tidak bisa terhubung ke server (' + (e2.message || e1.message || 'network') + ')' };
-    }
+  // 1) lewat proxy situs sendiri (tanpa masalah CORS); 2) bila proxy belum ada / tak terjangkau → langsung ke API
+  async function hit(url) {
+    const r = await fetch(url, opts); const text = await r.text();
+    let d = null; try { d = JSON.parse(text); } catch {}
+    return { r, text, d };
   }
-  let d;
-  try { d = JSON.parse(text); } catch { d = { ok: false, message: (text || '').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0, 160) || ('HTTP ' + r.status) }; }
-  if (!d || typeof d !== 'object') d = { ok: false, message: String(d) };
-  if (d.ok === undefined) d.ok = !!(r.ok && d.error == null && d.success !== false);
-  for (const k of ['message', 'error', 'msg']) {
-    if (d[k] != null && typeof d[k] === 'object') {
-      try { d[k] = JSON.stringify(d[k]).slice(0, 300); } catch { d[k] = String(d[k]); }
-    }
+  let res = null, via = 'proxy';
+  try { res = await hit(API_PROXY + '/' + path); } catch (e) { res = null; }
+  if (!res || ((res.r.status === 404 || res.r.status === 405) && !(res.d && typeof res.d === 'object' && res.d.message))) {
+    via = 'langsung';
+    try { res = await hit(API + '/' + path); }
+    catch (e) { return { ok: false, message: 'Tidak bisa terhubung ke API (' + (e.message || 'jaringan') + '). Cek koneksi, lalu coba lagi.' }; }
   }
+  const { r, text } = res; let d = res.d;
+  if (!d || typeof d !== 'object' || Array.isArray(d)) d = { ok: false, message: (text || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 160) || 'respons kosong' };
+  if (d.ok !== true) { d.ok = false; if (!d.message && !d.error && !d.detail) d.message = 'Gagal'; d.message = (amText(d.message) || amText(d.error) || amText(d.detail)) + ' [HTTP ' + r.status + ', ' + via + ']'; }
   return d;
 }
 const MAIL_API = '/api/tempmail';
@@ -168,27 +176,13 @@ function showPanel(name, tab) {
   document.getElementById('panel-' + name).classList.add('active');
   if (tab) tab.classList.add('active');
 }
-function toMsg(v) {
-  if (v == null || v === '') return '';
-  if (typeof v === 'string') return v;
-  if (typeof v === 'number' || typeof v === 'boolean') return String(v);
-  if (typeof v === 'object') {
-    if (typeof v.message === 'string') return v.message;
-    if (typeof v.error === 'string') return v.error;
-    if (typeof v.msg === 'string') return v.msg;
-    try { return JSON.stringify(v); } catch (e) { return String(v); }
-  }
-  return String(v);
-}
 function showMsg(id, text, type) {
   const el = document.getElementById(id);
-  el.textContent = toMsg(text) || '';
+  el.textContent = text;
   el.className = 'msg' + (type ? ' ' + type : '');
 }
-function apiErr(d) {
-  return toMsg(d && (d.message || d.error || d.msg)) || 'Gagal';
-}
 
+// AM Premium
 async function sendLink() {
   const email = document.getElementById('email').value.trim();
   if (!email || !email.includes('@')) { showMsg('msg', 'Email tidak valid', 'err'); return; }
@@ -197,10 +191,11 @@ async function sendLink() {
   try {
     const d = await amCall('send', { email });
     if (d.ok) {
-      showMsg('msg', toMsg(d.message) || 'Link dikirim!', 'ok');
+      showMsg('msg', amText(d.message) || 'Link dikirim!', 'ok');
       visitors++; document.getElementById('visitors').textContent = visitors;
+      watchInbox(email);
     } else {
-      showMsg('msg', apiErr(d), 'err');
+      showMsg('msg', amText(d.message) || amText(d.error) || amText(d.detail) || 'Gagal (HTTP/respons tidak dikenal)', 'err');
     }
   } catch(e) { showMsg('msg', 'Error: ' + e.message, 'err'); }
   btn.disabled = false; btn.textContent = 'Send magic link →';
@@ -214,15 +209,80 @@ async function verifyLink() {
   try {
     const d = await amCall('verify', { email, link });
     if (d.ok) {
-      showMsg('msg', toMsg(d.message) || ('Premium aktif' + (d.status ? ' (' + d.status + ')' : '') + (d.orderId ? ' · ' + d.orderId : '')), 'ok');
+      showMsg('msg', amText(d.message) || ('Premium aktif' + (d.status ? ' (' + d.status + ')' : '') + (d.orderId ? ' · ' + d.orderId : '')), 'ok');
       verified++; document.getElementById('verified').textContent = verified;
     } else {
-      showMsg('msg', apiErr(d), 'err');
+      showMsg('msg', amText(d.message) || amText(d.error) || amText(d.detail) || 'Gagal (HTTP/respons tidak dikenal)', 'err');
     }
   } catch(e) { showMsg('msg', 'Error: ' + e.message, 'err'); }
   btn.disabled = false; btn.textContent = 'Verify account →';
 }
 
+// ---- Inbox + link "Sign in to Alight Creative" ----
+function goTab(name) {
+  document.querySelectorAll('.tab').forEach(t => { if ((t.getAttribute('onclick') || '').includes("'" + name + "'")) showPanel(name, t); });
+}
+function mailText(m) { return [m.subject, m.body, m.text, m.content, m.html, m.snippet].filter(Boolean).join(' '); }
+function isSignInMail(m) {
+  const subj = String(m.subject || ''), all = mailText(m);
+  const good = /sign[\s-]*in\s+to\s+alight\s+creative/i, bad = /log[\s-]*in\s+to\s+alight\s+creative/i;
+  if (good.test(subj)) return true;
+  if (bad.test(subj)) return false;
+  return good.test(all) && !bad.test(all);
+}
+function extractSignInLink(m) {
+  const raw = mailText(m).replace(/&/g, '&');
+  const urls = (raw.match(/https?:\/\/[^\s<>"'\\)]+/g) || []).map(u => u.replace(/[.,;]+$/, ''));
+  return urls.find(u => /__\/auth\/links|alight-creative\.firebaseapp\.com|alightcreative\.com\/auth|oobCode|mode=signIn/i.test(u))
+      || urls.find(u => /alight|firebaseapp|signin|sign-in|magic/i.test(u)) || '';
+}
+function findSignInLink(list) {
+  const ts = x => { const n = Date.parse(x.date || x.time || x.created_at || ''); return isNaN(n) ? 0 : n; };
+  const cands = list.filter(isSignInMail).sort((a, b) => ts(b) - ts(a));
+  for (const m of cands) { const u = extractSignInLink(m); if (u) return u; }
+  return '';
+}
+function pasteLink(url, addr, quiet) {
+  document.getElementById('link').value = url; window._autoLink = url;
+  if (addr) document.getElementById('email').value = addr;
+  if (!quiet) showMsg('msg', 'Link "Sign in to Alight Creative" otomatis ditempel. Klik Verify.', 'ok');
+}
+function tokenFor(email) {
+  const s = JSON.parse(localStorage.getItem('savedEmails') || '[]').find(x => x.email === email);
+  return (s && s.token) || (email === tempAddress ? tempToken : '') || '';
+}
+async function fetchInbox(email) {
+  const r = await fetch(MAIL_API + '?action=inbox&email=' + encodeURIComponent(email) + '&token=' + encodeURIComponent(tokenFor(email)));
+  if (!r.ok) throw new Error('Server merespons HTTP ' + r.status);
+  const d = await r.json();
+  return d.messages || d.inbox || d.emails || [];
+}
+async function pullLink() {
+  const email = document.getElementById('email').value.trim();
+  if (!email) { showMsg('msg', 'Isi Account Email dulu', 'err'); return; }
+  const btn = document.getElementById('btnPull'); btn.disabled = true; btn.textContent = 'Mengecek inbox…';
+  try {
+    const list = await fetchInbox(email);
+    const u = findSignInLink(list);
+    if (u) pasteLink(u, email);
+    else showMsg('msg', list.length ? 'Belum ada email "Sign in to Alight Creative" di inbox ini.' : 'Inbox masih kosong. Kirim magic link dulu, tunggu sebentar, lalu coba lagi.', 'err');
+  } catch (e) { showMsg('msg', 'Gagal membuka inbox: ' + e.message, 'err'); }
+  btn.disabled = false; btn.textContent = 'Ambil link dari inbox';
+}
+function watchInbox(email) {
+  if (window._watchTimer) clearInterval(window._watchTimer);
+  let n = 0;
+  window._watchTimer = setInterval(async () => {
+    if (++n > 30 || document.getElementById('email').value.trim() !== email) return clearInterval(window._watchTimer);
+    try {
+      const u = findSignInLink(await fetchInbox(email));
+      const cur = document.getElementById('link').value.trim();
+      if (u && u !== cur) { pasteLink(u, email); clearInterval(window._watchTimer); }
+    } catch (e) {}
+  }, 4000);
+}
+
+// Temp Mail
 async function generateEmail() {
   showMsg('mailMsg', 'Membuat email...', '');
   try {
@@ -235,19 +295,13 @@ async function generateEmail() {
     document.getElementById('tempEmail').textContent = tempAddress;
     showMsg('mailMsg', 'Email dibuat! Auto-cek inbox...', 'ok');
     const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
-    saved.unshift({email: tempAddress, time: new Date().toISOString()});
+    saved.unshift({email: tempAddress, token: tempToken || '', time: new Date().toISOString()});
     localStorage.setItem('savedEmails', JSON.stringify(saved.slice(0, 20)));
     renderSaved();
     if (window._inboxTimer) clearInterval(window._inboxTimer);
     window._inboxTimer = setInterval(checkInbox, 5000);
     checkInbox();
   } catch(e) { showMsg('mailMsg', 'Gagal: ' + e.message, 'err'); }
-}
-function deleteSavedEmail(index) {
-  const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
-  saved.splice(index, 1);
-  localStorage.setItem('savedEmails', JSON.stringify(saved));
-  renderSaved();
 }
 function copyTempEmail() {
   const email = document.getElementById('tempEmail').textContent;
@@ -260,7 +314,7 @@ async function checkInbox() {
   try {
     const r = await fetch(MAIL_API + '?action=inbox&email=' + encodeURIComponent(tempAddress));
     const data = await r.json();
-    const list = data.messages || data.inbox || data.emails || [];
+    console.log('Inbox response:', data); const list = data.messages || data.inbox || data.emails || [];
     const el = document.getElementById('mailList');
     if (!list.length) { 
       el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:12px">Inbox kosong. Kirim email ke ' + (tempAddress || '') + '</p>'; 
@@ -269,25 +323,13 @@ async function checkInbox() {
     el.innerHTML = list.map((m, i) => {
       const subj = (m.subject || '').toLowerCase();
       const isAlight = subj.includes('alight') || subj.includes('sign in') || subj.includes('login') || subj.includes('verify');
-      return '<div class="mail-item" onclick="readMail(' + i + ')" style="' + (isAlight?'border:1px solid #3b82f6':'') + '"><div class="mail-from">' + (m.from || m.sender || '-') + '</div><div class="mail-subj">' + (m.subject || '(no subject)') + '</div><div class="mail-time">' + (m.date || m.time || '') + '</div></div>';
+      return `<div class="mail-item" onclick="readMail(${i})" style="${isAlight?'border:1px solid #3b82f6':''}"><div class="mail-from">${m.from || m.sender || '-'}</div><div class="mail-subj">${m.subject || '(no subject)'}</div><div class="mail-time">${m.date || m.time || ''}</div></div>`;
     }).join('');
     window._mailCache = list;
-    for (const m of list) {
-      const fullText = (m.body || m.text || m.content || m.html || '') + ' ' + JSON.stringify(m);
-      const text = fullText.toLowerCase();
-      const isAlight = text.includes('alight') || text.includes('sign in') || text.includes('login') || text.includes('alightcreative') || text.includes('firebaseapp');
-      if (isAlight) {
-        const urls = fullText.match(/https?:\/\/[^\s<>"'\\]+/g) || [];
-        const alightLink = urls.find(l => l.includes('alight-creative.firebaseapp.com') || l.includes('alightcreative.com/auth') || l.includes('__/auth/links')) || urls.find(l => /alight|verify|login|sign|magic|firebaseapp/i.test(l)) || urls[0];
-        if (alightLink && !document.getElementById('link').value) {
-          document.getElementById('link').value = alightLink;
-          document.getElementById('email').value = tempAddress;
-          showPanel('am');
-          showMsg('msg', 'Link Alight Creative otomatis ditempel! Klik Verify.', 'ok');
-          if (window._inboxTimer) clearInterval(window._inboxTimer);
-          break;
-        }
-      }
+    const su = findSignInLink(list), cur = document.getElementById('link').value.trim();
+    if (su && su !== cur && (!cur || cur === window._autoLink)) {
+      pasteLink(su, tempAddress); goTab('am');
+      if (window._inboxTimer) clearInterval(window._inboxTimer);
     }
   } catch(e) { console.warn(e); }
 }
@@ -299,34 +341,101 @@ function readMail(idx) {
   const from = m.from || m.sender || '-';
   const allText = text + ' ' + (m.html || '') + ' ' + JSON.stringify(m);
   const urls = allText.match(/https?:\/\/[^\s<>"'\\]+/g) || [];
-  const alightUrl = urls.find(u => u.includes('alight-creative') || u.includes('firebaseapp') || /verify|login|sign|magic/i.test(u)) || urls[0];
+  const alightUrl = urls.find(u => u.includes('alight-creative.firebaseapp.com') || u.includes('alightcreative.com/auth')) || urls.find(u => /alight|verify|login|sign|magic/i.test(u)) || urls[0] || '';
+  let linked = text.replace(/(https?:\/\/[^\s<>"]+)/g, '<a href="$1" target="_blank" style="color:#60a5fa">$1</a>');
+  linked = linked.replace(/(Sign in to Alight Creative|Login ke Alight Creative)/gi, '<span style="color:#60a5fa;font-weight:600">$1</span>');
   const view = document.getElementById('emailView');
-  view.className = 'email-view show';
-  view.innerHTML = '<div class="ev-from">' + from + '</div><div class="ev-subj">' + subj + '</div><div class="ev-body">' + (text || '(kosong)').slice(0, 2000) + '</div>' +
-    (alightUrl ? '<button class="copy-link-btn" onclick="navigator.clipboard.writeText(\'' + alightUrl.replace(/'/g,"\\'") + '\').then(()=>showMsg(\'mailMsg\',\'Link disalin!\',\'ok\'))">Salin link verifikasi</button>' : '');
+  const btn = alightUrl ? '<button class="copy-link-btn" onclick="copyAlightLink(\'' + alightUrl.replace(/'/g, "\\'") + '\')">Salin Link Alight Creative</button> <a class="copy-link-btn" href="' + alightUrl + '" target="_blank" style="text-decoration:none;display:inline-block;margin-left:8px">Open Link</a>' : '<button class="copy-link-btn" onclick="alert(\'Link tidak ditemukan\')">Salin Link Alight Creative</button>';
+  view.innerHTML = '<div class="ev-from">Dari: ' + from + '</div><div class="ev-subj">' + subj + '</div><div class="ev-body">' + linked.replace(/\n/g, '<br>') + '</div>' + btn;
+  view.classList.add('show');
+  if (alightUrl) {
+    document.getElementById('link').value = alightUrl;
+    document.getElementById('email').value = tempAddress || '';
+  }
+}
+function copyAlightLink(url) {
+  navigator.clipboard.writeText(url).then(() => showMsg('mailMsg', 'Link disalin!', 'ok'));
+  document.getElementById('link').value = url;
+}
+function escapeHTML(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[ch]));
 }
 function renderSaved() {
   const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
   const el = document.getElementById('savedList');
-  if (!saved.length) { el.innerHTML = '<p class="empty-state">Belum ada</p>'; return; }
-  el.innerHTML = saved.map((item, i) =>
-    '<div class="mail-item"><div class="mail-from">' + (item.email || '') + '</div><div class="mail-time">' + (item.time ? new Date(item.time).toLocaleString('id-ID') : '') + '</div>' +
-    '<div class="saved-actions"><button class="btn btn-copy" onclick="useSaved(' + i + ')">Pakai</button><button class="btn btn-copy" onclick="copySaved(' + i + ')">Salin</button><button class="btn btn-copy" onclick="deleteSavedEmail(' + i + ')">Hapus</button></div></div>'
-  ).join('');
+  if (!saved.length) { el.innerHTML = '<p class="empty-state">Belum ada email tersimpan</p>'; return; }
+  el.innerHTML = saved.map((s, i) => `<div class="mail-item" style="cursor:default">
+    <div class="mail-from">${escapeHTML(s.email)}</div>
+    <div class="mail-time">Tersimpan · ${escapeHTML(new Date(s.time).toLocaleString('id-ID'))}</div>
+    <div class="saved-actions">
+      <button class="btn btn-verify" onclick="useSaved(${i})">Pakai</button>
+      <button class="btn btn-send" onclick="checkSavedInbox(${i},this)">Inbox</button>
+      <button class="btn btn-copy" onclick="copySavedEmail(${i})">Salin</button>
+      <button class="btn" style="background:#ff718820;color:#ff7188;border-color:#ff718840" onclick="deleteSavedEmail(${i})">Hapus</button>
+    </div>
+    <div class="saved-inbox" id="savedInbox${i}"></div>
+  </div>`).join('');
 }
-function useSaved(i) {
-  const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
-  const item = saved[i]; if (!item) return;
-  document.getElementById('email').value = item.email;
-  tempAddress = item.email;
-  showPanel('am');
-  showMsg('msg', 'Email dimasukkan. Siap kirim magic link.', 'ok');
+function useSaved(index) {
+  const item = JSON.parse(localStorage.getItem('savedEmails') || '[]')[index]; if (!item) return;
+  document.getElementById('email').value = item.email; document.getElementById('link').value = ''; window._autoLink = '';
+  goTab('am'); showMsg('msg', 'Email dipakai. Klik Send magic link, link sign-in akan masuk otomatis.', 'ok');
 }
-async function copySaved(i) {
+async function copySavedEmail(index) {
   const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
-  const item = saved[i]; if (!item) return;
+  const item = saved[index]; if (!item) return;
   try { await navigator.clipboard.writeText(item.email); showMsg('mailMsg','Email berhasil disalin','ok'); }
   catch(e) { showMsg('mailMsg','Gagal menyalin. Salin email secara manual.','err'); }
+}
+async function checkSavedInbox(index, button) {
+  const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
+  const item = saved[index]; if (!item) return;
+  const output = document.getElementById('savedInbox' + index);
+  button.disabled = true; button.textContent = 'Memuat inbox…';
+  output.innerHTML = '<p class="empty-state">Mengambil pesan untuk ' + escapeHTML(item.email) + '…</p>';
+  try {
+    const messages = await fetchInbox(item.email);
+    window._savedMailCache = window._savedMailCache || {};
+    window._savedMailCache[index] = messages;
+    if (!messages.length) {
+      output.innerHTML = '<p class="empty-state">Inbox masih kosong. Coba cek lagi beberapa saat.</p>';
+      return;
+    }
+    const su = findSignInLink(messages);
+    if (su) pasteLink(su, item.email, true);
+    output.innerHTML = (su ? '<div class="msg ok" style="display:block;margin:0 0 10px">Link "Sign in to Alight Creative" ditemukan dan sudah ditempel di Verify. <a href="#" onclick="goTab(\'am\');return false" style="color:inherit;text-decoration:underline">Buka Verify</a></div>' : '') +
+      '<div class="mail-list">' + messages.map((m, i) =>
+      `<div class="mail-item" onclick="readSavedMail(${index},${i})" style="${isSignInMail(m) ? 'border:1px solid #3b82f6' : ''}">
+        <div class="mail-from">${escapeHTML(m.from || m.sender || 'Pengirim tidak diketahui')}</div>
+        <div class="mail-subj">${escapeHTML(m.subject || '(Tanpa subjek)')}</div>
+        <div class="mail-time">${escapeHTML(m.date || m.time || '')}</div>
+      </div>`).join('') + '</div><div class="email-view" id="savedMailView' + index + '"></div>';
+  } catch(e) {
+    output.innerHTML = '<p class="empty-state" style="color:var(--red)">Gagal memuat inbox: ' + escapeHTML(e.message) + '</p>';
+  } finally {
+    button.disabled = false; button.textContent = 'Inbox';
+  }
+}
+function readSavedMail(index, messageIndex) {
+  const m = window._savedMailCache?.[index]?.[messageIndex]; if (!m) return;
+  const view = document.getElementById('savedMailView' + index); if (!view) return;
+  const body = m.body || m.text || m.content || m.html || 'Isi pesan tidak tersedia dari API.';
+  const safeBody = escapeHTML(body).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>').replace(/\n/g,'<br>');
+  view.innerHTML = '<div class="ev-from">Dari: ' + escapeHTML(m.from || m.sender || '-') + '</div><div class="ev-subj">' + escapeHTML(m.subject || '(Tanpa subjek)') + '</div><div class="ev-body">' + safeBody + '</div>';
+  const lk = isSignInMail(m) ? extractSignInLink(m) : '';
+  if (lk) {
+    const b = document.createElement('button'); b.className = 'copy-link-btn'; b.textContent = 'Tempel link ke Verify';
+    b.onclick = () => { const it = JSON.parse(localStorage.getItem('savedEmails') || '[]')[index]; pasteLink(lk, it && it.email); goTab('am'); };
+    view.appendChild(b);
+  }
+  view.classList.add('show');
+}
+
+function deleteSavedEmail(index) {
+  const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
+  saved.splice(index, 1);
+  localStorage.setItem('savedEmails', JSON.stringify(saved));
+  renderSaved();
 }
 renderSaved();
 </script>
