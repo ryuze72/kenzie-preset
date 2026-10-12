@@ -112,7 +112,7 @@ const ordList=()=>Object.entries(orders).map(([id,o])=>Object.assign({id},o,{sta
 const evInfo=l=>{const d=esc(l.d||'');switch(l.type){
   case'visit':return['t-visit','visit','Kunjungan',l.vid+(d?' · '+d:'')];case'nav':return['t-nav','nav','Buka '+(PAGES[l.d]||d),l.vid];
   case'admin_login':return['t-admin','admin','Login admin',l.vid];case'admin_logout':return['t-out','out','Logout admin',l.vid];
-  case'music_search':return['t-music','music','Cari lagu',d];case'music_play':return['t-music','music','Putar lagu',d];
+  case'music_search':return['t-music','music','Cari lagu',d];case'music_play':return['t-music','music','Putar lagu',d];case'music_download':return['t-music','music','Unduh MP3',d];
   case'order_new':return['t-order','order','Pesanan baru',d];case'order_proof':return['t-order','order','Bukti bayar dikirim',d];
   default:return['t-nav','nav',esc(l.type),l.vid]}};
 const FILT={all:()=>true,visit:l=>l.type==='visit',nav:l=>l.type==='nav',admin:l=>/^admin/.test(l.type),music:l=>/^music/.test(l.type),order:l=>/^order/.test(l.type)};
@@ -152,7 +152,7 @@ function vOrd(){const O=ordList(),c=k=>O.filter(o=>o.status===k).length,rev=O.fi
 function vSys(){
   return'<div class="glass card"><h2>Halaman web</h2><div class="links">'+LINKS.map(([n,u,ic],i)=>{const r=st['p'+i];return'<a class="link" href="'+u+'" target="_blank" rel="noopener"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="'+ic+'"/></svg></div><div class="tx"><b>'+n+'</b><span class="u">'+u.replace('https://','')+'</span></div>'+(r?'<span class="pill '+(r.ok?'ok':'bad')+'">'+(r.ok?r.ms+' ms':'Gagal')+'</span>':'<span class="pill wait">...</span>')+'</a>'}).join('')+'</div></div>'+
   '<div class="glass card"><h2>Layanan<button class="btn" id="recheck">Cek ulang</button></h2>'+
-  svc('Database (Firebase)','kenzie-preset-default-rtdb',st.db)+svc('API pencarian lagu (YouTube)','ytdlpyton.nvlgroup.my.id (via /api/yt-search)',st.mus,'<button class="btn" id="testMus">Tes</button>')+
+  svc('Database (Firebase)','kenzie-preset-default-rtdb',st.db)+svc('API pencarian lagu (YouTube)','api.theresav.eu (via /api/yt-search)',st.mus,'<button class="btn" id="testMus">Tes</button>')+
   '<p class="note">Log aktivitas tersimpan di path <b>logs</b>, statistik preset di <b>stats</b>, pesanan di <b>orders</b>, <b>buyers</b>, dan <b>proofs</b>. Pastikan aturan Firebase mengizinkan baca/tulis untuk path tersebut.</p></div>'}
 function svc(n,u,r,extra){return'<div class="svc"><div>'+n+'<small>'+u+'</small></div><div style="display:flex;gap:8px;align-items:center">'+(extra||'')+(r?'<span class="pill '+(r.ok?'ok':'bad')+'">'+(r.ok?r.ms+' ms':'Gagal')+'</span>':'<span class="pill wait">...</span>')+'</div></div>'}
 async function ping(key,url,opt){const t=performance.now();try{await fetch(url,Object.assign({mode:'no-cors',cache:'no-store'},opt||{}));st[key]={ok:true,ms:Math.round(performance.now()-t)}}catch{st[key]={ok:false}}if(tab==='sys')render()}
