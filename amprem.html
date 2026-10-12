@@ -225,13 +225,13 @@ function goTab(name) {
 function mailText(m) { return [m.subject, m.body, m.text, m.content, m.html, m.snippet].filter(Boolean).join(' '); }
 function isSignInMail(m) {
   const subj = String(m.subject || ''), all = mailText(m);
-  const good = /sign[\s-]*in\s+to\s+alight\s+creative/i, bad = /log[\s-]*in\s+to\s+alight\s+creative/i;
+  const good = /sign[\s-]*in\s+(to|ke)\s+alight\s+creative/i, bad = /log[\s-]*in\s+(to|ke)\s+alight\s+creative/i;
   if (good.test(subj)) return true;
-  if (bad.test(subj)) return false;
+  if (bad.test(subj)) return false;                 // "Login to Alight Creative" diabaikan
   return good.test(all) && !bad.test(all);
 }
 function extractSignInLink(m) {
-  const raw = mailText(m).replace(/&/g, '&');
+  const raw = mailText(m).replace(/&amp;/g, '&');
   const urls = (raw.match(/https?:\/\/[^\s<>"'\\)]+/g) || []).map(u => u.replace(/[.,;]+$/, ''));
   return urls.find(u => /__\/auth\/links|alight-creative\.firebaseapp\.com|alightcreative\.com\/auth|oobCode|mode=signIn/i.test(u))
       || urls.find(u => /alight|firebaseapp|signin|sign-in|magic/i.test(u)) || '';
@@ -257,6 +257,7 @@ async function fetchInbox(email) {
   const d = await r.json();
   return d.messages || d.inbox || d.emails || [];
 }
+// tombol "Ambil link dari inbox" di halaman Verify
 async function pullLink() {
   const email = document.getElementById('email').value.trim();
   if (!email) { showMsg('msg', 'Isi Account Email dulu', 'err'); return; }
@@ -269,6 +270,7 @@ async function pullLink() {
   } catch (e) { showMsg('msg', 'Gagal membuka inbox: ' + e.message, 'err'); }
   btn.disabled = false; btn.textContent = 'Ambil link dari inbox';
 }
+// setelah "Send magic link" berhasil: cek inbox tiap 4 detik (maks. 2 menit) sampai link sign-in masuk
 function watchInbox(email) {
   if (window._watchTimer) clearInterval(window._watchTimer);
   let n = 0;
@@ -298,6 +300,7 @@ async function generateEmail() {
     saved.unshift({email: tempAddress, token: tempToken || '', time: new Date().toISOString()});
     localStorage.setItem('savedEmails', JSON.stringify(saved.slice(0, 20)));
     renderSaved();
+    // Auto check inbox every 5 seconds
     if (window._inboxTimer) clearInterval(window._inboxTimer);
     window._inboxTimer = setInterval(checkInbox, 5000);
     checkInbox();
@@ -326,6 +329,7 @@ async function checkInbox() {
       return `<div class="mail-item" onclick="readMail(${i})" style="${isAlight?'border:1px solid #3b82f6':''}"><div class="mail-from">${m.from || m.sender || '-'}</div><div class="mail-subj">${m.subject || '(no subject)'}</div><div class="mail-time">${m.date || m.time || ''}</div></div>`;
     }).join('');
     window._mailCache = list;
+    // Auto tempel link "Sign in to Alight Creative" (bukan "Login to ...")
     const su = findSignInLink(list), cur = document.getElementById('link').value.trim();
     if (su && su !== cur && (!cur || cur === window._autoLink)) {
       pasteLink(su, tempAddress); goTab('am');
@@ -339,10 +343,13 @@ function readMail(idx) {
   const text = m.body || m.text || m.content || m.html || '';
   const subj = m.subject || '(no subject)';
   const from = m.from || m.sender || '-';
+  // Extract all URLs from text and html
   const allText = text + ' ' + (m.html || '') + ' ' + JSON.stringify(m);
   const urls = allText.match(/https?:\/\/[^\s<>"'\\]+/g) || [];
   const alightUrl = urls.find(u => u.includes('alight-creative.firebaseapp.com') || u.includes('alightcreative.com/auth')) || urls.find(u => /alight|verify|login|sign|magic/i.test(u)) || urls[0] || '';
+  // Make URLs blue links
   let linked = text.replace(/(https?:\/\/[^\s<>"]+)/g, '<a href="$1" target="_blank" style="color:#60a5fa">$1</a>');
+  // Also highlight "Sign in to Alight Creative" text
   linked = linked.replace(/(Sign in to Alight Creative|Login ke Alight Creative)/gi, '<span style="color:#60a5fa;font-weight:600">$1</span>');
   const view = document.getElementById('emailView');
   const btn = alightUrl ? '<button class="copy-link-btn" onclick="copyAlightLink(\'' + alightUrl.replace(/'/g, "\\'") + '\')">Salin Link Alight Creative</button> <a class="copy-link-btn" href="' + alightUrl + '" target="_blank" style="text-decoration:none;display:inline-block;margin-left:8px">Open Link</a>' : '<button class="copy-link-btn" onclick="alert(\'Link tidak ditemukan\')">Salin Link Alight Creative</button>';
@@ -358,7 +365,7 @@ function copyAlightLink(url) {
   document.getElementById('link').value = url;
 }
 function escapeHTML(value) {
-  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[ch]));
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 }
 function renderSaved() {
   const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
@@ -375,6 +382,13 @@ function renderSaved() {
     </div>
     <div class="saved-inbox" id="savedInbox${i}"></div>
   </div>`).join('');
+}
+async function copyPlain(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch (e) {}
+  try {
+    const t = document.createElement('textarea'); t.value = text; t.style.cssText = 'position:fixed;opacity:0;top:0'; document.body.appendChild(t);
+    t.focus(); t.select(); t.setSelectionRange(0, text.length); const ok = document.execCommand('copy'); t.remove(); return ok;
+  } catch (e) { return false; }
 }
 function useSaved(index) {
   const item = JSON.parse(localStorage.getItem('savedEmails') || '[]')[index]; if (!item) return;
@@ -422,12 +436,17 @@ function readSavedMail(index, messageIndex) {
   const body = m.body || m.text || m.content || m.html || 'Isi pesan tidak tersedia dari API.';
   const safeBody = escapeHTML(body).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>').replace(/\n/g,'<br>');
   view.innerHTML = '<div class="ev-from">Dari: ' + escapeHTML(m.from || m.sender || '-') + '</div><div class="ev-subj">' + escapeHTML(m.subject || '(Tanpa subjek)') + '</div><div class="ev-body">' + safeBody + '</div>';
-  const lk = isSignInMail(m) ? extractSignInLink(m) : '';
+  const anyUrl = (mailText(m).replace(/&amp;/g, '&').match(/https?:\/\/[^\s<>"'\\)]+/) || [''])[0].replace(/[.,;]+$/, '');
+  const lk = extractSignInLink(m) || anyUrl;
+  const mk = (label, fn) => { const b = document.createElement('button'); b.className = 'copy-link-btn'; b.style.marginRight = '8px'; b.textContent = label; b.onclick = fn; view.appendChild(b); };
+  const st = document.createElement('div'); st.style.cssText = 'font-size:12px;margin-top:10px';
   if (lk) {
-    const b = document.createElement('button'); b.className = 'copy-link-btn'; b.textContent = 'Tempel link ke Verify';
-    b.onclick = () => { const it = JSON.parse(localStorage.getItem('savedEmails') || '[]')[index]; pasteLink(lk, it && it.email); goTab('am'); };
-    view.appendChild(b);
+    mk('Salin link & buka link', () => { window.open(lk, '_blank', 'noopener'); copyPlain(lk).then(ok => { st.textContent = ok ? '✓ Link disalin & dibuka' : 'Link dibuka, tapi gagal menyalin otomatis'; st.style.color = ok ? 'var(--green)' : 'var(--red)'; }); });
+    if (isSignInMail(m)) mk('Tempel ke Verify', () => { const it = JSON.parse(localStorage.getItem('savedEmails') || '[]')[index]; pasteLink(lk, it && it.email); goTab('am'); });
+  } else {
+    const n = document.createElement('div'); n.className = 'empty-state'; n.style.padding = '12px 0 0'; n.textContent = 'Link tidak ditemukan di pesan ini.'; view.appendChild(n);
   }
+  view.appendChild(st);
   view.classList.add('show');
 }
 
