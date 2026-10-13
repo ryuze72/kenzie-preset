@@ -192,6 +192,8 @@
       background: var(--ctl); color: var(--accent); font: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer;
     }
     .ml-open:active { transform: scale(.96); }
+    .ml-btns { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 14px; }
+    .ml-btns .ml-open { margin: 0; }
     .ml-pick { display: flex; align-items: center; gap: 12px; }
     .ml-pick img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; background: var(--ctl); flex: 0 0 64px; }
     .ml-result { margin-top: 14px; text-align: center; }
@@ -793,7 +795,10 @@
 
     <div class="page active" id="homePage">
       <div class="home-row"><div class="stats"><b id="totalCount">0</b> preset · <b id="readyCount">0</b> siap</div>
-        <button class="ml-open" type="button" onclick="mlOpen()">Fake ML</button></div>
+        <div class="ml-btns">
+          <button class="ml-open" type="button" onclick="mlOpen()">Fake Lobby ML</button>
+          <button class="ml-open" type="button" onclick="ffOpen()">Fake Lobby FF</button>
+        </div></div>
       <div class="cats" id="catBar">
         <button class="cat active" data-cat="All">Semua</button>
         <button class="cat" data-cat="Trending">Trending</button>
@@ -1011,6 +1016,24 @@
       <div class="modal-actions">
         <button class="btn btn-outline" type="button" onclick="closeStoreModal('mlModal')">Tutup</button>
         <button class="btn btn-primary" type="button" id="mlGo" onclick="mlMake()">Buat</button>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="overlay" id="ffModal">
+    <div class="modal">
+      <h3>Fake Lobby FF</h3>
+      <div class="form-group">
+        <label>Avatar (opsional)</label>
+        <input type="file" id="ffFile" accept="image/*" style="display:none" onchange="ffPick(this)" />
+        <div class="ml-pick"><img id="ffPrev" alt="" /><button type="button" class="btn btn-outline" style="font-size:12px" onclick="document.getElementById('ffFile').click()">Pilih foto</button></div>
+      </div>
+      <div class="form-group"><label>Username *</label><input class="form-input" id="ffName" maxlength="40" placeholder="Nama di profil FF" /></div>
+      <div class="ml-result" id="ffOut" hidden></div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" type="button" onclick="closeStoreModal('ffModal')">Tutup</button>
+        <button class="btn btn-primary" type="button" id="ffGo" onclick="ffMake()">Buat</button>
       </div>
     </div>
   </div>
@@ -1872,6 +1895,47 @@
         }
         out.hidden = false;
         out.innerHTML = '<img alt="Hasil" src="' + src.replace(/"/g, '') + '" /><a class="btn btn-outline" style="display:inline-block;text-decoration:none" download="fake-ml.png" href="' + src.replace(/"/g, '') + '">Simpan gambar</a>';
+      } catch (e) { toast('Gagal: ' + (e && e.message || 'tidak bisa terhubung'), 'err'); }
+      finally { go.disabled = false; go.textContent = 'Buat'; }
+    }
+
+
+    // ===== Fake Lobby FF =====
+    const FF_API = '/api/ff-maker';
+    let ffAvatar = '';
+    function ffOpen() { openStoreModal('ffModal'); }
+    function ffPick(inp) {
+      const f = inp.files && inp.files[0]; if (!f) return;
+      const url = URL.createObjectURL(f), im = new Image();
+      im.onload = () => {
+        const n = 512, c = document.createElement('canvas'); c.width = c.height = n;
+        const k = Math.max(n / im.width, n / im.height), w = im.width * k, h = im.height * k;
+        c.getContext('2d').drawImage(im, (n - w) / 2, (n - h) / 2, w, h);
+        ffAvatar = c.toDataURL('image/png'); $s('ffPrev').src = ffAvatar; URL.revokeObjectURL(url);
+      };
+      im.onerror = () => { URL.revokeObjectURL(url); toast('Gambar tidak bisa dibaca', 'err'); };
+      im.src = url;
+    }
+    async function ffMake() {
+      const name = $s('ffName').value.trim();
+      if (!name) { toast('Username wajib diisi', 'err'); return; }
+      const go = $s('ffGo'), out = $s('ffOut'); go.disabled = true; go.textContent = 'Membuat…';
+      try {
+        const body = { username: name };
+        if (ffAvatar) body.avatar = ffAvatar;
+        const res = await fetch(FF_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        const ct = res.headers.get('content-type') || '';
+        let src = '';
+        if (res.ok && /^image\//i.test(ct)) src = URL.createObjectURL(await res.blob());
+        else {
+          const text = await res.text(); let d = null; try { d = JSON.parse(text); } catch {}
+          if (!res.ok) throw new Error((d && (d.error || d.message)) || ('HTTP ' + res.status));
+          const hit = JSON.stringify(d || '').match(/https?:\/\/[^"\s]+\.(?:png|jpe?g|webp)[^"\s]*/i) || JSON.stringify(d || '').match(/data:image\/[a-z]+;base64,[A-Za-z0-9+/=]+/i);
+          if (!hit) throw new Error('API tidak mengirim gambar');
+          src = hit[0];
+        }
+        out.hidden = false;
+        out.innerHTML = '<img alt="Hasil" src="' + src.replace(/"/g, '') + '" /><a class="btn btn-outline" style="display:inline-block;text-decoration:none" download="fake-ff.jpg" href="' + src.replace(/"/g, '') + '">Simpan gambar</a>';
       } catch (e) { toast('Gagal: ' + (e && e.message || 'tidak bisa terhubung'), 'err'); }
       finally { go.disabled = false; go.textContent = 'Buat'; }
     }
