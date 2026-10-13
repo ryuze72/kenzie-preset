@@ -267,13 +267,17 @@ function pasteLink(url, addr, quiet) {
 }
 function tokenFor(email) {
   const s = JSON.parse(localStorage.getItem('savedEmails') || '[]').find(x => x.email === email);
-  return (s && s.token) || (email === tempAddress ? tempToken : '') || '';
+  return (s && (s.token || s.api_token)) || (email === tempAddress ? (tempToken || '') : '') || '';
 }
 async function fetchInbox(email) {
-  const r = await fetch(MAIL_API + '?action=inbox&email=' + encodeURIComponent(email) + '&token=' + encodeURIComponent(tokenFor(email)));
-  if (!r.ok) throw new Error('Server merespons HTTP ' + r.status);
-  const d = await r.json();
-  return d.messages || d.inbox || d.emails || [];
+  const tok = tokenFor(email);
+  if (!tok && /@(ryuze\.xml|kenzie\.prst)$/i.test(email)) {
+    throw new Error('Token hilang. Generate ulang email brand ini.');
+  }
+  const r = await fetch(MAIL_API + '?action=inbox&email=' + encodeURIComponent(email) + '&token=' + encodeURIComponent(tok));
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error || ('Server merespons HTTP ' + r.status));
+  return d.messages || d.inbox || d.emails || (Array.isArray(d) ? d : []);
 }
 async function pullLink() {
   const email = document.getElementById('email').value.trim();
@@ -308,11 +312,11 @@ async function generateEmail() {
     const data = await r.json();
     if (!data.status || !data.email) throw new Error(data.error || 'Gagal buat email');
     tempAddress = data.email;
-    tempToken = data.token;
+    tempToken = data.api_token || data.token || '';
     document.getElementById('tempEmail').textContent = tempAddress;
     showMsg('mailMsg', 'Email dibuat! Auto-cek inbox...', 'ok');
     const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
-    saved.unshift({email: tempAddress, token: tempToken || '', time: new Date().toISOString()});
+    saved.unshift({email: tempAddress, token: tempToken || '', upstream: data.upstream_email || '', time: new Date().toISOString()});
     localStorage.setItem('savedEmails', JSON.stringify(saved.slice(0, 20)));
     renderSaved();
     if (window._inboxTimer) clearInterval(window._inboxTimer);
@@ -329,7 +333,12 @@ function copyTempEmail() {
 async function checkInbox() {
   if (!tempAddress) return;
   try {
-    const r = await fetch(MAIL_API + '?action=inbox&email=' + encodeURIComponent(tempAddress));
+    const tok = tokenFor(tempAddress) || tempToken || '';
+    const r = await fetch(MAIL_API + '?action=inbox&email=' + encodeURIComponent(tempAddress) + '&token=' + encodeURIComponent(tok));
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      throw new Error(err.error || ('HTTP ' + r.status));
+    }
     const data = await r.json();
     const list = data.messages || data.inbox || data.emails || [];
     const el = document.getElementById('mailList');
@@ -348,7 +357,7 @@ async function checkInbox() {
       pasteLink(su, tempAddress); goTab('am');
       if (window._inboxTimer) clearInterval(window._inboxTimer);
     }
-  } catch(e) { console.warn(e); }
+  } catch(e) { console.warn(e); showMsg('mailMsg', 'Inbox: ' + (e.message || 'gagal'), 'err'); }
 }
 function readMail(idx) {
   const m = window._mailCache && window._mailCache[idx];
@@ -380,58 +389,57 @@ function escapeHTML(value) {
 function renderSaved() {
   const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
   const el = document.getElementById('savedList');
-  if (!saved.length) { el.innerHTML = '<p class="empty-state">Belum ada email tersimpan</p>'; return; }
-  el.innerHTML = saved.map((s, i) => '<div class="mail-item" style="cursor:default"><div class="mail-from">' + escapeHTML(s.email) + '</div><div class="mail-time">Tersimpan · ' + escapeHTML(new Date(s.time).toLocaleString('id-ID')) + '</div><div class="saved-actions"><button class="btn btn-verify" onclick="useSaved(' + i + ')">Pakai</button><button class="btn btn-send" onclick="checkSavedInbox(' + i + ',this)">Inbox</button><button class="btn btn-copy" onclick="copySavedEmail(' + i + ')">Salin</button><button class="btn" style="background:#ff718820;color:#ff7188;border-color:#ff718840" onclick="deleteSavedEmail(' + i + ')">Hapus</button></div><div class="saved-inbox" id="savedInbox' + i + '"></div></div>').join('');
+  if (!saved.length) { el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px">Belum ada</p>'; return; }
+  el.innerHTML = saved.map((item, i) => '<div class="mail-item" style="cursor:default"><div class="mail-from">' + escapeHTML(item.email) + '</div><div class="mail-time">Tersimpan · ' + escapeHTML(new Date(item.time).toLocaleString('id-ID')) + '</div><div class="saved-actions"><button class="btn btn-verify" onclick="useSaved(' + i + ')">Pakai</button><button class="btn btn-send" onclick="checkSavedInbox(' + i + ',this)">Inbox</button><button class="btn btn-copy" onclick="copySavedEmail(' + i + ')">Salin</button><button class="btn" style="background:#ff718820;color:#ff7188;border-color:#ff718840" onclick="deleteSavedEmail(' + i + ')">Hapus</button></div><div class="saved-inbox" id="savedInbox' + i + '"></div></div>').join('');
 }
 function useSaved(index) {
   const item = JSON.parse(localStorage.getItem('savedEmails') || '[]')[index]; if (!item) return;
-  document.getElementById('email').value = item.email; document.getElementById('link').value = ''; window._autoLink = '';
-  goTab('am'); showMsg('msg', 'Email dipakai. Klik Send magic link, link sign-in akan masuk otomatis.', 'ok');
+  document.getElementById('email').value = item.email; tempAddress = item.email; tempToken = item.token || item.api_token || '';
+  goTab('am');
 }
 async function copySavedEmail(index) {
   const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
   const item = saved[index]; if (!item) return;
-  try { await navigator.clipboard.writeText(item.email); showMsg('mailMsg','Email berhasil disalin','ok'); }
-  catch(e) { showMsg('mailMsg','Gagal menyalin. Salin email secara manual.','err'); }
+  try { await navigator.clipboard.writeText(item.email); } catch (e) {}
 }
 async function checkSavedInbox(index, button) {
   const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
   const item = saved[index]; if (!item) return;
   const output = document.getElementById('savedInbox' + index);
   button.disabled = true; button.textContent = 'Memuat inbox…';
-  output.innerHTML = '<p class="empty-state">Mengambil pesan untuk ' + escapeHTML(item.email) + '…</p>';
   try {
     const messages = await fetchInbox(item.email);
     window._savedMailCache = window._savedMailCache || {};
     window._savedMailCache[index] = messages;
     if (!messages.length) {
-      output.innerHTML = '<p class="empty-state">Inbox masih kosong. Coba cek lagi beberapa saat.</p>';
-      return;
-    }
-    const su = findSignInLink(messages);
-    if (su) pasteLink(su, item.email, true);
-    output.innerHTML = (su ? '<div class="msg ok" style="display:block;margin:0 0 10px">Link "Sign in to Alight Creative" ditemukan dan sudah ditempel di Verify. <a href="#" onclick="goTab(\'am\');return false" style="color:inherit;text-decoration:underline">Buka Verify</a></div>' : '') +
-      '<div class="mail-list">' + messages.map((m, i) =>
+      output.innerHTML = '<p class="empty-state">Inbox kosong</p>';
+    } else {
+      output.innerHTML = '<div class="mail-list">' + messages.map((m, i) =>
       '<div class="mail-item" onclick="readSavedMail(' + index + ',' + i + ')" style="' + (isSignInMail(m) ? 'border:1px solid #3b82f6' : '') + '"><div class="mail-from">' + escapeHTML(m.from || m.sender || 'Pengirim tidak diketahui') + '</div><div class="mail-subj">' + escapeHTML(m.subject || '(Tanpa subjek)') + '</div><div class="mail-time">' + escapeHTML(m.date || m.time || '') + '</div></div>').join('') + '</div><div class="email-view" id="savedMailView' + index + '"></div>';
-  } catch(e) {
+    }
+  } catch (e) {
     output.innerHTML = '<p class="empty-state" style="color:var(--red)">Gagal memuat inbox: ' + escapeHTML(e.message) + '</p>';
-  } finally {
-    button.disabled = false; button.textContent = 'Inbox';
   }
+  button.disabled = false; button.textContent = 'Inbox';
 }
 function readSavedMail(index, messageIndex) {
   const m = window._savedMailCache && window._savedMailCache[index] && window._savedMailCache[index][messageIndex]; if (!m) return;
   const view = document.getElementById('savedMailView' + index); if (!view) return;
-  const body = m.body || m.text || m.content || m.html || 'Isi pesan tidak tersedia dari API.';
-  const safeBody = escapeHTML(body).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>').replace(/\n/g,'<br>');
-  view.innerHTML = '<div class="ev-from">Dari: ' + escapeHTML(m.from || m.sender || '-') + '</div><div class="ev-subj">' + escapeHTML(m.subject || '(Tanpa subjek)') + '</div><div class="ev-body">' + safeBody + '</div>';
-  const lk = isSignInMail(m) ? extractSignInLink(m) : '';
+  const text = m.body || m.text || m.content || m.html || '';
+  const subj = m.subject || '(Tanpa subjek)';
+  const from = m.from || m.sender || '-';
+  let linked = String(text).replace(/(https?:\/\/[^\s<>"]+)/g, '<a href="$1" target="_blank" style="color:#60a5fa">$1</a>');
+  const lk = extractSignInLink(m);
+  let btn = '';
   if (lk) {
-    const b = document.createElement('button'); b.className = 'copy-link-btn'; b.textContent = 'Tempel link ke Verify';
-    b.onclick = function() { const it = JSON.parse(localStorage.getItem('savedEmails') || '[]')[index]; pasteLink(lk, it && it.email); goTab('am'); };
-    view.appendChild(b);
+    btn = '<button class="copy-link-btn">Pakai link ini</button>';
   }
+  view.innerHTML = '<div class="ev-from">Dari: ' + escapeHTML(from) + '</div><div class="ev-subj">' + escapeHTML(subj) + '</div><div class="ev-body">' + linked.replace(/\n/g, '<br>') + '</div>' + btn;
   view.classList.add('show');
+  if (lk) {
+    const b = view.querySelector('.copy-link-btn');
+    b.onclick = function() { const it = JSON.parse(localStorage.getItem('savedEmails') || '[]')[index]; pasteLink(lk, it && it.email); goTab('am'); };
+  }
 }
 function deleteSavedEmail(index) {
   const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
