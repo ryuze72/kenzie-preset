@@ -54,7 +54,6 @@ function brandUsername(tag) {
 function pickBrandDomain(requested) {
   const d = String(requested || '').trim().toLowerCase();
   if (d && BRANDS[d]) return d;
-  // default: acak antara brand
   return BRAND_LIST[(Math.random() * BRAND_LIST.length) | 0];
 }
 
@@ -110,7 +109,6 @@ module.exports = async (req, res) => {
   const timer = setTimeout(() => ctl.abort(), 25000);
 
   try {
-    // ---------- GENERATE ----------
     if (action === 'generate') {
       const wantRaw = q.raw === '1' || q.raw === 'true';
       const { r, text, data } = await upstreamGet({ action: 'generate' }, ctl.signal);
@@ -157,7 +155,6 @@ module.exports = async (req, res) => {
       });
     }
 
-    // ---------- DOMAINS ----------
     if (action === 'domains') {
       const { r, text, data } = await upstreamGet({ action: 'domains' }, ctl.signal);
       let list = Array.isArray(data) ? data.slice() : [];
@@ -171,7 +168,6 @@ module.exports = async (req, res) => {
       return res.status(200).json(list);
     }
 
-    // ---------- SEARCH ----------
     if (action === 'search') {
       const qq = String(q.q || q.query || '').trim().toLowerCase();
       const { r, text, data } = await upstreamGet({ action: 'search', q: qq }, ctl.signal);
@@ -188,7 +184,6 @@ module.exports = async (req, res) => {
       return res.status(200).json(list);
     }
 
-    // ---------- INBOX / DETAIL / UPTIME ----------
     if (action === 'inbox' || action === 'detail' || action === 'uptime') {
       let domain = String(q.domain || '').trim();
       let user = String(q.user || q.username || '').trim();
@@ -230,6 +225,11 @@ module.exports = async (req, res) => {
             ? data
             : { status: false, error: 'Upstream HTTP ' + r.status, raw: text.slice(0, 200) }
         );
+      }
+      if (action === 'inbox') {
+        const messages = Array.isArray(data) ? data
+          : (data && (data.messages || data.inbox || data.emails || data.data)) || [];
+        return res.status(200).json({ status: true, ok: true, messages: Array.isArray(messages) ? messages : [] });
       }
       res.status(200);
       res.setHeader('Content-Type', 'application/json; charset=utf-8');
