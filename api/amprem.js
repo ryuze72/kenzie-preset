@@ -1,5 +1,5 @@
-// Satu file untuk dua endpoint: POST /api/send  dan  POST /api/verify
-// (Vercel: [action] = send / verify). Meneruskan (GET) ke API AM Premium api.theresav.eu.
+// POST /api/amprem?action=send|verify → api.theresav.eu alightmotion
+// Send selalu pakai lang=en agar email "Sign in to Alight Creative" (bukan Login id).
 const BASE = 'https://api.theresav.eu/api/premium/alightmotion/';
 const API_KEY = process.env.AM_API_KEY || 'kenzie';
 
@@ -17,14 +17,22 @@ module.exports = async (req, res) => {
   if (typeof b === 'string') { try { b = JSON.parse(b); } catch { b = {}; } }
   b = b || {};
   const email = String(b.email || '').trim();
-  const payload = action === 'send' ? { email } : { email, link: String(b.link || '').trim() };
+  const link = String(b.link || '').trim();
 
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), 20000);
   try {
-    const qs = '?email=' + encodeURIComponent(email) + (action === 'verify' ? '&link=' + encodeURIComponent(payload.link) : '');
-    const r = await fetch(BASE + action + qs, {
-      method: 'GET', signal: ctl.signal,
+    let qs = 'email=' + encodeURIComponent(email);
+    if (action === 'send') {
+      // Paksa bahasa EN → subject "Sign in to Alight Creative" + link lang=en
+      qs += '&lang=en&language=en&locale=en';
+    }
+    if (action === 'verify') {
+      qs += '&link=' + encodeURIComponent(link);
+    }
+    const r = await fetch(BASE + action + '?' + qs, {
+      method: 'GET',
+      signal: ctl.signal,
       headers: { accept: 'application/json', 'x-apikey': API_KEY, 'user-agent': 'Mozilla/5.0' },
     });
     const text = await r.text();
