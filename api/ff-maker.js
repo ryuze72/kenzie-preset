@@ -1,21 +1,8 @@
-// Vercel Serverless Function — Fake Lobby Free Fire.
-// POST /api/ff-maker  body JSON: { avatar?:"data:image/...;base64,..."|"https://...", username }
-// Avatar opsional (Nexray tetap jalan tanpa foto). Bila data-URL → upload Litterbox dulu.
-const NEXRAY = 'https://api.nexray.eu.cc/maker/fakelobyff';
-const LITTERBOX = 'https://litterbox.catbox.moe/resources/internals/api.php';
-
-async function hostAvatar(buf, mime, ext, signal) {
-  const fd = new FormData();
-  fd.append('reqtype', 'fileupload');
-  fd.append('time', '1h');
-  fd.append('fileToUpload', new Blob([buf], { type: mime }), 'avatar.' + ext);
-  const r = await fetch(LITTERBOX, { method: 'POST', body: fd, signal });
-  const text = (await r.text()).trim();
-  if (!r.ok || !/^https?:\/\//i.test(text)) {
-    throw new Error('upload gagal: ' + (text.slice(0, 120) || ('HTTP ' + r.status)));
-  }
-  return text;
-}
+// Vercel Serverless Function — pembuat gambar "Fake Lobby FF".
+// POST /api/ff-maker  body JSON: { "username": "TestFF" }  → balasan gambar (jpg/png)
+// Diteruskan ke https://api.theresav.eu/api/maker/fake/ff (header x-apikey). Alamat bisa diganti lewat env FF_UPSTREAM.
+// Dicoba POST (multipart) dulu; bila API menjawab 404/405, dicoba GET ?username=.
+const BASE = process.env.FF_UPSTREAM || 'https://api.theresav.eu/api/maker/fake/ff';
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -26,61 +13,23 @@ module.exports = async (req, res) => {
 
   let b = req.body;
   if (typeof b === 'string') { try { b = JSON.parse(b); } catch { b = null; } }
-  if (!b || typeof b !== 'object') return res.status(400).json({ ok: false, error: 'Body bukan JSON' });
-
-  const username = String(b.username || '').trim().slice(0, 40);
+  const username = String((b && b.username) || '').trim().slice(0, 30);
   if (!username) return res.status(400).json({ ok: false, error: 'Username wajib diisi' });
 
-  const rawAvatar = String(b.avatar || '').trim();
-  const m = /^data:(image\/(?:png|jpe?g|webp));base64,([A-Za-z0-9+/=]+)$/.exec(rawAvatar);
-  const isHttp = /^https?:\/\//i.test(rawAvatar);
-
-  let avatarUrl = isHttp ? rawAvatar : '';
-  if (m && !avatarUrl) {
-    const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), 25000);
-    try {
-      const buf = Buffer.from(m[2], 'base64');
-      const mime = m[1];
-      const ext = mime.includes('png') ? 'png' : mime.includes('webp') ? 'webp' : 'jpg';
-      avatarUrl = await hostAvatar(buf, mime, ext, ctl.signal);
-    } catch (e) {
-      // avatar opsional — lanjut tanpa foto
-      avatarUrl = '';
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-
+  const headers = { 'x-apikey': process.env.MUSIC_API_KEY || 'kenzie', accept: '*/*', 'user-agent': 'Mozilla/5.0' };
   const ctl = new AbortController();
-  const timer = setTimeout(() => ctl.abort(), 50000);
+  const timer = setTimeout(() => ctl.abort(), 55000);
   try {
-    const qs = new URLSearchParams({ nickname: username, t: String(Date.now()) });
-    if (avatarUrl) qs.set('avatar', avatarUrl);
-    const r = await fetch(NEXRAY + '?' + qs.toString(), {
-      method: 'GET',
-      signal: ctl.signal,
-      headers: { accept: 'image/*,application/json,*/*', 'user-agent': 'Mozilla/5.0' },
-    });
-    const ct = r.headers.get('content-type') || '';
-    const buf = Buffer.from(await r.arrayBuffer());
-    if (r.ok && (/^image\//i.test(ct) || buf[0] === 0x89 || buf[0] === 0xff)) {
-      res.status(200);
-      res.setHeader('Content-Type', /^image\//i.test(ct) ? ct : 'image/jpeg');
-      res.setHeader('Cache-Control', 'no-store');
-      return res.send(buf);
-    }
-    let msg = 'HTTP ' + r.status;
-    try {
-      const j = JSON.parse(buf.toString('utf8'));
-      msg = j.error || j.message || msg;
-    } catch {}
-    return res.status(502).json({ ok: false, error: 'Gagal membuat Fake Lobby FF: ' + msg });
+    const fd = new FormData(); fd.append('username', username);
+    let r = await fetch(BASE, { method: 'POST', body: fd, signal: ctl.signal, headers });
+    if (r.status === 404 || r.status === 405) r = await fetch(BASE + '?username=' + encodeURIComponent(username), { method: 'GET', signal: ctl.signal, headers });
+    const ct = r.headers.get('content-type') || 'application/octet-stream';
+    const out = Buffer.from(await r.arrayBuffer());
+    if (!r.ok && !/json/i.test(ct)) return res.status(r.status).json({ ok: false, error: 'API membalas HTTP ' + r.status + ': ' + out.toString('utf8', 0, 200) });
+    res.status(r.status).setHeader('Content-Type', ct).send(out);
   } catch (e) {
-    const why = (e && e.name === 'AbortError') ? 'timeout' : ((e && e.message) || 'unknown');
-    return res.status(502).json({ ok: false, error: 'Gagal menghubungi API FF (' + why + ')' });
-  } finally {
-    clearTimeout(timer);
-  }
+    const why = (e && e.name === 'AbortError') ? 'timeout 55 detik' : ((e && e.cause && (e.cause.code || e.cause.message)) || (e && e.message) || 'unknown');
+    res.status(502).json({ ok: false, error: 'Gagal menghubungi API maker FF (' + why + ')' });
+  } finally { clearTimeout(timer); }
 };
 module.exports.config = { maxDuration: 60 };
