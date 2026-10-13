@@ -13,20 +13,21 @@
     return good.test(all);
   };
   function isEnAuthLink(u) {
-    if (/lang(=|%3D)id\b/i.test(u)) return false;
-    return /lang(=|%3D)en\b/i.test(u);
+    const s = String(u || '');
+    if (/lang(=|%3D)id\b/i.test(s)) return false;
+    return /lang(=|%3D)en\b/i.test(s);
   }
   function isAuthCandidate(u) {
-    return /__\/auth\/links|alight-creative\.firebaseapp\.com|alightcreative\.com\/auth|oobCode|mode(=|%3D)signIn/i.test(u);
+    return /__\/auth\/links|alight-creative\.firebaseapp\.com|alightcreative\.com\/auth|oobCode|mode(=|%3D)signIn/i.test(String(u || ''));
   }
   function scoreAuthLink(u) {
-    let s = 0;
-    if (isAuthCandidate(u)) s += 5;
-    if (/mode(=|%3D)signIn/i.test(u)) s += 5;
-    if (/lang(=|%3D)en\b/i.test(u)) s += 20;
-    if (/lang(=|%3D)id\b/i.test(u)) s -= 50;
-    if (/firebaseapp\.com/i.test(u)) s += 2;
-    return s;
+    const s = String(u || '');
+    let n = 0;
+    if (isAuthCandidate(s)) n += 5;
+    if (/mode(=|%3D)signIn/i.test(s)) n += 5;
+    if (/lang(=|%3D)en\b/i.test(s)) n += 30;
+    if (/lang(=|%3D)id\b/i.test(s)) n -= 80;
+    return n;
   }
   window.extractSignInLink = function (m) {
     const raw = mailText(m).replace(/&/g, '&');
@@ -60,4 +61,14 @@
     }
     return '';
   };
+  const _paste = window.pasteLink;
+  if (typeof _paste === 'function') {
+    window.pasteLink = function (url, addr, quiet) {
+      if (url && /lang(=|%3D)id\b/i.test(url) && !/lang(=|%3D)en\b/i.test(url)) {
+        if (typeof showMsg === 'function') showMsg('msg', 'Link lang=id diabaikan. Tunggu email Sign-in (EN).', 'err');
+        return;
+      }
+      return _paste(url, addr, quiet);
+    };
+  }
 })();
