@@ -1,5 +1,6 @@
 // Vercel Serverless — Temp Mail proxy
 // Pola Zetttools (generator.email) + domain brand @ryuze.xml
+// Username brand selalu mengandung "ryuze" (contoh: ryuze7k2m@ryuze.xml)
 //
 // GET /api/tempmail?action=generate              → email @ryuze.xml (alias)
 // GET /api/tempmail?action=generate&raw=1       → email upstream asli
@@ -24,11 +25,23 @@ function fromB64url(s) {
   try { return Buffer.from(String(s), 'base64url').toString('utf8'); } catch { return ''; }
 }
 
-function randUser(len) {
+function randChars(len) {
   const abc = 'abcdefghijklmnopqrstuvwxyz0123456789';
   let o = '';
   for (let i = 0; i < len; i++) o += abc[(Math.random() * abc.length) | 0];
   return o;
+}
+
+/** Username brand: selalu ada "ryuze" + suffix acak */
+function brandUsername() {
+  const styles = [
+    () => 'ryuze' + randChars(5),
+    () => 'ryuze' + randChars(4) + ((Math.random() * 90 + 10) | 0),
+    () => 'ryuze_' + randChars(6),
+    () => randChars(3) + 'ryuze' + randChars(3),
+    () => 'ryuze' + ((Math.random() * 9000 + 1000) | 0),
+  ];
+  return styles[(Math.random() * styles.length) | 0]();
 }
 
 function packToken(upstreamUser, upstreamDomain, apiToken) {
@@ -106,8 +119,8 @@ module.exports = async (req, res) => {
         });
       }
 
-      // Brand: tampilan @ryuze.xml, mapping di token
-      const brandUser = upUser || randUser(8);
+      // Brand: username mengandung "ryuze" + @ryuze.xml
+      const brandUser = brandUsername();
       const brandEmail = brandUser + '@' + BRAND_DOMAIN;
 
       return res.status(200).json({
@@ -163,7 +176,6 @@ module.exports = async (req, res) => {
         if (!domain) domain = d;
       }
 
-      // Resolve brand domain → upstream via token
       let upUser = user;
       let upDomain = domain;
       if (domain === BRAND_DOMAIN || (email && email.endsWith('@' + BRAND_DOMAIN))) {
