@@ -1,14 +1,35 @@
-/* HD Foto — inject UI next to Fake FF */
+/* HD Foto — inject UI next to Fake FF (homepage only, bukan amprem) */
 (function () {
   const HD_API = '/api/hd';
   let hdDataUrl = '';
+
+  function isHomePage() {
+    const p = (location.pathname || '/').replace(/\/+$/, '') || '/';
+    // Jangan di AM Premium / halaman lain
+    if (/amprem/i.test(p)) return false;
+    if (/amprem/i.test(location.href || '')) return false;
+    // Hanya jika ada bar tombol Fake ML/FF
+    return !!document.querySelector('.ml-btns');
+  }
 
   function ready(fn) {
     if (document.readyState !== 'loading') fn();
     else document.addEventListener('DOMContentLoaded', fn);
   }
 
+  function cleanupAmp() {
+    // Hapus sisa UI HD di halaman amprem kalau sempat ter-inject
+    if (!/amprem/i.test(location.pathname || '') && !/amprem/i.test(location.href || '')) return;
+    ['hdModal', 'hdOpenBtn'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.remove();
+    });
+  }
+
   function inject() {
+    cleanupAmp();
+    if (!isHomePage()) return;
+
     const row = document.querySelector('.ml-btns');
     if (row && !document.getElementById('hdOpenBtn')) {
       const b = document.createElement('button');
@@ -38,6 +59,7 @@
   }
 
   window.hdOpen = function () {
+    if (!isHomePage()) return;
     inject();
     if (typeof openStoreModal === 'function') openStoreModal('hdModal');
     else {
