@@ -185,6 +185,17 @@
       content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--green);
       box-shadow: 0 0 0 0 var(--green); animation: ping 2.4s ease-out infinite;
     }
+    .home-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+    .home-row .stats { margin-right: 0; }
+    .ml-open {
+      margin: 18px 0 14px; min-height: 36px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--ctl-edge);
+      background: var(--ctl); color: var(--accent); font: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer;
+    }
+    .ml-open:active { transform: scale(.96); }
+    .ml-pick { display: flex; align-items: center; gap: 12px; }
+    .ml-pick img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; background: var(--ctl); flex: 0 0 64px; }
+    .ml-result { margin-top: 14px; text-align: center; }
+    .ml-result img { max-width: 100%; border-radius: 14px; display: block; margin: 0 auto 10px; }
     @keyframes ping { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--green) 60%, transparent); } 80%, 100% { box-shadow: 0 0 0 8px transparent; } }
     .stats b { color: var(--ink); font-weight: 800; }
 
@@ -781,7 +792,8 @@
     </header>
 
     <div class="page active" id="homePage">
-      <div class="stats"><b id="totalCount">0</b> preset · <b id="readyCount">0</b> siap</div>
+      <div class="home-row"><div class="stats"><b id="totalCount">0</b> preset · <b id="readyCount">0</b> siap</div>
+        <button class="ml-open" type="button" onclick="mlOpen()">Fake ML</button></div>
       <div class="cats" id="catBar">
         <button class="cat active" data-cat="All">Semua</button>
         <button class="cat" data-cat="Trending">Trending</button>
@@ -980,6 +992,25 @@
       <div class="modal-actions">
         <button class="btn btn-outline" onclick="closeModal()">Batal</button>
         <button class="btn btn-primary" onclick="savePreset()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="mlModal">
+    <div class="modal">
+      <h3>Fake ML</h3>
+      <div class="form-group">
+        <label>Avatar *</label>
+        <input type="file" id="mlFile" accept="image/*" style="display:none" onchange="mlPick(this)" />
+        <div class="ml-pick"><img id="mlPrev" alt="" /><button type="button" class="btn btn-outline" style="font-size:12px" onclick="document.getElementById('mlFile').click()">Pilih foto</button></div>
+      </div>
+      <div class="form-group"><label>Username *</label><input class="form-input" id="mlName" maxlength="40" placeholder="Nama di profil" /></div>
+      <div class="form-group"><label>Rank</label><input class="form-input" id="mlRank" maxlength="30" list="mlRanks" placeholder="mis. imo" /><datalist id="mlRanks"><option value="warrior"><option value="elite"><option value="master"><option value="grandmaster"><option value="epic"><option value="legend"><option value="mythic"><option value="imo"></datalist></div>
+      <div class="form-group"><label>Border (opsional)</label><input class="form-input" id="mlBorder" maxlength="40" /></div>
+      <div class="ml-result" id="mlOut" hidden></div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" type="button" onclick="closeStoreModal('mlModal')">Tutup</button>
+        <button class="btn btn-primary" type="button" id="mlGo" onclick="mlMake()">Buat</button>
       </div>
     </div>
   </div>
@@ -1468,7 +1499,7 @@
     // MP3  : GET https://api.theresav.eu/api/download/ytmp3?url=...&format=mp3&bitrate=128k → lewat proxy /api/yt-mp3
     // Browser hanya memanggil proxy di situs sendiri (tanpa masalah CORS).
     const MX_PROXY = '/api/yt-search', MX_MP3 = '/api/yt-mp3';
-    const mx = { tracks: [], i: -1, raw: null, ctl: null, playing: false, dock: false, yt: null, dur: 0 };
+    const mx = { tracks: [], i: -1, raw: null, ctl: null, playing: false, dock: false, yt: null, dur: 0, bg: false, cur: 0, links: {} };
     const mxEl = id => document.getElementById(id);
     const IC_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>';
     const IC_DL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0 4-4m-4 4-4-4"/><path d="M5 19h14"/></svg><i class="dl-spin"></i>';
@@ -1623,7 +1654,7 @@
     window.addEventListener('message', ev => {
       if (!/(^|\.)youtube(-nocookie)?\.com$/.test((ev.origin || '').replace(/^https?:\/\//, ''))) return;
       let d = ev.data; if (typeof d === 'string') { try { d = JSON.parse(d); } catch { return; } }
-      if (!d || typeof d !== 'object' || !mx.yt) return;
+      if (!d || typeof d !== 'object' || !mx.yt || mx.bg) return;
       const t = mx.tracks[mx.i]; if (!t || !t.yt) return;
       mx.yt.ready = true;
       const info = d.info;
@@ -1631,6 +1662,7 @@
       else if (d.event === 'infoDelivery' || d.event === 'initialDelivery') {
         if (info && typeof info === 'object') {
           if (info.duration) mx.dur = info.duration;
+          if (info.currentTime != null) mx.cur = info.currentTime;
           if (info.currentTime != null && mx.dur) { const f = mxEl('mpFill'); if (f) f.style.width = Math.min(100, info.currentTime / mx.dur * 100) + '%'; }
           if (info.playerState != null && d.event === 'initialDelivery') ytState(info.playerState);
         }
@@ -1642,15 +1674,39 @@
       else if (s === 2) { if (mx.playing) { mx.playing = false; mxPaint(); } }
       else if (s === 0) { mx.playing = false; mxPaint(); musicStep(1); }
     }
+    // ---- putar di latar belakang: setelah lagu mulai (lewat YouTube), audionya disiapkan lewat <audio> supaya tetap bunyi saat keluar dari browser / layar mati ----
+    function mxUnlock(a) { try { a.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA='; const p = a.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {} }
+    async function mxBgPrep(i) {
+      const t = mx.tracks[i]; if (!t || !t.yt) return;
+      try {
+        let u = mx.links[t.yt];
+        if (!u) {
+          const res = await fetch(MX_MP3 + '?mode=link&bitrate=128k&url=' + encodeURIComponent('https://www.youtube.com/watch?v=' + t.yt));
+          const d = await res.json().catch(() => null);
+          if (!res.ok || !d || !d.url) { if (mx.i === i) toast('Latar belakang belum aktif: ' + ((d && (d.error || d.message)) || ('HTTP ' + res.status)), 'err'); return; }
+          u = mx.links[t.yt] = d.url;
+        }
+        if (mx.i !== i || mx.bg) return;
+        const a = mxEl('musicAudio'), at = mx.cur || 0, wasPlaying = mx.playing;
+        a.src = u; a.preload = 'auto';
+        a.addEventListener('loadedmetadata', function f() { a.removeEventListener('loadedmetadata', f); if (at > 1 && isFinite(a.duration) && at < a.duration) { try { a.currentTime = at; } catch (e) {} } });
+        if (!wasPlaying) { mx.bg = true; return; }
+        await a.play();
+        if (mx.i !== i) { a.pause(); return; }
+        mx.bg = true; ytCmd('pauseVideo'); mx.playing = true; mxPaint();
+        toast('Mode latar belakang aktif — musik tetap jalan saat keluar dari browser', 'ok');
+      } catch (e) { if (mx.i === i) toast('Latar belakang belum aktif: ' + ((e && e.message) || 'audio ditolak browser'), 'err'); mx.bg = false; try { const a = mxEl('musicAudio'); a.pause(); a.removeAttribute('src'); } catch (x) {} }
+    }
     function musicPlay(i, force) {
       const t = mx.tracks[i]; if (!t) return;
       const a = mxEl('musicAudio');
       if (mx.i === i && !force) { musicToggle(); return; }
       if (!t.audio && !t.yt) { toast('Lagu ini tidak punya sumber putar', 'err'); return; }
       mx.i = i;
+      mx.bg = false; mx.cur = 0;
       if (t.yt) {
-        a.pause(); a.removeAttribute('src'); mx.playing = true;
-        mxEmbed(t.yt);
+        mxUnlock(a); a.pause(); a.removeAttribute('src'); mx.playing = true;
+        mxEmbed(t.yt); mxBgPrep(i);
       } else {
         mxEmbed(null);
         a.src = t.audio;
@@ -1708,7 +1764,7 @@
     function musicToggle() {
       const t = mx.tracks[mx.i], a = mxEl('musicAudio');
       if (!t) return;
-      if (t.yt) { if (mx.playing) { ytCmd('pauseVideo'); mx.playing = false; } else { ytCmd('playVideo'); mx.playing = true; } mxPaint(); return; }
+      if (t.yt && !mx.bg) { if (mx.playing) { ytCmd('pauseVideo'); mx.playing = false; } else { ytCmd('playVideo'); mx.playing = true; } mxPaint(); return; }
       if (a.paused) a.play().catch(() => toast('Gagal memutar', 'err')); else a.pause();
     }
     function musicStep(d) {
@@ -1719,7 +1775,7 @@
     function musicClose() {
       const a = mxEl('musicAudio');
       a.pause(); a.removeAttribute('src'); a.load();
-      mx.i = -1; mx.playing = false; mx.dock = false; mxEmbed(null); mxPaint();
+      mx.i = -1; mx.playing = false; mx.bg = false; mx.dock = false; mxEmbed(null); mxPaint();
     }
     // ✕ di halaman Musik: turunkan player ke bawah kolom pencarian (musik tetap jalan). ✕ lagi / di halaman lain: tutup.
     function musicX() {
@@ -1767,11 +1823,12 @@
     if ('ResizeObserver' in window) { const ro = new ResizeObserver(() => mxLayout()); ro.observe(mxEl('musicPage')); ro.observe(mxEl('miniPlayer')); }
     (function () {
       const a = mxEl('musicAudio');
-      a.addEventListener('play', () => { mx.playing = true; mxPaint(); });
-      a.addEventListener('pause', () => { mx.playing = false; mxPaint(); });
-      a.addEventListener('ended', () => { mx.playing = false; mxPaint(); musicStep(1); });
-      a.addEventListener('timeupdate', () => { const f = mxEl('mpFill'); if (f && a.duration) f.style.width = (a.currentTime / a.duration * 100) + '%'; });
-      a.addEventListener('error', () => { if (a.getAttribute('src')) { mx.playing = false; mxPaint(); toast('Lagu gagal diputar', 'err'); } });
+      const yo = () => { const t = mx.tracks[mx.i]; return !!(t && t.yt && !mx.bg); };   // abaikan event audio saat YouTube yang memutar
+      a.addEventListener('play', () => { if (yo()) return; mx.playing = true; mxPaint(); });
+      a.addEventListener('pause', () => { if (yo()) return; mx.playing = false; mxPaint(); });
+      a.addEventListener('ended', () => { if (yo()) return; mx.playing = false; mxPaint(); musicStep(1); });
+      a.addEventListener('timeupdate', () => { if (yo()) return; const f = mxEl('mpFill'); if (f && a.duration) f.style.width = (a.currentTime / a.duration * 100) + '%'; });
+      a.addEventListener('error', () => { if (yo()) return; if (mx.bg) { const t = mx.tracks[mx.i]; mx.bg = false; if (t) delete mx.links[t.yt]; a.pause(); a.removeAttribute('src'); ytCmd('playVideo'); mx.playing = true; mxPaint(); return; } if (a.getAttribute('src')) { mx.playing = false; mxPaint(); toast('Lagu gagal diputar', 'err'); } });
       mxEl('mpBar').addEventListener('click', e => {
         if (!a.duration) return;
         const r = e.currentTarget.getBoundingClientRect();
@@ -1779,6 +1836,45 @@
       });
     })();
 
+
+    // ===== Fake ML (maker gambar profil) =====
+    const ML_API = '/api/ml-maker';
+    let mlAvatar = '';
+    function mlOpen() { openStoreModal('mlModal'); }
+    function mlPick(inp) {
+      const f = inp.files && inp.files[0]; if (!f) return;
+      const url = URL.createObjectURL(f), im = new Image();
+      im.onload = () => {
+        const n = 512, c = document.createElement('canvas'); c.width = c.height = n;
+        const k = Math.max(n / im.width, n / im.height), w = im.width * k, h = im.height * k;
+        c.getContext('2d').drawImage(im, (n - w) / 2, (n - h) / 2, w, h);
+        mlAvatar = c.toDataURL('image/png'); $s('mlPrev').src = mlAvatar; URL.revokeObjectURL(url);
+      };
+      im.onerror = () => { URL.revokeObjectURL(url); toast('Gambar tidak bisa dibaca', 'err'); };
+      im.src = url;
+    }
+    async function mlMake() {
+      const name = $s('mlName').value.trim();
+      if (!mlAvatar) { toast('Pilih foto avatar dulu', 'err'); return; }
+      if (!name) { toast('Username wajib diisi', 'err'); return; }
+      const go = $s('mlGo'), out = $s('mlOut'); go.disabled = true; go.textContent = 'Membuat…';
+      try {
+        const res = await fetch(ML_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ avatar: mlAvatar, username: name, rank: $s('mlRank').value.trim(), border: $s('mlBorder').value.trim() }) });
+        const ct = res.headers.get('content-type') || '';
+        let src = '';
+        if (res.ok && /^image\//i.test(ct)) src = URL.createObjectURL(await res.blob());
+        else {
+          const text = await res.text(); let d = null; try { d = JSON.parse(text); } catch {}
+          if (!res.ok) throw new Error((d && (d.error || d.message)) || ('HTTP ' + res.status));
+          const hit = JSON.stringify(d || '').match(/https?:\/\/[^"\s]+\.(?:png|jpe?g|webp)[^"\s]*/i) || JSON.stringify(d || '').match(/data:image\/[a-z]+;base64,[A-Za-z0-9+/=]+/i);
+          if (!hit) throw new Error('API tidak mengirim gambar');
+          src = hit[0];
+        }
+        out.hidden = false;
+        out.innerHTML = '<img alt="Hasil" src="' + src.replace(/"/g, '') + '" /><a class="btn btn-outline" style="display:inline-block;text-decoration:none" download="fake-ml.png" href="' + src.replace(/"/g, '') + '">Simpan gambar</a>';
+      } catch (e) { toast('Gagal: ' + (e && e.message || 'tidak bisa terhubung'), 'err'); }
+      finally { go.disabled = false; go.textContent = 'Buat'; }
+    }
 
     // ===== Toko: pembelian Alight Motion Premium (1 paket: 1 Tahun) =====
     // Firebase: settings/store (harga, cara bayar, QRIS), orders/{kode} (paket, harga, status, publik untuk cek status),
