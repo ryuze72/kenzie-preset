@@ -1,9 +1,91 @@
 <!DOCTYPE html>
-<html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AM Premium</title></head>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<style>html:not(.gate-ok) body>*:not(#kgate){display:none!important}html:not(.gate-ok){background:#000}</style>
+<script src="/gate.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AM Premium</title>
+<style>
+:root{color-scheme:dark;--ink:#f7f8ff;--muted:#9ba8c4;--red:#ff7188;--green:#64e6b0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,sans-serif;color:var(--ink);min-height:100dvh;background:linear-gradient(160deg,#080b17,#10162a);padding-bottom:24px}
+.header{padding:calc(12px + env(safe-area-inset-top)) 14px;display:flex;gap:10px;align-items:center;border-bottom:1px solid #ffffff17}
+.logo{width:40px;height:40px;border-radius:14px;background:#fff;color:#10152a;display:grid;place-items:center;font-weight:900}
+.tabs{display:flex;gap:6px;overflow-x:auto}
+.tab{padding:10px 12px;border-radius:999px;background:#ffffff0e;color:#aeb8d0;font-size:11px;font-weight:700;border:0;cursor:pointer}
+.tab.active{background:#ffffff28;color:#fff}
+.card{margin:14px;padding:18px;border-radius:24px;background:#ffffff12;border:1px solid #ffffff18}
+.card-title{font-size:18px;font-weight:750;margin-bottom:12px}
+.label{font-size:10px;font-weight:800;color:#b4c1dc;margin:6px 0}
+input,textarea{width:100%;padding:14px;border-radius:16px;border:1px solid #ffffff20;background:#04081480;color:#fff;font-size:15px;margin-bottom:10px}
+.btn{width:100%;min-height:46px;border-radius:999px;border:0;font-weight:750;margin-bottom:8px;cursor:pointer}
+.btn-send{background:linear-gradient(115deg,#6baeff,#c2a1ff);color:#081126}
+.btn-verify{background:linear-gradient(115deg,#a18aff,#e09bff);color:#170c2b}
+.btn-copy{background:#ffffff14;color:#fff}
+.msg{margin-top:10px;padding:10px;border-radius:12px;font-size:13px;text-align:center;display:none}
+.msg.ok{display:block;background:#4ee5aa20;color:var(--green)}
+.msg.err{display:block;background:#ff718820;color:var(--red)}
+.panel{display:none}.panel.active{display:block}
+.email-box{display:flex;gap:8px;align-items:center;background:#04081480;border-radius:14px;padding:12px;margin-bottom:10px;word-break:break-all;font-size:13px}
+.mail-item{padding:12px;border-radius:14px;background:#05091680;margin-bottom:8px;border:1px solid #ffffff14}
+</style>
+</head>
 <body>
-<script src="/amprem-p0.js"></script>
-<script src="/amprem-p1.js"></script>
-<script src="/amprem-p2.js"></script>
-<script src="/amprem-p3.js"></script>
-<script src="/amprem-load.js"></script>
-</body></html>
+<div class="header">
+  <div class="logo">R</div>
+  <div class="tabs">
+    <button class="tab active" onclick="showPanel('am',this)">AM PREMIUM</button>
+    <button class="tab" onclick="showPanel('mail',this)">Temp Mail</button>
+  </div>
+</div>
+<div class="panel active" id="panel-am">
+  <div class="card">
+    <div class="card-title">Verify account</div>
+    <div class="label">EMAIL</div>
+    <input id="email" type="email" placeholder="email@acqq.dev">
+    <button class="btn btn-send" onclick="sendLink()">Send magic link</button>
+    <div class="label">VERIFICATION LINK (lang=en only)</div>
+    <textarea id="link" rows="4" placeholder="Sign-in link lang=en..."></textarea>
+    <button class="btn btn-copy" onclick="pullLink()">Ambil link dari inbox</button>
+    <button class="btn btn-verify" onclick="verifyLink()">Verify account</button>
+    <div class="msg" id="msg"></div>
+  </div>
+</div>
+<div class="panel" id="panel-mail">
+  <div class="card">
+    <div class="card-title">Temp Mail</div>
+    <div class="email-box"><span id="tempEmail">Klik Generate</span></div>
+    <button class="btn btn-send" onclick="generateEmail()">Generate Email</button>
+    <button class="btn btn-copy" onclick="checkInbox(true)">Refresh Inbox</button>
+    <div id="mailList"></div>
+    <div class="msg" id="mailMsg"></div>
+  </div>
+</div>
+<script src="/amprem-fix.js"></script>
+<script>
+const API_PROXY='/api/amprem', MAIL_API='/api/tempmail';
+let tempToken=null, tempAddress=null;
+function showPanel(n,t){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.getElementById('panel-'+n).classList.add('active');if(t)t.classList.add('active');}
+function showMsg(id,text,type){const el=document.getElementById(id);el.textContent=text;el.className='msg'+(type?' '+type:'');}
+function amText(v){if(v==null||v==='')return'';if(typeof v==='string'||typeof v==='number')return String(v);if(typeof v==='object')return amText(v.message||v.error||v.detail||v.msg)||JSON.stringify(v).slice(0,180);return String(v);}
+async function amCall(path,body){const r=await fetch(API_PROXY+'?action='+encodeURIComponent(path),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const text=await r.text();let d=null;try{d=JSON.parse(text);}catch{}if(!d||typeof d!=='object')d={ok:false,message:text.slice(0,120)||'gagal'};if(d.ok===undefined)d.ok=!!(r.ok&&(d.status===true||d.success===true));if(d.ok!==true){d.ok=false;d.message=amText(d.message)||amText(d.error)||('HTTP '+r.status);}return d;}
+async function sendLink(){const email=document.getElementById('email').value.trim();if(!email.includes('@')){showMsg('msg','Email tidak valid','err');return;}try{const d=await amCall('send',{email});if(d.ok){showMsg('msg',amText(d.message)||'Link dikirim (EN)!','ok');watchInbox(email);}else showMsg('msg',amText(d.message)||'Gagal','err');}catch(e){showMsg('msg',e.message,'err');}}
+async function verifyLink(){const email=document.getElementById('email').value.trim(),link=document.getElementById('link').value.trim();if(!email||!link){showMsg('msg','Isi email & link','err');return;}try{const d=await amCall('verify',{email,link});showMsg('msg',amText(d.message)||(d.ok?'Premium aktif':'Gagal'),d.ok?'ok':'err');}catch(e){showMsg('msg',e.message,'err');}}
+function mailText(m){return [m.subject,m.body,m.text,m.content,m.html,m.snippet].filter(Boolean).join(' ');}
+function isSignInMail(m){const subj=String(m.subject||''),all=mailText(m);const good=/sign[\s-]*in\s+to\s+alight\s+creative/i,bad=/log[\s-]*in\s+to\s+alight\s+creative/i;if(bad.test(subj)&&!good.test(subj))return false;if(good.test(subj))return true;if(bad.test(all)&&!good.test(all))return false;return good.test(all);}
+function isEnAuthLink(u){if(/lang(=|%3D)id\b/i.test(u))return false;return /lang(=|%3D)en\b/i.test(u);}
+function isAuthCandidate(u){return /__\/auth\/links|alight-creative\.firebaseapp\.com|alightcreative\.com\/auth|oobCode|mode(=|%3D)signIn/i.test(u);}
+function scoreAuthLink(u){let s=0;if(isAuthCandidate(u))s+=5;if(/mode(=|%3D)signIn/i.test(u))s+=5;if(/lang(=|%3D)en\b/i.test(u))s+=20;if(/lang(=|%3D)id\b/i.test(u))s-=50;return s;}
+function extractSignInLink(m){const raw=mailText(m).replace(/&/g,'&');let urls=(raw.match(/https?:\/\/[^\s<>"'\\)]+/g)||[]).map(u=>u.replace(/[.,;]+$/,''));const decoded=[];for(const u of urls){decoded.push(u);try{decoded.push(decodeURIComponent(u));}catch(e){}}urls=[...new Set(decoded)];const scored=urls.filter(u=>isAuthCandidate(u)||/alight|firebaseapp|signin|magic/i.test(u)).map(u=>({u,s:scoreAuthLink(u)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s);const en=scored.find(x=>isEnAuthLink(x.u));if(en)return en.u;const nonId=scored.find(x=>!/lang(=|%3D)id\b/i.test(x.u));return nonId?nonId.u:'';}
+function findSignInLink(list){const ts=x=>{const n=Date.parse(x.date||x.time||x.created_at||'');return isNaN(n)?0:n;};const cands=list.filter(isSignInMail).sort((a,b)=>ts(b)-ts(a));for(const m of cands){const u=extractSignInLink(m);if(u&&isEnAuthLink(u))return u;}for(const m of cands){const u=extractSignInLink(m);if(u)return u;}return'';}
+function pasteLink(url,addr){document.getElementById('link').value=url;if(addr)document.getElementById('email').value=addr;showMsg('msg','Link Sign-in (EN) ditempel. Klik Verify.','ok');}
+function tokenFor(email){const s=JSON.parse(localStorage.getItem('savedEmails')||'[]').find(x=>x.email===email);return(s&&(s.token||s.api_token))||(email===tempAddress?(tempToken||''):'')||'';}
+async function fetchInbox(email){const tok=tokenFor(email);const r=await fetch(MAIL_API+'?action=inbox&email='+encodeURIComponent(email)+'&token='+encodeURIComponent(tok));const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||('HTTP '+r.status));return d.messages||d.inbox||d.emails||(Array.isArray(d)?d:[]);}
+async function pullLink(){const email=document.getElementById('email').value.trim();if(!email){showMsg('msg','Isi email','err');return;}try{const list=await fetchInbox(email);const u=findSignInLink(list);if(u)pasteLink(u,email);else showMsg('msg',list.length?'Belum ada Sign-in (EN)':'Inbox kosong','err');}catch(e){showMsg('msg',e.message,'err');}}
+function watchInbox(email){if(window._w)clearInterval(window._w);let n=0;window._w=setInterval(async()=>{if(++n>30)return clearInterval(window._w);try{const u=findSignInLink(await fetchInbox(email));if(u){pasteLink(u,email);clearInterval(window._w);}}catch(e){}},4000);}
+async function generateEmail(){showMsg('mailMsg','Membuat...','');try{const r=await fetch(MAIL_API+'?action=create');const data=await r.json();if(!data.email)throw new Error(data.error||'Gagal');tempAddress=data.email;tempToken=data.api_token||data.token||data.email;document.getElementById('tempEmail').textContent=tempAddress;document.getElementById('email').value=tempAddress;showMsg('mailMsg','Email: '+tempAddress,'ok');const saved=JSON.parse(localStorage.getItem('savedEmails')||'[]');saved.unshift({email:tempAddress,token:tempToken,time:new Date().toISOString()});localStorage.setItem('savedEmails',JSON.stringify(saved.slice(0,20)));checkInbox(false);}catch(e){showMsg('mailMsg',e.message,'err');}}
+async function checkInbox(manual){if(!tempAddress)return;try{const list=await fetchInbox(tempAddress);const el=document.getElementById('mailList');if(!list.length){el.innerHTML='<p style="color:#9ba8c4;text-align:center">Inbox kosong</p>';return;}el.innerHTML=list.map(m=>'<div class="mail-item"><b>'+(m.subject||'(no subject)')+'</b><div style="font-size:12px;color:#9fcaff">'+(m.from||'')+'</div></div>').join('');const su=findSignInLink(list);if(su)pasteLink(su,tempAddress);}catch(e){if(manual)showMsg('mailMsg',e.message,'err');}}
+</script>
+</body>
+</html>
