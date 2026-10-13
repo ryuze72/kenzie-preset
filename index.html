@@ -192,8 +192,6 @@
       background: var(--ctl); color: var(--accent); font: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer;
     }
     .ml-open:active { transform: scale(.96); }
-    .ml-btns { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 14px; }
-    .ml-btns .ml-open { margin: 0; }
     .ml-pick { display: flex; align-items: center; gap: 12px; }
     .ml-pick img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; background: var(--ctl); flex: 0 0 64px; }
     .ml-result { margin-top: 14px; text-align: center; }
@@ -339,6 +337,7 @@
     .link-box {
       display: flex; flex-direction: column; gap: 10px; padding: 12px; margin-bottom: 10px; border-radius: 20px;
     }
+    .link-title { width: 100%; padding: 2px 4px 0; font-size: 12px; font-weight: 800; letter-spacing: .02em; color: var(--ink); }
     .link-box code { display: block; width: 100%; min-width: 0; padding: 2px 4px 0; font-size: 12px; line-height: 1.5; color: var(--muted); overflow-wrap: anywhere; word-break: break-all; white-space: normal; }
     .link-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .link-actions:has(.btn-sm:only-child) { grid-template-columns: 1fr; }
@@ -795,10 +794,7 @@
 
     <div class="page active" id="homePage">
       <div class="home-row"><div class="stats"><b id="totalCount">0</b> preset · <b id="readyCount">0</b> siap</div>
-        <div class="ml-btns">
-          <button class="ml-open" type="button" onclick="mlOpen()">Fake Lobby ML</button>
-          <button class="ml-open" type="button" onclick="ffOpen()">Fake Lobby FF</button>
-        </div></div>
+        <button class="ml-open" type="button" onclick="mlOpen()">Fake ML</button></div>
       <div class="cats" id="catBar">
         <button class="cat active" data-cat="All">Semua</button>
         <button class="cat" data-cat="Trending">Trending</button>
@@ -1016,24 +1012,6 @@
       <div class="modal-actions">
         <button class="btn btn-outline" type="button" onclick="closeStoreModal('mlModal')">Tutup</button>
         <button class="btn btn-primary" type="button" id="mlGo" onclick="mlMake()">Buat</button>
-      </div>
-    </div>
-  </div>
-
-
-  <div class="overlay" id="ffModal">
-    <div class="modal">
-      <h3>Fake Lobby FF</h3>
-      <div class="form-group">
-        <label>Avatar (opsional)</label>
-        <input type="file" id="ffFile" accept="image/*" style="display:none" onchange="ffPick(this)" />
-        <div class="ml-pick"><img id="ffPrev" alt="" /><button type="button" class="btn btn-outline" style="font-size:12px" onclick="document.getElementById('ffFile').click()">Pilih foto</button></div>
-      </div>
-      <div class="form-group"><label>Username *</label><input class="form-input" id="ffName" maxlength="40" placeholder="Nama di profil FF" /></div>
-      <div class="ml-result" id="ffOut" hidden></div>
-      <div class="modal-actions">
-        <button class="btn btn-outline" type="button" onclick="closeStoreModal('ffModal')">Tutup</button>
-        <button class="btn btn-primary" type="button" id="ffGo" onclick="ffMake()">Buat</button>
       </div>
     </div>
   </div>
@@ -1283,7 +1261,7 @@
       const play = p.video
         ? '<div style="position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.25);font-size:22px;pointer-events:none">▶</div>'
         : '';
-      const badge = currentCat === 'XML' ? 'XML' : (p.link ? '5MB' : 'XML');
+      const badge = [p.xmlUrl ? 'XML' : '', p.link ? '5MB' : ''].filter(Boolean).join(' + ') || 'XML';
       const main = currentCat === 'XML'
         ? (p.xmlUrl ? '<a class="btn-sm primary" href="' + esc(p.xmlUrl) + '" target="_blank" onclick="event.stopPropagation()">Buka XML</a>' : '<button class="btn-sm primary" disabled>XML</button>')
         : (p.link ? '<a class="btn-sm primary" href="' + esc(p.link) + '" onclick="event.stopPropagation();trackUse(\'' + p.id + '\')">Impor</a>' : '<button class="btn-sm primary" disabled>Belum</button>');
@@ -1305,7 +1283,7 @@
       document.getElementById('similarSection').style.display='block';
       const isFav = favorites.includes(p.id);
       const thumb = p.thumb ? `<img src="${esc(p.thumb)}" alt=""/>` : `<div style="width:100%;height:100%;display:grid;place-items:center;font-size:48px;opacity:.3">🎬</div>`;
-      el.innerHTML = `<div class="detail-thumb">${thumb}</div><div class="detail-info"><span class="detail-id" onclick="copyWebLink('${p.id}')">${p.id}</span><h1>${esc(p.name)}</h1><div class="detail-meta"><span class="chip"><b>Kreator</b> ${esc(p.creator)}</span><span class="chip"><b>Upload</b> ${esc(p.date||'-')}</span>${statChips(p.id)}${p.trending?'<span class="chip">Trending</span>':''}${p.popular?'<span class="chip">Populer</span>':''}</div>${p.description?`<p class="detail-desc">${esc(p.description)}</p>`:''}${p.link?`<div class="link-box"><code>${esc(p.link)}</code><div class="link-actions"><a class="btn-sm primary" href="${esc(p.link)}" target="_blank" onclick="trackUse('${p.id}')">Open Link</a><button class="btn-sm" onclick="copyAlightLink('${p.id}')">Salin</button></div></div>`:`<div class="warn">⏳ Menunggu link Alight Motion</div>`}${p.demo?`<div class="link-box"><code>${esc(p.demo)}</code><div class="link-actions"><a class="btn-sm primary" href="${esc(p.demo)}" target="_blank">Open Link</a><button class="btn-sm" onclick="copyDemoLink('${p.id}')">Salin</button></div></div>`:''}${p.xmlUrl?`<div class="link-box"><code>${esc(p.xmlUrl)}</code><div class="link-actions"><a class="btn-sm primary" href="${esc(p.xmlUrl)}" target="_blank">Open Link</a><button class="btn-sm" onclick="copyXMLLink('${p.id}')">Salin</button></div></div>`:''}${p.video && !p.video.startsWith('data:')?`<div class="link-box"><code>${esc(p.video)}</code><div class="link-actions"><a class="btn-sm primary" href="${esc(p.video)}" target="_blank">Open Link</a></div></div>`:''}<div class="detail-actions">${p.link?`<a class="btn btn-primary" href="${esc(p.link)}" onclick="trackUse('${p.id}')">Impor</a>`:'<button class="btn btn-primary" disabled>Impor</button>'}<button class="btn btn-outline" onclick="copyWebLink('${p.id}')">Salin Web</button><button class="btn btn-outline" onclick="sharePreset('${p.id}')">Bagikan</button><button class="btn btn-outline" onclick="toggleFav('${p.id}');renderDetail('${p.id}')">${isFav?'❤️':'🤍'}</button></div></div>`;
+      el.innerHTML = `<div class="detail-thumb">${thumb}</div><div class="detail-info"><span class="detail-id" onclick="copyWebLink('${p.id}')">${p.id}</span><h1>${esc(p.name)}</h1><div class="detail-meta"><span class="chip"><b>Kreator</b> ${esc(p.creator)}</span><span class="chip"><b>Upload</b> ${esc(p.date||'-')}</span>${statChips(p.id)}${p.trending?'<span class="chip">Trending</span>':''}${p.popular?'<span class="chip">Populer</span>':''}</div>${p.description?`<p class="detail-desc">${esc(p.description)}</p>`:''}${p.link?`<div class="link-box"><div class="link-title">Link Preset</div><code>${esc(p.link)}</code><div class="link-actions"><a class="btn-sm primary" href="${esc(p.link)}" target="_blank" onclick="trackUse('${p.id}')">Open Link</a><button class="btn-sm" onclick="copyAlightLink('${p.id}')">Salin</button></div></div>`:`<div class="warn">⏳ Menunggu link Alight Motion</div>`}${p.demo?`<div class="link-box"><div class="link-title">Tiktok Admin</div><code>${esc(p.demo)}</code><div class="link-actions"><a class="btn-sm primary" href="${esc(p.demo)}" target="_blank">Open Link</a><button class="btn-sm" onclick="copyDemoLink('${p.id}')">Salin</button></div></div>`:''}${p.xmlUrl?`<div class="link-box"><div class="link-title">Link XML</div><code>${esc(p.xmlUrl)}</code><div class="link-actions"><a class="btn-sm primary" href="${esc(p.xmlUrl)}" target="_blank">Open Link</a><button class="btn-sm" onclick="copyXMLLink('${p.id}')">Salin</button></div></div>`:''}${p.video && !p.video.startsWith('data:')?`<div class="link-box"><div class="link-title">Contoh Konteks Preset</div><code>${esc(p.video)}</code><div class="link-actions"><a class="btn-sm primary" href="${esc(p.video)}" target="_blank">Open Link</a></div></div>`:''}<div class="detail-actions">${p.link?`<a class="btn btn-primary" href="${esc(p.link)}" onclick="trackUse('${p.id}')">Impor</a>`:'<button class="btn btn-primary" disabled>Impor</button>'}<button class="btn btn-outline" onclick="copyWebLink('${p.id}')">Salin Web</button><button class="btn btn-outline" onclick="sharePreset('${p.id}')">Bagikan</button><button class="btn btn-outline" onclick="toggleFav('${p.id}');renderDetail('${p.id}')">${isFav?'❤️':'🤍'}</button></div></div>`;
       document.getElementById('gridSimilar').innerHTML = presets.filter(x=>x.id!==p.id).slice(0,4).map(cardHTML).join('') || '<p style="color:var(--muted)">Tidak ada</p>';
     }
     function renderFavorites() {
@@ -1895,47 +1873,6 @@
         }
         out.hidden = false;
         out.innerHTML = '<img alt="Hasil" src="' + src.replace(/"/g, '') + '" /><a class="btn btn-outline" style="display:inline-block;text-decoration:none" download="fake-ml.png" href="' + src.replace(/"/g, '') + '">Simpan gambar</a>';
-      } catch (e) { toast('Gagal: ' + (e && e.message || 'tidak bisa terhubung'), 'err'); }
-      finally { go.disabled = false; go.textContent = 'Buat'; }
-    }
-
-
-    // ===== Fake Lobby FF =====
-    const FF_API = '/api/ff-maker';
-    let ffAvatar = '';
-    function ffOpen() { openStoreModal('ffModal'); }
-    function ffPick(inp) {
-      const f = inp.files && inp.files[0]; if (!f) return;
-      const url = URL.createObjectURL(f), im = new Image();
-      im.onload = () => {
-        const n = 512, c = document.createElement('canvas'); c.width = c.height = n;
-        const k = Math.max(n / im.width, n / im.height), w = im.width * k, h = im.height * k;
-        c.getContext('2d').drawImage(im, (n - w) / 2, (n - h) / 2, w, h);
-        ffAvatar = c.toDataURL('image/png'); $s('ffPrev').src = ffAvatar; URL.revokeObjectURL(url);
-      };
-      im.onerror = () => { URL.revokeObjectURL(url); toast('Gambar tidak bisa dibaca', 'err'); };
-      im.src = url;
-    }
-    async function ffMake() {
-      const name = $s('ffName').value.trim();
-      if (!name) { toast('Username wajib diisi', 'err'); return; }
-      const go = $s('ffGo'), out = $s('ffOut'); go.disabled = true; go.textContent = 'Membuat…';
-      try {
-        const body = { username: name };
-        if (ffAvatar) body.avatar = ffAvatar;
-        const res = await fetch(FF_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-        const ct = res.headers.get('content-type') || '';
-        let src = '';
-        if (res.ok && /^image\//i.test(ct)) src = URL.createObjectURL(await res.blob());
-        else {
-          const text = await res.text(); let d = null; try { d = JSON.parse(text); } catch {}
-          if (!res.ok) throw new Error((d && (d.error || d.message)) || ('HTTP ' + res.status));
-          const hit = JSON.stringify(d || '').match(/https?:\/\/[^"\s]+\.(?:png|jpe?g|webp)[^"\s]*/i) || JSON.stringify(d || '').match(/data:image\/[a-z]+;base64,[A-Za-z0-9+/=]+/i);
-          if (!hit) throw new Error('API tidak mengirim gambar');
-          src = hit[0];
-        }
-        out.hidden = false;
-        out.innerHTML = '<img alt="Hasil" src="' + src.replace(/"/g, '') + '" /><a class="btn btn-outline" style="display:inline-block;text-decoration:none" download="fake-ff.jpg" href="' + src.replace(/"/g, '') + '">Simpan gambar</a>';
       } catch (e) { toast('Gagal: ' + (e && e.message || 'tidak bisa terhubung'), 'err'); }
       finally { go.disabled = false; go.textContent = 'Buat'; }
     }
