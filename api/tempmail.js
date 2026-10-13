@@ -1,15 +1,7 @@
 // Vercel Serverless — Temp Mail proxy
-// Pola Zetttools (generator.email) + domain brand:
-//   @ryuze.xml  → username mengandung "ryuze"
-//   @kenzie.prst → username mengandung "kenzie"
-//
-// GET /api/tempmail?action=generate
-// GET /api/tempmail?action=generate&domain=kenzie.prst
-// GET /api/tempmail?action=generate&domain=ryuze.xml
-// GET /api/tempmail?action=generate&raw=1
-// GET /api/tempmail?action=domains|search|inbox|detail|uptime
-//
-// Alias brand: tampilan custom, inbox via upstream. Token menyimpan mapping.
+// Pola Zetttools (generator.email) + domain brand (display only).
+// PENTING: field "email" = alamat YANG BISA MENERIMA surat (upstream).
+// "brand_email" = tampilan @kenzie.prst / @ryuze.xml (TIDAK bisa menerima).
 const UPSTREAM = 'https://zetttools.vercel.app/api/tempmail';
 const BRANDS = {
   'ryuze.xml': { tag: 'ryuze' },
@@ -38,7 +30,6 @@ function randChars(len) {
   return o;
 }
 
-/** Username brand: selalu mengandung tag (ryuze / kenzie) */
 function brandUsername(tag) {
   const t = String(tag || 'ryuze').toLowerCase();
   const styles = [
@@ -110,7 +101,7 @@ module.exports = async (req, res) => {
 
   try {
     if (action === 'generate') {
-      const wantRaw = q.raw === '1' || q.raw === 'true';
+      const forceBrand = q.brand === '1' || q.brand === 'true';
       const { r, text, data } = await upstreamGet({ action: 'generate' }, ctl.signal);
       if (!r.ok || !data || !data.email) {
         return res.status(r.ok ? 502 : r.status).json(
@@ -122,36 +113,25 @@ module.exports = async (req, res) => {
       const upDomain = data.domain || String(data.email).split('@')[1];
       const token = packToken(upUser, upDomain, data.api_token);
 
-      if (wantRaw) {
-        return res.status(200).json({
-          status: 'success',
-          ok: true,
-          email: data.email,
-          username: upUser,
-          domain: upDomain,
-          api_token: token,
-          inbox_url: data.inbox_url || '',
-          brand: false,
-        });
-      }
-
       const brandDomain = pickBrandDomain(q.domain);
       const tag = BRANDS[brandDomain].tag;
       const brandUser = brandUsername(tag);
       const brandEmail = brandUser + '@' + brandDomain;
 
+      // Default: email = alamat NYATA yang bisa menerima (upstream)
+      // brand_email = kosmetik saja
       return res.status(200).json({
         status: 'success',
         ok: true,
-        email: brandEmail,
-        username: brandUser,
-        domain: brandDomain,
+        email: data.email,
+        username: upUser,
+        domain: upDomain,
         api_token: token,
         inbox_url: data.inbox_url || '',
-        upstream_email: data.email,
-        upstream_domain: upDomain,
+        brand_email: brandEmail,
+        brand_domain: brandDomain,
         brand: true,
-        note: 'Domain brand @' + brandDomain + ' — inbox via upstream generator.email',
+        note: 'Pakai field email untuk kirim/terima. brand_email hanya tampilan (tidak punya MX).',
       });
     }
 
@@ -204,7 +184,7 @@ module.exports = async (req, res) => {
         if (!map) {
           return res.status(400).json({
             status: false,
-            error: 'Untuk domain brand sertakan api_token dari hasil generate',
+            error: 'Domain brand tidak menerima email. Generate ulang dan pakai alamat upstream (bukan @kenzie.prst/@ryuze.xml).',
           });
         }
         upUser = map.u;
