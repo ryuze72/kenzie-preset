@@ -1,15 +1,21 @@
 // Vercel Serverless — Temp Mail proxy
-// Pola Zetttools (generator.email) + domain brand @ryuze.xml
-// Username brand selalu mengandung "ryuze" (contoh: ryuze7k2m@ryuze.xml)
+// Pola Zetttools (generator.email) + domain brand:
+//   @ryuze.xml  → username mengandung "ryuze"
+//   @kenzie.prst → username mengandung "kenzie"
 //
-// GET /api/tempmail?action=generate              → email @ryuze.xml (alias)
-// GET /api/tempmail?action=generate&raw=1       → email upstream asli
+// GET /api/tempmail?action=generate
+// GET /api/tempmail?action=generate&domain=kenzie.prst
+// GET /api/tempmail?action=generate&domain=ryuze.xml
+// GET /api/tempmail?action=generate&raw=1
 // GET /api/tempmail?action=domains|search|inbox|detail|uptime
 //
-// Alias: tampilan user@ryuze.xml, inbox tetap di upstream.
-// Token memuat mapping upstream (tidak perlu database).
+// Alias brand: tampilan custom, inbox via upstream. Token menyimpan mapping.
 const UPSTREAM = 'https://zetttools.vercel.app/api/tempmail';
-const BRAND_DOMAIN = 'ryuze.xml';
+const BRANDS = {
+  'ryuze.xml': { tag: 'ryuze' },
+  'kenzie.prst': { tag: 'kenzie' },
+};
+const BRAND_LIST = Object.keys(BRANDS);
 
 function cors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -32,16 +38,28 @@ function randChars(len) {
   return o;
 }
 
-/** Username brand: selalu ada "ryuze" + suffix acak */
-function brandUsername() {
+/** Username brand: selalu mengandung tag (ryuze / kenzie) */
+function brandUsername(tag) {
+  const t = String(tag || 'ryuze').toLowerCase();
   const styles = [
-    () => 'ryuze' + randChars(5),
-    () => 'ryuze' + randChars(4) + ((Math.random() * 90 + 10) | 0),
-    () => 'ryuze_' + randChars(6),
-    () => randChars(3) + 'ryuze' + randChars(3),
-    () => 'ryuze' + ((Math.random() * 9000 + 1000) | 0),
+    () => t + randChars(5),
+    () => t + randChars(4) + ((Math.random() * 90 + 10) | 0),
+    () => t + '_' + randChars(6),
+    () => randChars(3) + t + randChars(3),
+    () => t + ((Math.random() * 9000 + 1000) | 0),
   ];
   return styles[(Math.random() * styles.length) | 0]();
+}
+
+function pickBrandDomain(requested) {
+  const d = String(requested || '').trim().toLowerCase();
+  if (d && BRANDS[d]) return d;
+  // default: acak antara brand
+  return BRAND_LIST[(Math.random() * BRAND_LIST.length) | 0];
+}
+
+function isBrandDomain(d) {
+  return !!(d && BRANDS[String(d).toLowerCase()]);
 }
 
 function packToken(upstreamUser, upstreamDomain, apiToken) {
@@ -92,7 +110,7 @@ module.exports = async (req, res) => {
   const timer = setTimeout(() => ctl.abort(), 25000);
 
   try {
-    // ---------- GENERATE (brand @ryuze.xml by default) ----------
+    // ---------- GENERATE ----------
     if (action === 'generate') {
       const wantRaw = q.raw === '1' || q.raw === 'true';
       const { r, text, data } = await upstreamGet({ action: 'generate' }, ctl.signal);
@@ -119,31 +137,35 @@ module.exports = async (req, res) => {
         });
       }
 
-      // Brand: username mengandung "ryuze" + @ryuze.xml
-      const brandUser = brandUsername();
-      const brandEmail = brandUser + '@' + BRAND_DOMAIN;
+      const brandDomain = pickBrandDomain(q.domain);
+      const tag = BRANDS[brandDomain].tag;
+      const brandUser = brandUsername(tag);
+      const brandEmail = brandUser + '@' + brandDomain;
 
       return res.status(200).json({
         status: 'success',
         ok: true,
         email: brandEmail,
         username: brandUser,
-        domain: BRAND_DOMAIN,
+        domain: brandDomain,
         api_token: token,
         inbox_url: data.inbox_url || '',
         upstream_email: data.email,
         upstream_domain: upDomain,
         brand: true,
-        note: 'Domain brand @' + BRAND_DOMAIN + ' — inbox via upstream generator.email',
+        note: 'Domain brand @' + brandDomain + ' — inbox via upstream generator.email',
       });
     }
 
-    // ---------- DOMAINS: sisipkan ryuze.xml di depan ----------
+    // ---------- DOMAINS ----------
     if (action === 'domains') {
       const { r, text, data } = await upstreamGet({ action: 'domains' }, ctl.signal);
       let list = Array.isArray(data) ? data.slice() : [];
-      if (!list.includes(BRAND_DOMAIN)) list.unshift(BRAND_DOMAIN);
-      if (!r.ok && !list.length) {
+      for (let i = BRAND_LIST.length - 1; i >= 0; i--) {
+        const b = BRAND_LIST[i];
+        if (!list.includes(b)) list.unshift(b);
+      }
+      if (!r.ok && list.length === BRAND_LIST.length) {
         return res.status(r.status).json(data || { status: false, raw: text.slice(0, 200) });
       }
       return res.status(200).json(list);
@@ -151,11 +173,14 @@ module.exports = async (req, res) => {
 
     // ---------- SEARCH ----------
     if (action === 'search') {
-      const qq = String(q.q || q.query || '').trim();
+      const qq = String(q.q || q.query || '').trim().toLowerCase();
       const { r, text, data } = await upstreamGet({ action: 'search', q: qq }, ctl.signal);
       let list = Array.isArray(data) ? data.slice() : [];
-      if (!qq || BRAND_DOMAIN.includes(qq.toLowerCase()) || 'ryuze'.includes(qq.toLowerCase())) {
-        if (!list.includes(BRAND_DOMAIN)) list.unshift(BRAND_DOMAIN);
+      for (const b of BRAND_LIST) {
+        const tag = BRANDS[b].tag;
+        if (!qq || b.includes(qq) || tag.includes(qq)) {
+          if (!list.includes(b)) list.unshift(b);
+        }
       }
       if (!r.ok && !list.length) {
         return res.status(r.status).json(data || { status: false, raw: text.slice(0, 200) });
@@ -178,12 +203,13 @@ module.exports = async (req, res) => {
 
       let upUser = user;
       let upDomain = domain;
-      if (domain === BRAND_DOMAIN || (email && email.endsWith('@' + BRAND_DOMAIN))) {
+      const brandHit = isBrandDomain(domain) || (email && BRAND_LIST.some(b => email.toLowerCase().endsWith('@' + b)));
+      if (brandHit) {
         const map = unpackToken(token);
         if (!map) {
           return res.status(400).json({
             status: false,
-            error: 'Untuk @' + BRAND_DOMAIN + ' sertakan api_token dari hasil generate',
+            error: 'Untuk domain brand sertakan api_token dari hasil generate',
           });
         }
         upUser = map.u;
@@ -214,6 +240,7 @@ module.exports = async (req, res) => {
       status: false,
       error: 'action tidak dikenal',
       allow: ['generate', 'domains', 'search', 'inbox', 'detail', 'uptime'],
+      brands: BRAND_LIST,
     });
   } catch (e) {
     const why = (e && e.name === 'AbortError') ? 'timeout' : ((e && e.message) || 'unknown');
