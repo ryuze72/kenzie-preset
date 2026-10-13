@@ -191,7 +191,7 @@
       margin: 18px 0 14px; min-height: 36px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--ctl-edge);
       background: var(--ctl); color: var(--accent); font: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer;
     }
-    .ml-btns { display: inline-flex; gap: 8px; }
+    .ml-btns { display: inline-flex; gap: 8px; flex-wrap: wrap; }
     .ml-open:active { transform: scale(.96); }
     .ml-pick { display: flex; align-items: center; gap: 12px; }
     .ml-pick img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; background: var(--ctl); flex: 0 0 64px; }
@@ -795,7 +795,7 @@
 
     <div class="page active" id="homePage">
       <div class="home-row"><div class="stats"><b id="totalCount">0</b> preset · <b id="readyCount">0</b> siap</div>
-        <span class="ml-btns"><button class="ml-open" type="button" onclick="mlOpen()">Fake ML</button><button class="ml-open" type="button" onclick="ffOpen()">Fake FF</button></span></div>
+        <span class="ml-btns"><button class="ml-open" type="button" onclick="mlOpen()">Fake ML</button><button class="ml-open" type="button" onclick="ffOpen()">Fake FF</button><button class="ml-open" type="button" onclick="hdOpen()">HD Foto</button></span></div>
       <div class="cats" id="catBar">
         <button class="cat active" data-cat="All">Semua</button>
         <button class="cat" data-cat="Trending">Trending</button>
@@ -1025,6 +1025,24 @@
       <div class="modal-actions">
         <button class="btn btn-outline" type="button" onclick="closeStoreModal('ffModal')">Tutup</button>
         <button class="btn btn-primary" type="button" id="ffGo" onclick="ffMake()">Buat</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="hdModal">
+    <div class="modal">
+      <h3>HD Foto</h3>
+      <div class="form-group">
+        <label>Foto *</label>
+        <input type="file" id="hdFile" accept="image/*" style="display:none" onchange="hdPick(this)" />
+        <div class="ml-pick"><img id="hdPrev" alt="" /><button type="button" class="btn btn-outline" style="font-size:12px" onclick="document.getElementById('hdFile').click()">Pilih foto</button></div>
+      </div>
+      <div class="form-group"><label>Perbesar</label>
+        <select class="form-input" id="hdScale"><option value="2">2x</option><option value="3">3x</option><option value="4" selected>4x</option></select></div>
+      <div class="ml-result" id="hdOut" hidden></div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" type="button" onclick="closeStoreModal('hdModal')">Tutup</button>
+        <button class="btn btn-primary" type="button" id="hdGo" onclick="hdMake()">Jadikan HD</button>
       </div>
     </div>
   </div>
@@ -1915,6 +1933,41 @@
         out.innerHTML = '<img alt="Hasil" src="' + src + '" /><a class="btn btn-outline" style="display:inline-block;text-decoration:none" download="fake-ff.jpg" href="' + src + '">Simpan gambar</a>';
       } catch (e) { toast('Gagal: ' + (e && e.message || 'tidak bisa terhubung'), 'err'); }
       finally { go.disabled = false; go.textContent = 'Buat'; }
+    }
+
+    // ===== HD Foto (api/hd.js: POST JSON {image: dataURL, scale: 2|3|4} -> gambar) =====
+    const HD_API = '/api/hd';
+    let hdImage = '';
+    function hdOpen() { openStoreModal('hdModal'); }
+    function hdPick(inp) {
+      const f = inp.files && inp.files[0]; if (!f) return;
+      const url = URL.createObjectURL(f), im = new Image();
+      im.onload = () => {
+        const max = 1280, k = Math.min(1, max / Math.max(im.width, im.height));   // dikecilkan dulu agar muat batas upload 4,5 MB Vercel
+        const c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+        c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+        hdImage = c.toDataURL('image/jpeg', 0.92); $s('hdPrev').src = hdImage; $s('hdOut').hidden = true; URL.revokeObjectURL(url);
+      };
+      im.onerror = () => { URL.revokeObjectURL(url); toast('Gambar tidak bisa dibaca', 'err'); };
+      im.src = url;
+    }
+    async function hdMake() {
+      if (!hdImage) { toast('Pilih foto dulu', 'err'); return; }
+      const go = $s('hdGo'), out = $s('hdOut'); go.disabled = true; go.textContent = 'Memproses… bisa 10–40 detik';
+      try {
+        const res = await fetch(HD_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: hdImage, scale: Number($s('hdScale').value) || 4 }) });
+        const ct = res.headers.get('content-type') || '';
+        let src = '';
+        if (res.ok && /^image\//i.test(ct)) src = URL.createObjectURL(await res.blob());
+        else {
+          const text = await res.text(); let d = null; try { d = JSON.parse(text); } catch {}
+          const m = d && (d.message || d.error || d.msg);
+          throw new Error((typeof m === 'string' && m) || (res.ok ? 'API tidak mengirim gambar' : 'HTTP ' + res.status));
+        }
+        out.hidden = false;
+        out.innerHTML = '<img alt="Hasil HD" src="' + src + '" /><a class="btn btn-outline" style="display:inline-block;text-decoration:none" download="foto-hd.png" href="' + src + '">Simpan gambar</a>';
+      } catch (e) { toast('Gagal: ' + (e && e.message || 'tidak bisa terhubung'), 'err'); }
+      finally { go.disabled = false; go.textContent = 'Jadikan HD'; }
     }
 
     // ===== Toko: pembelian Alight Motion Premium (1 paket: 1 Tahun) =====
