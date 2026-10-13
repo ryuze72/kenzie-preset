@@ -36,15 +36,11 @@ input:focus,textarea:focus{border-color:#8dbdff;box-shadow:0 0 0 3px #6ea8ff20}t
 .saved-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.saved-actions .btn{width:auto;flex:1;margin:0;min-height:39px;padding:8px 10px;font-size:12px}.saved-inbox{margin-top:10px}.empty-state{color:var(--muted);text-align:center;padding:22px 10px;font-size:13px}
 @media(min-width:700px){.panel{max-width:620px;margin:0 auto}.header{padding-left:max(18px,calc((100vw - 900px)/2));padding-right:max(18px,calc((100vw - 900px)/2))}.stats,.desc{max-width:660px;margin-left:auto;margin-right:auto}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
-
 body.fx-low { --blur: 14px; }
 body.fx-med { --blur: 22px; }
 body.fx-med .card, body.fx-med .header { box-shadow: 0 0 0 1px rgba(255,255,255,.1), 0 8px 32px rgba(100,150,255,.15); }
 body.fx-hard { --blur: 40px; }
-body.fx-hard .card, body.fx-hard .header { 
-  box-shadow: 0 0 0 1px rgba(255,255,255,.15), 0 12px 40px rgba(100,150,255,.25), inset 0 1px 0 rgba(255,255,255,.2); 
-  animation: glow 2s ease-in-out infinite alternate;
-}
+body.fx-hard .card, body.fx-hard .header { box-shadow: 0 0 0 1px rgba(255,255,255,.15), 0 12px 40px rgba(100,150,255,.25), inset 0 1px 0 rgba(255,255,255,.2); animation: glow 2s ease-in-out infinite alternate; }
 body.fx-hard .btn-send, body.fx-hard .btn-verify { animation: pulse 1.5s ease-in-out infinite; }
 body.fx-hard .tab.active { animation: glow 1.8s ease-in-out infinite alternate; }
 @keyframes glow { from { box-shadow: 0 0 0 1px rgba(255,255,255,.1), 0 8px 24px rgba(100,150,255,.15); } to { box-shadow: 0 0 0 1px rgba(255,255,255,.2), 0 12px 40px rgba(120,160,255,.35); } }
@@ -96,7 +92,7 @@ body.fx-hard .tab.active { animation: glow 1.8s ease-in-out infinite alternate; 
       <button class="copy-btn" onclick="copyTempEmail()">Salin</button>
     </div>
     <button class="btn btn-send" onclick="generateEmail()">Generate Email</button>
-    <button class="btn btn-copy" onclick="checkInbox()">Refresh Inbox</button>
+    <button class="btn btn-copy" onclick="checkInbox(true)">Refresh Inbox</button>
     <div class="mail-list" id="mailList"></div><div class="email-view" id="emailView"></div>
     <div class="msg" id="mailMsg"></div>
   </div>
@@ -133,7 +129,7 @@ body.fx-hard .tab.active { animation: glow 1.8s ease-in-out infinite alternate; 
 
 const API = 'https://api.theresav.eu/api/premium/alightmotion';
 const API_KEY = 'kenzie';
-const API_PROXY = '/api/amprem';  // POST ?action=send|verify  (proxy CORS-safe)
+const API_PROXY = '/api/amprem';
 function amText(v) {
   if (v == null || v === '') return '';
   if (typeof v === 'string' || typeof v === 'number') return String(v);
@@ -150,13 +146,11 @@ async function amCall(path, body) {
     return { r, text, d };
   }
   let res = null, via = 'proxy';
-  // 1) Prefer own Vercel proxy (no CORS issues on mobile)
   try {
     res = await hit(API_PROXY + '?action=' + encodeURIComponent(path), opts);
   } catch (e) {
     res = null;
   }
-  // 2) Fallback: direct to upstream (may fail on mobile due to CORS)
   if (!res || (res.r.status === 404 && !(res.d && typeof res.d === 'object'))) {
     via = 'langsung';
     const qs = '?email=' + encodeURIComponent(body.email || '') + (path === 'verify' ? '&link=' + encodeURIComponent(body.link || '') : '');
@@ -249,7 +243,7 @@ function isSignInMail(m) {
   return good.test(all) && !bad.test(all);
 }
 function extractSignInLink(m) {
-  const raw = mailText(m).replace(/&/g, '&');
+  const raw = mailText(m).replace(/&amp;/g, '&');
   const urls = (raw.match(/https?:\/\/[^\s<>"'\\)]+/g) || []).map(u => u.replace(/[.,;]+$/, ''));
   return urls.find(u => /__\/auth\/links|alight-creative\.firebaseapp\.com|alightcreative\.com\/auth|oobCode|mode=signIn/i.test(u))
       || urls.find(u => /alight|firebaseapp|signin|sign-in|magic/i.test(u)) || '';
@@ -320,8 +314,8 @@ async function generateEmail() {
     localStorage.setItem('savedEmails', JSON.stringify(saved.slice(0, 20)));
     renderSaved();
     if (window._inboxTimer) clearInterval(window._inboxTimer);
-    window._inboxTimer = setInterval(checkInbox, 5000);
-    checkInbox();
+    window._inboxTimer = setInterval(function(){ checkInbox(false); }, 5000);
+    checkInbox(false);
   } catch(e) { showMsg('mailMsg', 'Gagal: ' + e.message, 'err'); }
 }
 function copyTempEmail() {
@@ -330,21 +324,31 @@ function copyTempEmail() {
     navigator.clipboard.writeText(email).then(() => showMsg('mailMsg', 'Disalin!', 'ok'));
   }
 }
-async function checkInbox() {
+function parseInboxData(data) {
+  if (Array.isArray(data)) return data;
+  if (!data || typeof data !== 'object') return [];
+  return data.messages || data.inbox || data.emails || data.data || [];
+}
+async function checkInbox(manual) {
   if (!tempAddress) return;
   try {
     const tok = tokenFor(tempAddress) || tempToken || '';
-    const r = await fetch(MAIL_API + '?action=inbox&email=' + encodeURIComponent(tempAddress) + '&token=' + encodeURIComponent(tok));
+    if (!tok) {
+      if (manual) showMsg('mailMsg', 'Token hilang. Klik Generate Email lagi.', 'err');
+      return;
+    }
+    const r = await fetch(MAIL_API + '?action=inbox&email=' + encodeURIComponent(tempAddress) + '&token=' + encodeURIComponent(tok) + '&_t=' + Date.now());
     if (!r.ok) {
       const err = await r.json().catch(() => ({}));
       throw new Error(err.error || ('HTTP ' + r.status));
     }
     const data = await r.json();
-    const list = data.messages || data.inbox || data.emails || [];
+    const list = parseInboxData(data);
     const el = document.getElementById('mailList');
-    if (!list.length) { 
-      el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:12px">Inbox kosong. Kirim email ke ' + (tempAddress || '') + '</p>'; 
-      return; 
+    if (!list.length) {
+      el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:12px">Inbox kosong. Kirim email ke ' + (tempAddress || '') + '</p>';
+      if (manual) showMsg('mailMsg', 'Inbox masih kosong', '');
+      return;
     }
     el.innerHTML = list.map((m, i) => {
       const subj = (m.subject || '').toLowerCase();
@@ -352,12 +356,16 @@ async function checkInbox() {
       return '<div class="mail-item" onclick="readMail(' + i + ')" style="' + (isAlight?'border:1px solid #3b82f6':'') + '"><div class="mail-from">' + (m.from || m.sender || '-') + '</div><div class="mail-subj">' + (m.subject || '(no subject)') + '</div><div class="mail-time">' + (m.date || m.time || '') + '</div></div>';
     }).join('');
     window._mailCache = list;
+    showMsg('mailMsg', list.length + ' pesan di inbox', 'ok');
     const su = findSignInLink(list), cur = document.getElementById('link').value.trim();
     if (su && su !== cur && (!cur || cur === window._autoLink)) {
       pasteLink(su, tempAddress); goTab('am');
       if (window._inboxTimer) clearInterval(window._inboxTimer);
     }
-  } catch(e) { console.warn(e); showMsg('mailMsg', 'Inbox: ' + (e.message || 'gagal'), 'err'); }
+  } catch(e) {
+    console.warn(e);
+    if (manual) showMsg('mailMsg', 'Inbox: ' + (e.message || 'gagal'), 'err');
+  }
 }
 function readMail(idx) {
   const m = window._mailCache && window._mailCache[idx];
@@ -384,7 +392,7 @@ function copyAlightLink(url) {
   document.getElementById('link').value = url;
 }
 function escapeHTML(value) {
-  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[ch]));
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 }
 function renderSaved() {
   const saved = JSON.parse(localStorage.getItem('savedEmails') || '[]');
