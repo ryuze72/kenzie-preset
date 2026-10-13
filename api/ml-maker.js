@@ -1,9 +1,25 @@
 // Vercel Serverless Function — Fake Lobby ML (kartu profil Mobile Legends).
-// POST /api/ml-maker  body JSON: { avatar:"data:image/...;base64,...", username, rank?, border? }
-// Provider utama: Nexray  GET /maker/fakelobyml?avatar=&nickname=
-// Cadangan: theresav POST /api/maker/fake/ml (multipart)
+// POST /api/ml-maker  body JSON: { avatar:"data:image/...;base64,..." | "https://...", username, rank?, border? }
+// Alur:
+//  1. Bila avatar data-URL → upload sementara ke litterbox.catbox.moe → dapat link publik
+//  2. Panggil Nexray GET /maker/fakelobyml?avatar=&nickname=
+//  3. Cadangan: theresav multipart (jika masih hidup)
 const NEXRAY = 'https://api.nexray.eu.cc/maker/fakelobyml';
 const THERESAV = 'https://api.theresav.eu/api/maker/fake/ml';
+const LITTERBOX = 'https://litterbox.catbox.moe/resources/internals/api.php';
+
+async function hostAvatar(buf, mime, ext, signal) {
+  const fd = new FormData();
+  fd.append('reqtype', 'fileupload');
+  fd.append('time', '1h');
+  fd.append('fileToUpload', new Blob([buf], { type: mime }), 'avatar.' + ext);
+  const r = await fetch(LITTERBOX, { method: 'POST', body: fd, signal });
+  const text = (await r.text()).trim();
+  if (!r.ok || !/^https?:\/\//i.test(text)) {
+    throw new Error('upload gagal: ' + (text.slice(0, 120) || ('HTTP ' + r.status)));
+  }
+  return text;
+}
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -16,9 +32,9 @@ module.exports = async (req, res) => {
   if (typeof b === 'string') { try { b = JSON.parse(b); } catch { b = null; } }
   if (!b || typeof b !== 'object') return res.status(400).json({ ok: false, error: 'Body bukan JSON' });
 
-  const avatar = String(b.avatar || '').trim();
-  const m = /^data:(image\/(?:png|jpe?g|webp));base64,([A-Za-z0-9+/=]+)$/.exec(avatar);
-  const isHttp = /^https?:\/\//i.test(avatar);
+  const rawAvatar = String(b.avatar || '').trim();
+  const m = /^data:(image\/(?:png|jpe?g|webp));base64,([A-Za-z0-9+/=]+)$/.exec(rawAvatar);
+  const isHttp = /^https?:\/\//i.test(rawAvatar);
   if (!m && !isHttp) return res.status(400).json({ ok: false, error: 'Avatar harus gambar PNG/JPG/WEBP (data URL atau link)' });
 
   const username = String(b.username || '').trim().slice(0, 40);
@@ -27,14 +43,38 @@ module.exports = async (req, res) => {
   const border = String(b.border || '').trim().slice(0, 40);
 
   const errors = [];
+  let avatarUrl = isHttp ? rawAvatar : '';
+  let avatarBuf = null;
+  let avatarMime = '';
+  let avatarExt = 'png';
 
-  // ---- 1) Nexray (GET, avatar = data URL atau http URL) ----
-  {
+  if (m) {
+    avatarBuf = Buffer.from(m[2], 'base64');
+    avatarMime = m[1];
+    avatarExt = m[1].includes('png') ? 'png' : m[1].includes('webp') ? 'webp' : 'jpg';
+  }
+
+  // Upload base64 → URL publik (diperlukan Nexray GET)
+  if (!avatarUrl && avatarBuf) {
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 25000);
+    try {
+      avatarUrl = await hostAvatar(avatarBuf, avatarMime, avatarExt, ctl.signal);
+    } catch (e) {
+      const why = (e && e.name === 'AbortError') ? 'timeout upload' : ((e && e.message) || 'upload gagal');
+      errors.push('host: ' + why);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  // ---- 1) Nexray ----
+  if (avatarUrl) {
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), 50000);
     try {
       const qs = new URLSearchParams({
-        avatar: avatar,
+        avatar: avatarUrl,
         nickname: username,
         t: String(Date.now()),
       });
@@ -66,17 +106,17 @@ module.exports = async (req, res) => {
     } finally {
       clearTimeout(timer);
     }
+  } else {
+    errors.push('nexray: dilewati (tidak ada URL avatar)');
   }
 
-  // ---- 2) theresav (multipart, butuh base64) ----
-  if (m) {
+  // ---- 2) theresav (multipart, butuh buffer) ----
+  if (avatarBuf) {
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), 50000);
     try {
-      const buf = Buffer.from(m[2], 'base64');
-      const ext = m[1].includes('png') ? 'png' : m[1].includes('webp') ? 'webp' : 'jpg';
       const fd = new FormData();
-      fd.append('avatar', new Blob([buf], { type: m[1] }), 'avatar.' + ext);
+      fd.append('avatar', new Blob([avatarBuf], { type: avatarMime }), 'avatar.' + avatarExt);
       fd.append('username', username);
       fd.append('rank', rank);
       fd.append('border', border);
@@ -113,14 +153,12 @@ module.exports = async (req, res) => {
     } finally {
       clearTimeout(timer);
     }
-  } else {
-    errors.push('theresav: dilewati (avatar bukan data URL)');
   }
 
   return res.status(502).json({
     ok: false,
     error: 'Gagal membuat Fake Lobby ML. Coba lagi nanti.',
-    detail: errors.slice(0, 4),
+    detail: errors.slice(0, 5),
   });
 };
 module.exports.config = { maxDuration: 60 };
