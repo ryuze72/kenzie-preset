@@ -1,4 +1,4 @@
-/* Fix stuck scroll di Saved inbox */
+/* Fix stuck scroll — tombol Salin/Open tetap di bawah isi email */
 .mail-list {
   max-height: min(70vh, 520px) !important;
   overflow-y: auto !important;
@@ -12,19 +12,15 @@
 .saved-inbox .email-view.show {
   max-height: none !important;
   overflow: visible !important;
-  padding-bottom: 28px !important;
+  padding-bottom: 32px !important;
 }
 .email-view .ev-actions {
   display: flex !important;
   flex-wrap: wrap !important;
   gap: 8px !important;
-  margin: 10px 0 12px !important;
-  position: sticky !important;
-  top: 0 !important;
-  z-index: 3 !important;
-  background: rgba(10, 15, 30, 0.92) !important;
-  padding: 8px 0 !important;
-  backdrop-filter: blur(8px);
+  margin-top: 14px !important;
+  margin-bottom: 8px !important;
+  position: static !important;
 }
 .copy-link-btn { margin-top: 0 !important; }
 .panel.active, .card {
@@ -33,4 +29,7 @@
 body {
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch !important;
+}
+.saved-inbox, .saved-msg {
+  overflow: visible !important;
 }
