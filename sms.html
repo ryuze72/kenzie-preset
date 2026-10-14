@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<style>html:not(.gate-ok) body>*:not(#kgate){display:none!important}html:not(.gate-ok){background:#000}</style>
+<script src="/gate.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Temp SMS · Kenzie</title>
+<style>
+:root{color-scheme:dark;--ink:#f7f8ff;--muted:#9ba8c4;--blue:#6eb5ff;--green:#64e6b0;--red:#ff7188;--line:rgba(255,255,255,.13)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;color:var(--ink);min-height:100dvh;background:radial-gradient(ellipse at 10% 0%,#4e6fff3d,transparent 40%),radial-gradient(ellipse at 100% 28%,#ae5eff2e,transparent 35%),linear-gradient(160deg,#080b17,#10162a 60%,#080b16);background-attachment:fixed;padding-bottom:40px}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.2;background-image:radial-gradient(#ffffff38 .6px,transparent .6px);background-size:5px 5px;mask-image:linear-gradient(to bottom,black,transparent 70%)}
+.header{position:sticky;top:0;z-index:10;padding:calc(12px + env(safe-area-inset-top)) 14px 12px;display:flex;align-items:center;gap:12px;background:#0a0e1d9e;backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px) saturate(180%);border-bottom:1px solid #ffffff17}
+.logo{flex:0 0 42px;width:42px;height:42px;border-radius:15px;background:linear-gradient(145deg,#fff,#b0c7ff);color:#10152a;display:grid;place-items:center;font-weight:900;font-size:20px;box-shadow:0 8px 24px #6c8cff30}
+.header h1{font-size:16px;font-weight:750;letter-spacing:-.3px}
+.header a{margin-left:auto;font-size:12px;color:#9fcaff;text-decoration:none;padding:8px 12px;border-radius:999px;background:#ffffff12;border:1px solid #ffffff18}
+.desc{padding:14px 18px 8px;font-size:13px;color:#aeb9d2;line-height:1.55}
+.card{margin:0 13px 16px;padding:20px 16px;border-radius:28px;background:linear-gradient(145deg,#ffffff1b,#ffffff0b);border:1px solid var(--line);box-shadow:inset 0 1px 0 #ffffff1c,0 18px 45px #0002;backdrop-filter:blur(24px) saturate(150%);-webkit-backdrop-filter:blur(24px) saturate(150%)}
+.card-title{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:760;letter-spacing:-.4px;margin-bottom:6px}
+.card-title:before{content:"";width:9px;height:22px;border-radius:8px;background:linear-gradient(180deg,#9bd5ff,#a99aff);box-shadow:0 0 16px #91a9ff55}
+.card-sub{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.45}
+.label{font-size:10px;font-weight:800;color:#b4c1dc;letter-spacing:.12em;margin:4px 0 8px}
+select,input{width:100%;padding:14px 15px;border-radius:16px;border:1px solid #ffffff20;background:#04081461;color:var(--ink);font-size:15px;outline:none;margin-bottom:12px}
+select:focus,input:focus{border-color:#8dbdff;box-shadow:0 0 0 3px #6ea8ff20}
+.btn{width:100%;min-height:46px;border:1px solid #ffffff26;border-radius:999px;font-weight:750;font-size:14px;cursor:pointer;margin-bottom:10px;transition:transform .15s}
+.btn:active{transform:scale(.98)}.btn:disabled{opacity:.55}
+.btn-primary{background:linear-gradient(115deg,#6baeff,#8c8aff 58%,#c2a1ff);color:#081126}
+.btn-ghost{background:#ffffff12;color:var(--ink)}
+.btn-sm{width:auto;min-height:34px;padding:6px 12px;font-size:12px;margin:0}
+.msg{margin-top:10px;padding:11px 13px;border-radius:14px;font-size:13px;text-align:center;display:none;border:1px solid transparent}
+.msg.ok{display:block;background:#4ee5aa14;color:var(--green);border-color:#4ee5aa30}
+.msg.err{display:block;background:#ff718814;color:var(--red);border-color:#ff718830}
+.list{display:flex;flex-direction:column;gap:8px;max-height:42vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.item{background:#05091659;border:1px solid #ffffff16;border-radius:16px;padding:12px 13px;cursor:pointer}
+.item:hover,.item.active{background:#ffffff14;border-color:#8dbdff55}
+.item .n{font-size:15px;font-weight:700;font-family:ui-monospace,monospace;color:#e8f0ff}
+.item .m{font-size:11px;color:var(--muted);margin-top:4px}
+.mail{background:#04081466;border:1px solid #ffffff18;border-radius:16px;padding:12px;margin-top:8px}
+.mail .from{font-size:11px;color:#9fcaff;font-weight:700}
+.mail .txt{font-size:13px;line-height:1.55;margin:6px 0;word-break:break-word}
+.mail .tm{font-size:11px;color:var(--muted)}
+.mail .code{display:inline-block;margin-top:8px;padding:6px 12px;border-radius:999px;background:#7ea9ff38;border:1px solid #9bcaff40;color:#e5eeff;font-weight:700;font-size:13px;cursor:pointer}
+.warn{font-size:11px;color:#c9b27a;margin-top:12px;line-height:1.45;padding:10px;border-radius:12px;background:#c9b27a12;border:1px solid #c9b27a28}
+.empty{color:var(--muted);text-align:center;padding:18px;font-size:13px}
+@media(min-width:700px){.wrap{max-width:620px;margin:0 auto}.header{padding-left:max(18px,calc((100vw - 900px)/2));padding-right:max(18px,calc((100vw - 900px)/2))}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">R</div>
+  <h1>Temp SMS</h1>
+  <a href="/">Home</a>
+</div>
+<p class="desc wrap">Nomor sementara publik untuk terima SMS/OTP. Inbox terbuka — jangan pakai akun penting.</p>
+
+<div class="wrap">
+  <div class="card">
+    <div class="card-title">Pilih negara & nomor</div>
+    <p class="card-sub">API: /api/sms → VeePN online-sms</p>
+    <div class="label">NEGARA</div>
+    <select id="country"></select>
+    <button class="btn btn-primary" id="btnLoad" onclick="loadNumbers()">Muat nomor</button>
+    <div class="label">NOMOR</div>
+    <div class="list" id="numList"><p class="empty">Pilih negara dulu</p></div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card" id="inboxCard" style="display:none">
+    <div class="card-title">Inbox SMS</div>
+    <p class="card-sub" id="inboxSub">—</p>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="copyActive()">Salin nomor</button>
+      <button class="btn btn-ghost btn-sm" onclick="loadInbox(true)">Refresh</button>
+    </div>
+    <div class="list" id="inboxList" style="max-height:50vh"></div>
+  </div>
+
+  <p class="warn wrap" style="margin:0 13px">Nomor publik & shared. WhatsApp/bank sering menolak. Jangan untuk penipuan.</p>
+</div>
+
+<script>
+const API = '/api/sms';
+let countries = [], numbers = [], active = null, poll = null;
+
+function showMsg(text, type) {
+  const el = document.getElementById('msg');
+  el.textContent = text || '';
+  el.className = 'msg' + (type ? ' ' + type : '');
+}
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function loadCountries() {
+  showMsg('Memuat negara…', '');
+  try {
+    const r = await fetch(API + '?action=countries&_t=' + Date.now());
+    const d = await r.json();
+    if (!d.ok || !d.countries) throw new Error(d.message || 'Gagal');
+    countries = d.countries;
+    const sel = document.getElementById('country');
+    sel.innerHTML = countries.map(c =>
+      '<option value="' + esc(c.slug) + '">' + esc(c.locale || c.name) + (c.iso ? ' (' + esc(c.iso) + ')' : '') + '</option>'
+    ).join('');
+    const id = countries.find(c => /indonesia/i.test(c.slug || c.name));
+    if (id) sel.value = id.slug;
+    showMsg(countries.length + ' negara tersedia', 'ok');
+  } catch (e) {
+    showMsg('Gagal negara: ' + e.message, 'err');
+  }
+}
+
+async function loadNumbers() {
+  const country = document.getElementById('country').value;
+  if (!country) return;
+  const btn = document.getElementById('btnLoad');
+  btn.disabled = true; btn.textContent = 'Memuat…';
+  showMsg('Memuat nomor ' + country + '…', '');
+  try {
+    const r = await fetch(API + '?action=numbers&country=' + encodeURIComponent(country) + '&_t=' + Date.now());
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.message || 'Gagal');
+    numbers = d.numbers || [];
+    const el = document.getElementById('numList');
+    if (!numbers.length) {
+      el.innerHTML = '<p class="empty">Tidak ada nomor di negara ini</p>';
+      showMsg('Kosong', 'err');
+    } else {
+      el.innerHTML = numbers.map((n, i) =>
+        '<div class="item" onclick="selectNumber(' + i + ')">' +
+          '<div class="n">' + esc(n.display || ('+' + n.full)) + '</div>' +
+          '<div class="m">' + (n.archived ? 'arsip · ' : '') + esc(n.last || '') + '</div>' +
+        '</div>'
+      ).join('');
+      showMsg(numbers.length + ' nomor', 'ok');
+    }
+  } catch (e) {
+    showMsg('Gagal nomor: ' + e.message, 'err');
+  }
+  btn.disabled = false; btn.textContent = 'Muat nomor';
+}
+
+function selectNumber(i) {
+  active = numbers[i];
+  if (!active) return;
+  document.querySelectorAll('#numList .item').forEach((el, idx) => el.classList.toggle('active', idx === i));
+  document.getElementById('inboxCard').style.display = 'block';
+  document.getElementById('inboxSub').textContent = (active.display || active.full) + ' · ' + document.getElementById('country').value;
+  loadInbox(true);
+  if (poll) clearInterval(poll);
+  poll = setInterval(() => loadInbox(false), 8000);
+}
+
+async function loadInbox(manual) {
+  if (!active) return;
+  const country = document.getElementById('country').value;
+  const number = active.number || active.full;
+  try {
+    const r = await fetch(API + '?action=inbox&country=' + encodeURIComponent(country) +
+      '&number=' + encodeURIComponent(number) + '&page=1&count=25&_t=' + Date.now());
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.message || 'Gagal');
+    const list = d.messages || [];
+    const el = document.getElementById('inboxList');
+    if (!list.length) {
+      el.innerHTML = '<p class="empty">Inbox kosong — kirim SMS ke nomor ini</p>';
+    } else {
+      el.innerHTML = list.map(m =>
+        '<div class="mail">' +
+          '<div class="from">Dari: ' + esc(m.from) + '</div>' +
+          '<div class="txt">' + esc(m.text) + '</div>' +
+          '<div class="tm">' + esc(m.time) + '</div>' +
+          (m.code ? '<span class="code" onclick="copyText(\'' + esc(m.code) + '\')">Kode: ' + esc(m.code) + ' · Salin</span>' : '') +
+        '</div>'
+      ).join('');
+    }
+    if (manual) showMsg('Inbox di-refresh', 'ok');
+  } catch (e) {
+    if (manual) showMsg('Inbox: ' + e.message, 'err');
+  }
+}
+
+function copyText(t) {
+  navigator.clipboard.writeText(t).then(() => showMsg('Disalin: ' + t, 'ok')).catch(() => {});
+}
+function copyActive() {
+  if (!active) return;
+  const n = active.display || ('+' + active.full);
+  copyText(n);
+}
+
+loadCountries();
+</script>
+</body>
+</html>
