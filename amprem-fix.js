@@ -1,32 +1,24 @@
-/* Override: prefer Sign-in + lang=en, never auto-paste Login/lang=id */
+/* Override: semua link Alight (lang=id / lang=en) boleh auto-tempel */
 (function () {
   function mailText(m) {
     return [m.subject, m.body, m.text, m.content, m.html, m.snippet].filter(Boolean).join(' ');
   }
+  // Terima Sign-in DAN Login ke Alight Creative
   window.isSignInMail = function (m) {
-    const subj = String(m.subject || ''), all = mailText(m);
-    const good = /sign[\s-]*in\s+to\s+alight\s+creative/i;
-    const bad = /log[\s-]*in\s+to\s+alight\s+creative/i;
-    if (bad.test(subj) && !good.test(subj)) return false;
-    if (good.test(subj)) return true;
-    if (bad.test(all) && !good.test(all)) return false;
-    return good.test(all);
+    const all = mailText(m) + ' ' + String(m.subject || '');
+    return /alight\s*creative|(sign|log)[\s-]*in/i.test(all) &&
+      (/alight|firebaseapp|oobCode|auth\/links/i.test(all) || /alight\s*creative/i.test(all));
   };
-  function isEnAuthLink(u) {
-    const s = String(u || '');
-    if (/lang(=|%3D)id\b/i.test(s)) return false;
-    return /lang(=|%3D)en\b/i.test(s);
-  }
   function isAuthCandidate(u) {
     return /__\/auth\/links|alight-creative\.firebaseapp\.com|alightcreative\.com\/auth|oobCode|mode(=|%3D)signIn/i.test(String(u || ''));
   }
   function scoreAuthLink(u) {
     const s = String(u || '');
     let n = 0;
-    if (isAuthCandidate(s)) n += 5;
+    if (isAuthCandidate(s)) n += 10;
     if (/mode(=|%3D)signIn/i.test(s)) n += 5;
-    if (/lang(=|%3D)en\b/i.test(s)) n += 30;
-    if (/lang(=|%3D)id\b/i.test(s)) n -= 80;
+    if (/lang(=|%3D)en\b/i.test(s)) n += 3; // prefer en sedikit, tapi id tetap diterima
+    if (/lang(=|%3D)id\b/i.test(s)) n += 2;
     return n;
   }
   window.extractSignInLink = function (m) {
@@ -43,32 +35,22 @@
       .map(u => ({ u, s: scoreAuthLink(u) }))
       .filter(x => x.s > 0)
       .sort((a, b) => b.s - a.s);
-    const en = scored.find(x => isEnAuthLink(x.u));
-    if (en) return en.u;
-    const nonId = scored.find(x => !/lang(=|%3D)id\b/i.test(x.u));
-    return nonId ? nonId.u : '';
+    return scored.length ? scored[0].u : '';
   };
   window.findSignInLink = function (list) {
     const ts = x => { const n = Date.parse(x.date || x.time || x.created_at || ''); return isNaN(n) ? 0 : n; };
-    const cands = list.filter(window.isSignInMail).sort((a, b) => ts(b) - ts(a));
+    const sorted = (list || []).slice().sort((a, b) => ts(b) - ts(a));
+    const cands = sorted.filter(window.isSignInMail);
     for (const m of cands) {
       const u = window.extractSignInLink(m);
-      if (u && isEnAuthLink(u)) return u;
+      if (u) return u;
     }
-    for (const m of cands) {
+    for (const m of sorted) {
       const u = window.extractSignInLink(m);
       if (u) return u;
     }
     return '';
   };
-  const _paste = window.pasteLink;
-  if (typeof _paste === 'function') {
-    window.pasteLink = function (url, addr, quiet) {
-      if (url && /lang(=|%3D)id\b/i.test(url) && !/lang(=|%3D)en\b/i.test(url)) {
-        if (typeof showMsg === 'function') showMsg('msg', 'Link lang=id diabaikan. Tunggu email Sign-in (EN).', 'err');
-        return;
-      }
-      return _paste(url, addr, quiet);
-    };
-  }
+  // Jangan blokir lang=id — semua link Alight boleh di-tempel
+  // (pasteLink dari core/boost tetap jalan)
 })();
