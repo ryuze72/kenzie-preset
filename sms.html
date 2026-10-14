@@ -83,12 +83,13 @@ select:focus,input:focus{border-color:#8dbdff;box-shadow:0 0 0 3px #6ea8ff20}
     <div class="list" id="savedList" style="max-height:40vh"><p class="empty">Belum ada nomor tersimpan</p></div>
   </div>
 
-  <p class="warn wrap" style="margin:0 13px">Nomor publik & shared. WhatsApp/bank sering menolak. Jangan untuk penipuan.</p>
+  <p class="warn wrap" style="margin:0 13px">Nomor publik & shared. WhatsApp/bank sering menolak. Format pengirim: +62… bukan 08…. Pilih nomor berstatus online. Jangan untuk penipuan.</p>
 </div>
 
 <script>
 const API = '/api/sms';
 let countries = [], numbers = [], active = null, poll = null;
+let lastMsgIds = new Set();
 
 function showMsg(text, type) {
   const el = document.getElementById('msg');
@@ -151,12 +152,13 @@ async function loadNumbers() {
 function selectNumber(i) {
   active = numbers[i];
   if (!active) return;
+  lastMsgIds = new Set();
   document.querySelectorAll('#numList .item').forEach((el, idx) => el.classList.toggle('active', idx === i));
   document.getElementById('inboxCard').style.display = 'block';
   document.getElementById('inboxSub').textContent = (active.display || active.full) + ' · ' + document.getElementById('country').value;
   loadInbox(true);
   if (poll) clearInterval(poll);
-  poll = setInterval(() => loadInbox(false), 8000);
+  poll = setInterval(() => loadInbox(false), 4000);
 }
 
 async function loadInbox(manual) {
@@ -165,24 +167,38 @@ async function loadInbox(manual) {
   const number = active.number || active.full;
   try {
     const r = await fetch(API + '?action=inbox&country=' + encodeURIComponent(country) +
-      '&number=' + encodeURIComponent(number) + '&page=1&count=25&_t=' + Date.now());
+      '&number=' + encodeURIComponent(number) + '&_t=' + Date.now(), { cache: 'no-store' });
     const d = await r.json();
     if (!d.ok) throw new Error(d.message || 'Gagal');
     const list = d.messages || [];
     const el = document.getElementById('inboxList');
+    let newCount = 0;
+    const ids = new Set();
+    list.forEach(m => {
+      const id = String(m.id || m.ts || m.text);
+      ids.add(id);
+      if (lastMsgIds.size && !lastMsgIds.has(id)) newCount++;
+    });
     if (!list.length) {
-      el.innerHTML = '<p class="empty">Inbox kosong — kirim SMS ke nomor ini</p>';
+      el.innerHTML = '<p class="empty">Belum ada SMS di nomor ini. Pastikan format pengirim: +62… (bukan 08…)</p>';
     } else {
-      el.innerHTML = list.map(m =>
-        '<div class="mail">' +
-          '<div class="from">Dari: ' + esc(m.from) + '</div>' +
+      el.innerHTML = list.map(m => {
+        const id = String(m.id || m.ts || m.text);
+        const isNew = lastMsgIds.size && !lastMsgIds.has(id);
+        return '<div class="mail"' + (isNew ? ' style="border-color:#64e6b055;box-shadow:0 0 0 1px #64e6b033"' : '') + '>' +
+          '<div class="from">Dari: ' + esc(m.from) + (isNew ? ' · <span style="color:var(--green)">BARU</span>' : '') + '</div>' +
           '<div class="txt">' + esc(m.text) + '</div>' +
           '<div class="tm">' + esc(m.time) + '</div>' +
           (m.code ? '<span class="code" onclick="copyText(\'' + esc(m.code) + '\')">Kode: ' + esc(m.code) + ' · Salin</span>' : '') +
-        '</div>'
-      ).join('');
+        '</div>';
+      }).join('');
     }
-    if (manual) showMsg('Inbox di-refresh', 'ok');
+    lastMsgIds = ids;
+    const st = (d.status || (d.online ? 'online' : '')) + (d.total != null ? ' · ' + d.total + ' pesan' : '');
+    document.getElementById('inboxSub').textContent =
+      (active.display || active.full) + ' · ' + country + (st ? ' · ' + st : '');
+    if (manual) showMsg(newCount ? (newCount + ' pesan baru') : ('Refresh OK' + (st ? ' · ' + st : '')), 'ok');
+    else if (newCount) showMsg(newCount + ' pesan baru masuk', 'ok');
   } catch (e) {
     if (manual) showMsg('Inbox: ' + e.message, 'err');
   }
@@ -257,11 +273,12 @@ function useSaved(i) {
     sel.value = s.country;
   }
   active = { number: s.number, full: s.full, display: s.display };
+  lastMsgIds = new Set();
   document.getElementById('inboxCard').style.display = 'block';
   document.getElementById('inboxSub').textContent = (s.display || s.full) + ' · ' + (s.country || '');
   loadInbox(true);
   if (poll) clearInterval(poll);
-  poll = setInterval(() => loadInbox(false), 8000);
+  poll = setInterval(() => loadInbox(false), 4000);
   showMsg('Nomor dipakai', 'ok');
   try { document.getElementById('inboxCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {}
 }
@@ -278,7 +295,7 @@ async function inboxSaved(i) {
   box.innerHTML = '<p class="empty">Memuat inbox…</p>';
   try {
     const r = await fetch(API + '?action=inbox&country=' + encodeURIComponent(s.country) +
-      '&number=' + encodeURIComponent(s.number || s.full) + '&page=1&count=20&_t=' + Date.now());
+      '&number=' + encodeURIComponent(s.number || s.full) + '&_t=' + Date.now(), { cache: 'no-store' });
     const d = await r.json();
     if (!d.ok) throw new Error(d.message || 'Gagal');
     const msgs = d.messages || [];
