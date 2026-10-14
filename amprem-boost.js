@@ -88,6 +88,58 @@
     urls.forEach(function (u) { try { extra.push(decodeURIComponent(u)); } catch (e) {} });
     return urls.concat(extra);
   }
+  function escapeHTML(s) {
+    return String(s || '').replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>').replace(/"/g, '"');
+  }
+
+  // Tombol di view email: Salin link | Open link | Pakai ke Verify
+  function linkActionButtons(url, addr) {
+    if (!url) return '';
+    var safe = String(url).replace(/&/g, '&').replace(/"/g, '"');
+    return (
+      '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">' +
+        '<button type="button" class="copy-link-btn" data-act="copy" data-url="' + safe + '">Salin link</button>' +
+        '<button type="button" class="copy-link-btn" data-act="open" data-url="' + safe + '">Open link</button>' +
+        '<button type="button" class="copy-link-btn" data-act="use" data-url="' + safe + '" data-addr="' + escapeHTML(addr || '') + '">Pakai ke Verify</button>' +
+      '</div>'
+    );
+  }
+  function bindLinkActions(root) {
+    if (!root) return;
+    root.querySelectorAll('[data-act]').forEach(function (btn) {
+      if (btn.dataset.bound) return;
+      btn.dataset.bound = '1';
+      btn.onclick = function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var url = btn.getAttribute('data-url') || '';
+        var act = btn.getAttribute('data-act');
+        var addr = btn.getAttribute('data-addr') || '';
+        if (!url) return;
+        if (act === 'copy') {
+          navigator.clipboard.writeText(url).then(function () {
+            show('msg', 'Link disalin', 'ok');
+            if (document.getElementById('mailMsg')) show('mailMsg', 'Link disalin', 'ok');
+          }).catch(function () { show('msg', 'Gagal salin', 'err'); });
+        } else if (act === 'open') {
+          try { window.open(url, '_blank', 'noopener,noreferrer'); }
+          catch (err) { show('msg', 'Gagal buka link', 'err'); }
+        } else if (act === 'use') {
+          if (typeof window.pasteLink === 'function') window.pasteLink(url, addr || undefined);
+          else {
+            var el = document.getElementById('link');
+            if (el) el.value = url;
+            if (addr) {
+              var em = document.getElementById('email');
+              if (em) em.value = addr;
+            }
+          }
+          if (typeof goTab === 'function') goTab('am');
+          show('msg', 'Link ditempel ke Verification. Klik Verify.', 'ok');
+        }
+      };
+    });
+  }
 
   var _fetch = window.fetchInbox;
   window.fetchInbox = async function (email) {
@@ -160,6 +212,65 @@
         };
       });
     }, 50);
+  };
+
+  // Override baca email Temp Mail
+  var _readMail = window.readMail;
+  window.readMail = function (i) {
+    if (typeof _readMail === 'function') _readMail(i);
+    setTimeout(function () {
+      var m = window._mailCache && window._mailCache[i];
+      if (!m) return;
+      var view = document.getElementById('emailView');
+      if (!view) return;
+      var url = pickBest(extractUrls(m));
+      if (!url) {
+        var text = m.body || m.text || m.content || m.html || '';
+        var urls = String(text).match(/https?:\/\/[^\s<>"]+/g) || [];
+        url = pickBest(urls) || urls.find(function (u) { return isAlight(u); }) || '';
+      }
+      if (!url) return;
+      // auto tempel juga
+      if (typeof window.pasteLink === 'function') {
+        window.pasteLink(url, window.tempAddress || '', true);
+      }
+      if (!view.querySelector('[data-act]')) {
+        view.insertAdjacentHTML('beforeend', linkActionButtons(url, window.tempAddress || ''));
+      }
+      bindLinkActions(view);
+    }, 30);
+  };
+
+  // Override baca email Saved
+  var _readSaved = window.readSavedMail;
+  window.readSavedMail = function (index, messageIndex) {
+    if (typeof _readSaved === 'function') _readSaved(index, messageIndex);
+    setTimeout(function () {
+      var m = window._savedMailCache && window._savedMailCache[index] && window._savedMailCache[index][messageIndex];
+      if (!m) return;
+      var view = document.getElementById('savedMailView' + index);
+      if (!view) return;
+      var saved = [];
+      try { saved = JSON.parse(localStorage.getItem('savedEmails') || '[]'); } catch (e) {}
+      var addr = (saved[index] && saved[index].email) || '';
+      var url = pickBest(extractUrls(m));
+      if (!url) {
+        var text = m.body || m.text || m.content || m.html || '';
+        var urls = String(text).match(/https?:\/\/[^\s<>"]+/g) || [];
+        url = pickBest(urls) || urls.find(function (u) { return isAlight(u); }) || '';
+      }
+      if (!url) return;
+      if (typeof window.pasteLink === 'function') {
+        window.pasteLink(url, addr, true);
+      }
+      // Hapus tombol lama single "Pakai link ini" kalau ada, ganti set tombol lengkap
+      var old = view.querySelector('.copy-link-btn:not([data-act])');
+      if (old && old.parentNode) old.parentNode.removeChild(old);
+      if (!view.querySelector('[data-act]')) {
+        view.insertAdjacentHTML('beforeend', linkActionButtons(url, addr));
+      }
+      bindLinkActions(view);
+    }, 30);
   };
 
   var _check = window.checkInbox;
