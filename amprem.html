@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AM Premium</title>
+<link rel="stylesheet" href="/amprem-scroll-fix.css">
 <script>
 (function () {
   var v = '?v=' + Date.now();
@@ -16,6 +17,36 @@
     document.open();
     document.write(html);
     document.close();
+    setTimeout(function () {
+      var s = document.createElement('link');
+      s.rel = 'stylesheet';
+      s.href = '/amprem-scroll-fix.css?v=' + Date.now();
+      document.head.appendChild(s);
+      if (typeof window.readSavedMail === 'function' && !window._scrollFix) {
+        window._scrollFix = true;
+        var _rs = window.readSavedMail;
+        window.readSavedMail = function (index, messageIndex, keepOpen) {
+          _rs(index, messageIndex, keepOpen);
+          setTimeout(function () {
+            var view = document.getElementById('savedMailView' + index + '_' + messageIndex);
+            if (!view || !view.classList.contains('show')) return;
+            var btns = Array.prototype.slice.call(view.querySelectorAll('.copy-link-btn'));
+            if (!btns.length) return;
+            var act = view.querySelector('.ev-actions');
+            if (!act) {
+              act = document.createElement('div');
+              act.className = 'ev-actions';
+              var subj = view.querySelector('.ev-subj');
+              if (subj && subj.nextSibling) view.insertBefore(act, subj.nextSibling);
+              else if (subj) subj.parentNode.insertBefore(act, subj.nextSibling);
+              else view.insertBefore(act, view.firstChild);
+            }
+            btns.forEach(function (b) { act.appendChild(b); });
+            try { act.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) {}
+          }, 40);
+        };
+      }
+    }, 50);
   }).catch(function (e) {
     document.body.innerHTML = '<p style="color:#fff;padding:24px;font-family:sans-serif;background:#080b17">Gagal memuat AM Premium: ' + (e && e.message || e) + '</p>';
   });
