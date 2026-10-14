@@ -6,14 +6,14 @@ function deepStrings(o, out, d) {
   return out;
 }
 function mailText(m) { return deepStrings(m, []).join(' '); }
-function plainTxt(s) { return String(s || '').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim(); }
+function plainTxt(s) { return String(s || '').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&/g, '&').replace(/\s+/g, ' ').trim(); }
 function isSignInMail(m) {
   const subj = String(m.subject || ''), all = mailText(m);
   if (/alight/i.test(subj) || /alight/i.test(all)) return true;
   return /(sign|log)[\s-]*in/i.test(subj + ' ' + all);
 }
 function extractAnyLink(m) {
-  const raw = mailText(m).replace(/&amp;/g, '&');
+  const raw = mailText(m).replace(/&/g, '&');
   const urls = (raw.match(/https?:\/\/[^\s<>"'\\)]+/g) || []).map(u => u.replace(/[.,;]+$/, ''));
   return urls.find(u => /alight-creative\.firebaseapp\.com|alightcreative\.com\/auth|__\/auth\/links|oobCode|mode=signIn/i.test(u))
     || urls.find(u => /alight|firebaseapp|signin|sign-in|magic|verify/i.test(u)) || urls[0] || '';
@@ -138,10 +138,11 @@ function readMail(idx) {
   linked = linked.replace(/(Sign in to Alight Creative|Login ke Alight Creative)/gi, '<span style="color:#60a5fa;font-weight:600">$1</span>');
   const view = document.getElementById('emailView');
   const btn = alightUrl
-    ? '<button class="copy-link-btn" onclick="copyAlightLink(\'' + alightUrl.replace(/'/g, "\\'") + '\')">Salin link</button> <a class="copy-link-btn" href="' + alightUrl.replace(/"/g, '&quot;') + '" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block;margin-left:8px">Open link</a>'
+    ? '<div class="ev-actions"><button type="button" class="copy-link-btn" onclick="copyAlightLink(\'' + alightUrl.replace(/'/g, "\\'") + '\')">Salin link</button> <a class="copy-link-btn" href="' + alightUrl.replace(/"/g, '"') + '" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block">Open link</a></div>'
     : '';
-  view.innerHTML = '<div class="ev-from">Dari: ' + escapeHTML(from) + '</div><div class="ev-subj">' + escapeHTML(subj) + '</div><div class="ev-body">' + linked.replace(/\n/g, '<br>') + '</div>' + btn;
+  view.innerHTML = '<div class="ev-from">Dari: ' + escapeHTML(from) + '</div><div class="ev-subj">' + escapeHTML(subj) + '</div>' + btn + '<div class="ev-body">' + linked.replace(/\n/g, '<br>') + '</div>';
   view.classList.add('show');
+  try { view.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {}
   const signUrl = extractSignInLink(m);
   if (signUrl) pasteLink(signUrl, tempAddress || '', true);
 }
@@ -149,7 +150,7 @@ function copyAlightLink(url) {
   navigator.clipboard.writeText(url).then(() => showMsg('mailMsg', 'Link disalin!', 'ok'));
 }
 function escapeHTML(value) {
-  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[ch]));
 }
 function renderSaved() {
   window._savedOpen = {}; window._savedSig = {};
@@ -226,14 +227,19 @@ function readSavedMail(index, messageIndex, keepOpen) {
   window._savedOpen[index] = messageIndex;
   const body = m.body || m.text || m.content || m.html || 'Isi tidak tersedia.';
   let safeBody = escapeHTML(plainTxt(body)).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>').replace(/\n/g,'<br>');
-  view.innerHTML = '<div class="ev-from">Dari: ' + escapeHTML(m.from || m.sender || '-') + '</div><div class="ev-subj">' + escapeHTML(m.subject || '') + '</div><div class="ev-body">' + safeBody + '</div>';
   const lk = extractAnyLink(m);
+  const actHtml = lk
+    ? '<div class="ev-actions"><button type="button" class="copy-link-btn" data-act="copy">Salin link</button><button type="button" class="copy-link-btn" data-act="open">Open link</button></div>'
+    : '';
+  view.innerHTML = '<div class="ev-from">Dari: ' + escapeHTML(m.from || m.sender || '-') + '</div><div class="ev-subj">' + escapeHTML(m.subject || '') + '</div>' + actHtml + '<div class="ev-body">' + safeBody + '</div>';
   if (lk) {
-    const mk = (label, fn) => { const b = document.createElement('button'); b.className = 'copy-link-btn'; b.style.marginRight = '8px'; b.textContent = label; b.onclick = fn; view.appendChild(b); };
-    mk('Salin link', () => navigator.clipboard.writeText(lk));
-    mk('Open link', () => window.open(lk, '_blank', 'noopener'));
+    const copyBtn = view.querySelector('[data-act="copy"]');
+    const openBtn = view.querySelector('[data-act="open"]');
+    if (copyBtn) copyBtn.onclick = function(e){ e.preventDefault(); e.stopPropagation(); navigator.clipboard.writeText(lk).then(function(){ if(typeof showMsg==='function') showMsg('msg','Link disalin','ok'); }); };
+    if (openBtn) openBtn.onclick = function(e){ e.preventDefault(); e.stopPropagation(); window.open(lk,'_blank','noopener'); };
   }
   view.classList.add('show');
+  try { view.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {}
   if (lk && _allowAutoPaste) pasteLink(lk, (JSON.parse(localStorage.getItem('savedEmails')||'[]')[index]||{}).email, true);
 }
 function deleteSavedEmail(index) {
