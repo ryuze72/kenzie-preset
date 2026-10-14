@@ -14,7 +14,6 @@
   function isAlight(u) {
     return /alight-creative\.firebaseapp\.com|alightcreative\.com\/auth|__\/auth\/links|oobCode|mode(=|%3D)signIn/i.test(String(u || ''));
   }
-  // Semua link Alight (id & en) diterima
   function pickBest(urls) {
     var list = (urls || []).filter(isAlight);
     if (!list.length) return '';
@@ -33,9 +32,7 @@
     return String(s || '').replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>').replace(/"/g, '"');
   }
 
-  // Hanya Salin email di tab AM (bukan Salin/Open link di verification)
   function ensureButtons() {
-    // Hapus tombol Salin link / Open link di panel AM jika sempat ter-inject
     ['btnCopyLink', 'btnOpenLink'].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) {
@@ -69,7 +66,6 @@
     }
   }
 
-  // Tombol di view email: Salin link + Open link saja (tanpa Pakai ke Verify)
   function linkActionButtons(url) {
     if (!url) return '';
     var safe = String(url).replace(/&/g, '&').replace(/"/g, '"');
@@ -128,7 +124,6 @@
   var _paste = window.pasteLink;
   window.pasteLink = function (url, addr, quiet) {
     if (!url) return;
-    // Terima semua link (id & en)
     if (typeof _paste === 'function') return _paste(url, addr, quiet);
     var el = document.getElementById('link');
     if (el) el.value = url;
@@ -165,19 +160,16 @@
     }).catch(function () { show('msg', 'Gagal salin email', 'err'); });
   };
 
-  // Toggle inbox: tap lagi = tutup
   window._openSavedInbox = window._openSavedInbox || null;
   var _loadSaved = window.loadSavedInbox;
   window.loadSavedInbox = async function (index, button) {
     var output = document.getElementById('savedInbox' + index);
     if (window._openSavedInbox === index && output && output.innerHTML) {
-      // tutup
       output.innerHTML = '';
       window._openSavedInbox = null;
       if (button) { button.disabled = false; button.textContent = 'Inbox'; }
       return;
     }
-    // tutup yang lain dulu
     if (window._openSavedInbox != null && window._openSavedInbox !== index) {
       var other = document.getElementById('savedInbox' + window._openSavedInbox);
       if (other) other.innerHTML = '';
@@ -197,7 +189,6 @@
         var email = from ? from.textContent.trim() : '';
         if (!email) return;
 
-        // Pakai
         var pakai = item.querySelector('.saved-actions .btn-send');
         if (pakai && !pakai.dataset.boost) {
           pakai.dataset.boost = '1';
@@ -207,7 +198,6 @@
           };
         }
 
-        // Salin email di samping Hapus
         var actions = item.querySelector('.saved-actions');
         if (actions && !actions.querySelector('.btn-copy-email')) {
           var copyBtn = document.createElement('button');
@@ -244,7 +234,6 @@
       if (url && typeof window.pasteLink === 'function') {
         window.pasteLink(url, window.tempAddress || '', true);
       }
-      // Hapus "Pakai ke Verify" lama / tombol non data-act
       view.querySelectorAll('.copy-link-btn:not([data-act])').forEach(function (el) { el.remove(); });
       view.querySelectorAll('[data-act="use"]').forEach(function (el) { el.remove(); });
       if (url && !view.querySelector('[data-act="copy"]')) {
@@ -296,6 +285,25 @@
       } catch (e) {}
     };
   }
+
+  // Nomor pesanan: ganti GPA → KENZIE di pesan verify
+  var _verify = window.verifyLink;
+  window.verifyLink = async function () {
+    if (typeof _verify !== 'function') return;
+    var _show = window.showMsg;
+    window.showMsg = function (id, text, type) {
+      if (id === 'msg' && type === 'ok' && text) {
+        text = String(text).replace(/GPA\.?/gi, 'KENZIE.');
+        if (!/KENZIE/i.test(text)) text += ' · Nomor pesanan: KENZIE.' + String(Date.now()).slice(-12);
+      }
+      return _show.apply(this, [id, text, type]);
+    };
+    try {
+      await _verify();
+    } finally {
+      window.showMsg = _show;
+    }
+  };
 
   ready(function () {
     ensureButtons();
