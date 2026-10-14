@@ -1,0 +1,36 @@
+/* Fix stuck scroll di Saved inbox */
+.mail-list {
+  max-height: min(70vh, 520px) !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
+}
+.saved-inbox .mail-list {
+  max-height: none !important;
+  overflow: visible !important;
+}
+.saved-inbox .email-view.show {
+  max-height: none !important;
+  overflow: visible !important;
+  padding-bottom: 28px !important;
+}
+.email-view .ev-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  margin: 10px 0 12px !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 3 !important;
+  background: rgba(10, 15, 30, 0.92) !important;
+  padding: 8px 0 !important;
+  backdrop-filter: blur(8px);
+}
+.copy-link-btn { margin-top: 0 !important; }
+.panel.active, .card {
+  overflow: visible !important;
+}
+body {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
