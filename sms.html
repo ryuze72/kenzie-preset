@@ -71,9 +71,16 @@ select:focus,input:focus{border-color:#8dbdff;box-shadow:0 0 0 3px #6ea8ff20}
     <p class="card-sub" id="inboxSub">—</p>
     <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
       <button class="btn btn-ghost btn-sm" onclick="copyActive()">Salin nomor</button>
+      <button class="btn btn-ghost btn-sm" onclick="saveActive()">Simpan nomor</button>
       <button class="btn btn-ghost btn-sm" onclick="loadInbox(true)">Refresh</button>
     </div>
     <div class="list" id="inboxList" style="max-height:50vh"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Saved numbers</div>
+    <p class="card-sub">Nomor yang kamu simpan di perangkat ini.</p>
+    <div class="list" id="savedList" style="max-height:40vh"><p class="empty">Belum ada nomor tersimpan</p></div>
   </div>
 
   <p class="warn wrap" style="margin:0 13px">Nomor publik & shared. WhatsApp/bank sering menolak. Jangan untuk penipuan.</p>
@@ -190,6 +197,116 @@ function copyActive() {
   copyText(n);
 }
 
+const SAVED_KEY = 'kenzie_sms_saved';
+
+function getSaved() {
+  try { return JSON.parse(localStorage.getItem(SAVED_KEY) || '[]'); } catch (e) { return []; }
+}
+function setSaved(list) {
+  localStorage.setItem(SAVED_KEY, JSON.stringify(list.slice(0, 40)));
+}
+function saveActive() {
+  if (!active) { showMsg('Pilih nomor dulu', 'err'); return; }
+  const country = document.getElementById('country').value;
+  const item = {
+    country,
+    number: active.number || '',
+    full: active.full || active.number || '',
+    display: active.display || ('+' + (active.full || active.number || '')),
+    time: new Date().toISOString()
+  };
+  let list = getSaved().filter(x => !(x.country === item.country && x.number === item.number));
+  list.unshift(item);
+  setSaved(list);
+  renderSaved();
+  showMsg('Nomor disimpan', 'ok');
+}
+function renderSaved() {
+  const list = getSaved();
+  const el = document.getElementById('savedList');
+  if (!el) return;
+  if (!list.length) {
+    el.innerHTML = '<p class="empty">Belum ada nomor tersimpan</p>';
+    return;
+  }
+  el.innerHTML = list.map((s, i) =>
+    '<div class="item" style="cursor:default">' +
+      '<div class="n">' + esc(s.display || s.full) + '</div>' +
+      '<div class="m">' + esc(s.country || '') + (s.time ? ' · ' + esc(new Date(s.time).toLocaleString('id-ID')) : '') + '</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">' +
+        '<button class="btn btn-ghost btn-sm" onclick="useSaved(' + i + ')">Pakai</button>' +
+        '<button class="btn btn-ghost btn-sm" onclick="copyText(\'' + esc(s.display || s.full).replace(/'/g, '') + '\')">Salin</button>' +
+        '<button class="btn btn-ghost btn-sm" onclick="inboxSaved(' + i + ')">Inbox</button>' +
+        '<button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteSaved(' + i + ')">Hapus</button>' +
+      '</div>' +
+      '<div id="savedInbox' + i + '"></div>' +
+    '</div>'
+  ).join('');
+}
+function useSaved(i) {
+  const list = getSaved();
+  const s = list[i];
+  if (!s) return;
+  const sel = document.getElementById('country');
+  if (s.country) {
+    if (![...sel.options].some(o => o.value === s.country)) {
+      const opt = document.createElement('option');
+      opt.value = s.country; opt.textContent = s.country;
+      sel.appendChild(opt);
+    }
+    sel.value = s.country;
+  }
+  active = { number: s.number, full: s.full, display: s.display };
+  document.getElementById('inboxCard').style.display = 'block';
+  document.getElementById('inboxSub').textContent = (s.display || s.full) + ' · ' + (s.country || '');
+  loadInbox(true);
+  if (poll) clearInterval(poll);
+  poll = setInterval(() => loadInbox(false), 8000);
+  showMsg('Nomor dipakai', 'ok');
+  try { document.getElementById('inboxCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {}
+}
+async function inboxSaved(i) {
+  const list = getSaved();
+  const s = list[i];
+  if (!s) return;
+  const box = document.getElementById('savedInbox' + i);
+  if (!box) return;
+  if (box.innerHTML && box.dataset.open === '1') {
+    box.innerHTML = ''; box.dataset.open = '0'; return;
+  }
+  box.dataset.open = '1';
+  box.innerHTML = '<p class="empty">Memuat inbox…</p>';
+  try {
+    const r = await fetch(API + '?action=inbox&country=' + encodeURIComponent(s.country) +
+      '&number=' + encodeURIComponent(s.number || s.full) + '&page=1&count=20&_t=' + Date.now());
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.message || 'Gagal');
+    const msgs = d.messages || [];
+    if (!msgs.length) {
+      box.innerHTML = '<p class="empty">Inbox kosong</p>';
+    } else {
+      box.innerHTML = msgs.map(m =>
+        '<div class="mail">' +
+          '<div class="from">Dari: ' + esc(m.from) + '</div>' +
+          '<div class="txt">' + esc(m.text) + '</div>' +
+          '<div class="tm">' + esc(m.time) + '</div>' +
+          (m.code ? '<span class="code" onclick="copyText(\'' + esc(m.code) + '\')">Kode: ' + esc(m.code) + ' · Salin</span>' : '') +
+        '</div>'
+      ).join('');
+    }
+  } catch (e) {
+    box.innerHTML = '<p class="empty" style="color:var(--red)">Gagal: ' + esc(e.message) + '</p>';
+  }
+}
+function deleteSaved(i) {
+  const list = getSaved();
+  list.splice(i, 1);
+  setSaved(list);
+  renderSaved();
+  showMsg('Dihapus', 'ok');
+}
+
+renderSaved();
 loadCountries();
 </script>
 </body>
