@@ -28,11 +28,12 @@ input:focus,textarea:focus{border-color:#8dbdff;box-shadow:0 0 0 3px #6ea8ff20}t
 .btn-send{background:linear-gradient(115deg,#6baeff,#8c8aff 58%,#c2a1ff);color:#081126;box-shadow:0 8px 24px #719bff25}.btn-verify{background:linear-gradient(115deg,#a18aff,#e09bff);color:#170c2b}.btn-copy{background:#ffffff12;color:var(--ink)}
 .legend{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}.legend span{font-size:11px;padding:7px 11px;border-radius:999px;background:#ffffff0f;border:1px solid #ffffff0d;display:flex;align-items:center;gap:6px}
 .msg{margin-top:12px;padding:12px 14px;border-radius:15px;font-size:13px;text-align:center;display:none;border:1px solid transparent}.msg.ok{display:block;background:#4ee5aa14;color:var(--green);border-color:#4ee5aa30}.msg.err{display:block;background:#ff718814;color:var(--red);border-color:#ff718830}
-.mail-list{display:flex;flex-direction:column;gap:9px;max-height:360px;overflow-y:auto}.mail-item{background:#05091659;border:1px solid #ffffff16;border-radius:18px;padding:13px;cursor:pointer;overflow-wrap:anywhere}.mail-item:hover{background:#ffffff12}
+.mail-list{display:flex;flex-direction:column;gap:9px;max-height:min(70vh,520px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}.mail-item{background:#05091659;border:1px solid #ffffff16;border-radius:18px;padding:13px;cursor:pointer;overflow-wrap:anywhere}.mail-item:hover{background:#ffffff12}
 .mail-from{font-size:12px;color:#9fcaff;font-weight:700;overflow-wrap:anywhere}.mail-subj{font-size:14px;margin:5px 0;color:#f4f6ff;font-weight:600}.mail-time{font-size:11px;color:var(--muted);margin-top:5px}
 .panel{display:none;animation:rise .28s ease both}.panel.active{display:block}@keyframes rise{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
 .email-box{background:#04081461;border:1px solid #ffffff18;border-radius:18px;padding:13px;font-family:ui-monospace,monospace;font-size:13px;word-break:break-all;margin-bottom:13px;display:flex;gap:10px;justify-content:space-between;align-items:center}.copy-btn{flex-shrink:0;background:#85b1ff33;border:1px solid #8dbdff40;color:#dceaff;padding:9px 13px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer}
 .email-view{background:#04081466;border:1px solid #ffffff18;border-radius:18px;padding:14px;margin-top:10px;display:none;overflow-wrap:anywhere}.email-view.show{display:block}.email-view .ev-from{font-size:12px;color:#9fcaff;margin-bottom:5px}.email-view .ev-subj{font-size:15px;font-weight:750;margin-bottom:9px}.email-view .ev-body{font-size:13px;line-height:1.7;color:#e7ebf7;overflow-wrap:anywhere}.email-view .ev-body a{color:#9bcaff;text-decoration:underline;word-break:break-all}.copy-link-btn{background:#7ea9ff38;border:1px solid #9bcaff40;color:#e5eeff;padding:9px 13px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;margin-top:12px}
+.saved-inbox .mail-list{max-height:none;overflow:visible}.saved-inbox .email-view.show{max-height:none;overflow:visible;padding-bottom:24px}.email-view .ev-actions{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 12px}.copy-link-btn{margin-top:0!important}
 .saved-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.saved-actions .btn{width:auto;flex:1;margin:0;min-height:39px;padding:8px 10px;font-size:12px}.saved-inbox{margin-top:10px}.saved-msg{margin-bottom:10px}.saved-msg .mail-item{margin-bottom:0}.saved-msg .email-view{margin-top:6px}.btn-send.on{outline:1px solid #8fc0ff}.empty-state{color:var(--muted);text-align:center;padding:22px 10px;font-size:13px}
 @media(min-width:700px){.panel{max-width:620px;margin:0 auto}.header{padding-left:max(18px,calc((100vw - 900px)/2));padding-right:max(18px,calc((100vw - 900px)/2))}.stats,.desc{max-width:660px;margin-left:auto;margin-right:auto}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
@@ -157,7 +158,13 @@ async function amCall(path, body) {
   if (d.ok === undefined) d.ok = r.ok && d.error == null && d.success !== false && d.status !== false && !/^(error|fail)/i.test(String(d.status || ''));
   if (!d.message && d.result) d.message = amText(d.result.message || d.result.msg || (typeof d.result === 'string' ? d.result : ''));
   if (!d.message && d.msg) d.message = amText(d.msg);
-  if (d.ok !== true) { d.ok = false; if (!d.message && !d.error && !d.detail) d.message = 'Gagal'; d.message = (amText(d.message) || amText(d.error) || amText(d.detail)) + ' [HTTP ' + r.status + ', ' + via + ']'; }
+  if (d.ok !== true) {
+    d.ok = false;
+    var base = amText(d.message) || amText(d.error) || amText(d.detail) || 'Gagal';
+    if (r.status >= 500 && !/oobCode|verifikasi|tidak|gagal|error|link/i.test(base)) base += ' [HTTP ' + r.status + ', ' + via + ']';
+    else if (r.status && r.status !== 200 && via === 'proxy' && base === 'Gagal') base += ' [HTTP ' + r.status + ', ' + via + ']';
+    d.message = base;
+  }
   return d;
 }
 const MAIL_API = '/api/tempmail';
@@ -195,10 +202,23 @@ async function sendLink() {
   } catch(e) { showMsg('msg', 'Error: ' + e.message, 'err'); }
   btn.disabled = false; btn.textContent = 'Send magic link →';
 }
+function normalizeVerifyLink(raw) {
+  let s = String(raw || '').trim();
+  const m = s.match(/https:\/\/alight-creative\.firebaseapp\.com\/__\/auth\/links\?[^\s"'<>]+/i)
+    || s.match(/https:\/\/alightcreative\.com\/auth_action\/?[^\s"'<>]+/i)
+    || s.match(/https?:\/\/[^\s"'<>]*oobCode[^\s"'<>]*/i);
+  if (m) s = m[0].replace(/[.,;]+$/, '');
+  return s;
+}
 async function verifyLink() {
   const email = document.getElementById('email').value.trim();
-  const link = document.getElementById('link').value.trim();
+  let link = normalizeVerifyLink(document.getElementById('link').value);
+  document.getElementById('link').value = link;
   if (!email || !link) { showMsg('msg', 'Isi email dan link', 'err'); return; }
+  if (!/^https?:\/\//i.test(link) || !/oobCode/i.test(link)) {
+    showMsg('msg', 'Link tidak lengkap. Salin ulang dari inbox (harus diawali https:// dan ada oobCode).', 'err');
+    return;
+  }
   const btn = document.getElementById('btnVerif');
   btn.disabled = true; btn.textContent = 'Memverifikasi...';
   try {
