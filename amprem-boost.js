@@ -22,14 +22,14 @@
     return list[0];
   }
   function extractUrls(m) {
-    var raw = [m.subject, m.body, m.text, m.content, m.html, m.snippet].filter(Boolean).join(' ').replace(/&/g, '&');
+    var raw = [m.subject, m.body, m.text, m.content, m.html, m.snippet].filter(Boolean).join(' ').replace(/&amp;/g, '&');
     var urls = (raw.match(/https?:\/\/[^\s<>"'\\)]+/g) || []).map(function (u) { return u.replace(/[.,;]+$/, ''); });
     var extra = [];
     urls.forEach(function (u) { try { extra.push(decodeURIComponent(u)); } catch (e) {} });
     return urls.concat(extra);
   }
   function escapeHTML(s) {
-    return String(s || '').replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>').replace(/"/g, '"');
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
   function ensureButtons() {
@@ -68,7 +68,7 @@
 
   function linkActionButtons(url) {
     if (!url) return '';
-    var safe = String(url).replace(/&/g, '&').replace(/"/g, '"');
+    var safe = String(url).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
     return (
       '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">' +
         '<button type="button" class="copy-link-btn" data-act="copy" data-url="' + safe + '">Salin link</button>' +
@@ -121,9 +121,14 @@
     return pickBest(all);
   };
 
+  // Auto-tempel HANYA setelah user klik "Send magic link"
+  window._allowAutoPaste = window._allowAutoPaste || false;
+
   var _paste = window.pasteLink;
   window.pasteLink = function (url, addr, quiet) {
     if (!url) return;
+    // quiet = auto dari inbox/poll → butuh flag send dulu
+    if (quiet && !window._allowAutoPaste) return;
     if (typeof _paste === 'function') return _paste(url, addr, quiet);
     var el = document.getElementById('link');
     if (el) el.value = url;
@@ -132,6 +137,38 @@
       if (em) em.value = addr;
     }
   };
+
+  var _send = window.sendLink;
+  window.sendLink = async function () {
+    if (typeof _send !== 'function') return;
+    var _show = window.showMsg;
+    window.showMsg = function (id, text, type) {
+      if (id === 'msg' && type === 'ok') {
+        window._allowAutoPaste = true;
+      }
+      return _show.apply(this, arguments);
+    };
+    try {
+      await _send();
+    } finally {
+      window.showMsg = _show;
+    }
+  };
+
+  var _pull = window.pullLink;
+  if (typeof _pull === 'function') {
+    window.pullLink = async function () {
+      // Manual "Ambil link dari inbox" selalu boleh tempel
+      var prev = window._allowAutoPaste;
+      window._allowAutoPaste = true;
+      try {
+        await _pull();
+      } finally {
+        if (!prev) window._allowAutoPaste = prev;
+        else window._allowAutoPaste = true;
+      }
+    };
+  }
 
   window.useSavedEmail = function (email) {
     var em = document.getElementById('email');
@@ -286,7 +323,6 @@
     };
   }
 
-  // Nomor pesanan: ganti GPA → KENZIE di pesan verify
   var _verify = window.verifyLink;
   window.verifyLink = async function () {
     if (typeof _verify !== 'function') return;
