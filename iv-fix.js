@@ -1,4 +1,4 @@
-/* Anti-flicker #imgView — stabil saat Control Center / app switch */
+/* Anti-flicker #imgView — khusus hasil HD + Control Center */
 (function () {
   function applyCss() {
     if (document.getElementById('iv-fix-css')) return;
@@ -7,34 +7,28 @@
     s.textContent = [
       '#imgView{background:#000!important;-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0);',
       '-webkit-backface-visibility:hidden;backface-visibility:hidden;isolation:isolate;contain:strict}',
-      '#imgView .iv-bar{background:#000;flex-shrink:0;z-index:2;-webkit-transform:translateZ(0);transform:translateZ(0)}',
-      '#imgView .iv-box{-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0);',
-      '-webkit-overflow-scrolling:touch;overscroll-behavior:contain}',
+      '#imgView .iv-bar{background:#000;flex-shrink:0;z-index:2}',
+      '#imgView .iv-box{-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0);overscroll-behavior:contain}',
       '#imgView img{-webkit-backface-visibility:hidden;backface-visibility:hidden;',
-      '-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0);',
-      'background:#000;image-rendering:auto;will-change:auto;content-visibility:visible}',
-      'body.iv-open{overflow:hidden!important;overscroll-behavior:none}',
-      'body.iv-open *{animation-play-state:paused!important}'
+      '-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0);background:#000}',
+      'body.iv-open{overflow:hidden!important;overscroll-behavior:none}'
     ].join('');
     (document.head || document.documentElement).appendChild(s);
   }
 
-  function freezeGif(im) {
+  function snapshot(im) {
     try {
       if (!im || !im.naturalWidth) return;
       if (im.getAttribute('data-frozen') === '1') return;
-      var src = im.src || '';
-      var isGif = /\.gif(?:$|\?)/i.test(src) || src.indexOf('image/gif') !== -1;
-      if (!isGif) return;
       var c = document.createElement('canvas');
       c.width = im.naturalWidth;
       c.height = im.naturalHeight;
-      var ctx = c.getContext('2d');
-      ctx.drawImage(im, 0, 0);
+      c.getContext('2d').drawImage(im, 0, 0);
       var url = c.toDataURL('image/png');
-      im.setAttribute('data-live-src', src);
+      im.setAttribute('data-live-src', im.getAttribute('data-src') || im.src);
       im.src = url;
       im.setAttribute('data-frozen', '1');
+      im.setAttribute('data-src', url);
     } catch (e) {}
   }
 
@@ -42,7 +36,6 @@
     applyCss();
     if (window.__ivFixInstalled) return;
     window.__ivFixInstalled = true;
-
     var prevOpen = window.imgView;
 
     window.imgView = function (src) {
@@ -55,13 +48,7 @@
       if (!v) {
         v = document.createElement('div');
         v.id = 'imgView';
-        v.innerHTML =
-          '<div class="iv-bar">' +
-          '<button type="button" onclick="imgViewClose()">Tutup</button>' +
-          '<a id="ivSave" download="hasil.png">Simpan</a></div>' +
-          '<div class="iv-box" onclick="if(event.target===this)imgViewClose()">' +
-          '<img id="ivImg" alt="" decoding="async" draggable="false" ' +
-          'onclick="this.classList.toggle(\'zoom\')" /></div>';
+        v.innerHTML = '<div class="iv-bar"><button type="button" onclick="imgViewClose()">Tutup</button><a id="ivSave" download="hasil.png">Simpan</a></div><div class="iv-box" onclick="if(event.target===this)imgViewClose()"><img id="ivImg" alt="" decoding="async" draggable="false" onclick="this.classList.toggle(\'zoom\')" /></div>';
         document.body.appendChild(v);
       }
       var im = document.getElementById('ivImg');
@@ -72,21 +59,18 @@
       im.classList.remove('zoom');
       var abs = src;
       try { abs = new URL(src, location.href).href; } catch (e) {}
-
       if (im.getAttribute('data-src') !== abs) {
         im.setAttribute('data-src', abs);
         im.removeAttribute('data-frozen');
-        im.removeAttribute('data-live-src');
-        im.onload = function () { freezeGif(im); };
+        im.onload = function () {
+          if ((im.naturalWidth * im.naturalHeight) > 800 * 800) snapshot(im);
+        };
         im.src = src;
       }
-
       var a = document.getElementById('ivSave');
       if (a) {
         a.href = src;
-        try {
-          a.download = (String(src).split('/').pop() || 'hasil.png').split('?')[0] || 'hasil.png';
-        } catch (e) {}
+        try { a.download = (String(src).split('/').pop() || 'hasil.png').split('?')[0] || 'hasil.png'; } catch (e) {}
       }
       v.classList.add('show');
       try {
@@ -110,20 +94,12 @@
       var v = document.getElementById('imgView');
       var im = document.getElementById('ivImg');
       if (!v || !v.classList.contains('show') || !im) return;
-      if (document.hidden) freezeGif(im);
-    });
-
-    window.addEventListener('pagehide', function () {
-      var im = document.getElementById('ivImg');
-      if (im) freezeGif(im);
+      if (document.hidden) snapshot(im);
     });
   }
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () { setTimeout(install, 0); });
-  } else {
-    setTimeout(install, 0);
-  }
-  setTimeout(install, 400);
-  setTimeout(install, 1500);
+  } else setTimeout(install, 0);
+  setTimeout(install, 500);
 })();
