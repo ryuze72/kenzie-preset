@@ -1,4 +1,4 @@
-/* HD Foto UI + hasil stabil (anti-kedip Control Center) */
+/* HD Foto UI + hasil stabil (anti-kedip Control Center) — hanya homepage */
 (function () {
   var HD_API = '/api/hd';
   var hdDataUrl = '';
@@ -6,8 +6,9 @@
   function isHomePage() {
     try {
       var h = (location.pathname || '/').replace(/\/+$/, '') || '/';
+      if (/amprem/i.test(h)) return false;
       return h === '/' || /index\.html$/i.test(h);
-    } catch (e) { return true; }
+    } catch (e) { return false; }
   }
 
   function ready(fn) {
@@ -40,6 +41,7 @@
   }
 
   function inject() {
+    if (!isHomePage()) return;
     if (document.getElementById('hdModal')) return;
     var wrap = document.createElement('div');
     wrap.innerHTML =
@@ -153,5 +155,5 @@
     }
   };
 
-  ready(function () { inject(); });
+  ready(function () { if (isHomePage()) inject(); });
 })();
