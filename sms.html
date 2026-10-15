@@ -73,6 +73,7 @@ select:focus,input:focus{border-color:#8dbdff;box-shadow:0 0 0 3px #6ea8ff20}
       <button class="btn btn-ghost btn-sm" onclick="copyActive()">Salin nomor</button>
       <button class="btn btn-ghost btn-sm" onclick="saveActive()">Simpan nomor</button>
       <button class="btn btn-ghost btn-sm" onclick="loadInbox(true)">Refresh</button>
+      <button class="btn btn-ghost btn-sm" onclick="openSmsWeb()">Open SMS web</button>
     </div>
     <div class="list" id="inboxList" style="max-height:50vh"></div>
   </div>
@@ -207,6 +208,14 @@ async function loadInbox(manual) {
 function copyText(t) {
   navigator.clipboard.writeText(t).then(() => showMsg('Disalin: ' + t, 'ok')).catch(() => {});
 }
+
+function openSmsWeb() {
+  if (!active) { showMsg('Pilih nomor dulu', 'err'); return; }
+  const n = String(active.number || active.full || '').replace(/\D/g, '');
+  if (!n) { showMsg('Nomor tidak valid', 'err'); return; }
+  window.open('https://smsdock.net/number/' + encodeURIComponent(n), '_blank', 'noopener,noreferrer');
+}
+
 function copyActive() {
   if (!active) return;
   const n = active.display || ('+' + active.full);
@@ -253,6 +262,7 @@ function renderSaved() {
         '<button class="btn btn-ghost btn-sm" onclick="useSaved(' + i + ')">Pakai</button>' +
         '<button class="btn btn-ghost btn-sm" onclick="copyText(\'' + esc(s.display || s.full).replace(/'/g, '') + '\')">Salin</button>' +
         '<button class="btn btn-ghost btn-sm" onclick="inboxSaved(' + i + ')">Inbox</button>' +
+        '<button class="btn btn-ghost btn-sm" onclick="openSavedSmsWeb(' + i + ')">Open SMS web</button>' +
         '<button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteSaved(' + i + ')">Hapus</button>' +
       '</div>' +
       '<div id="savedInbox' + i + '"></div>' +
@@ -315,6 +325,16 @@ async function inboxSaved(i) {
     box.innerHTML = '<p class="empty" style="color:var(--red)">Gagal: ' + esc(e.message) + '</p>';
   }
 }
+
+function openSavedSmsWeb(i) {
+  const list = getSaved();
+  const s = list[i];
+  if (!s) return;
+  const n = String(s.number || s.full || '').replace(/\D/g, '');
+  if (!n) { showMsg('Nomor tidak valid', 'err'); return; }
+  window.open('https://smsdock.net/number/' + encodeURIComponent(n), '_blank', 'noopener,noreferrer');
+}
+
 function deleteSaved(i) {
   const list = getSaved();
   list.splice(i, 1);
