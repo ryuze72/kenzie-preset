@@ -42,25 +42,27 @@
     }
     [data-theme="dark"] {
       color-scheme: dark;
-      --bg: #000000; --bg-2: #0c0c0e;
-      --ink: #ffffff; --muted: #9a9aa0;
-      --g1: rgba(255,255,255,.11); --g2: rgba(255,255,255,.04);
-      --edge: rgba(255,255,255,.14);
-      --hair: rgba(255,255,255,.12);
-      --ctl: rgba(118,118,128,.24); --ctl-edge: rgba(255,255,255,.08);
-      --shadow: 0 1px 0 rgba(255,255,255,.08) inset, 0 16px 36px -16px rgba(0,0,0,.8);
-      --accent: #0a84ff; --accent-2: #0a84ff;
-      --btn-a: #2e94ff; --btn-b: #0a84ff;
-      --btn-glow: rgba(10,132,255,.4);
-      --green: #30d158; --green-bg: rgba(48,209,88,.16);
-      --red: #ff453a; --red-bg: rgba(255,69,58,.16);
-      --amber: #ffd60a; --amber-bg: rgba(255,214,10,.14);
-      --idc: #64b0ff; --idbg: rgba(10,132,255,.2);
-      --sheet: #1c1c1e;
-      --scrim: rgba(0,0,0,.6);
-      --blob1: #64d2ff; --blob2: #0a84ff; --blob3: #5e5ce6; --blob4: #40c8e0; --blob-o: .42;
-      --c-a: #64d2ff; --c-b: #0a84ff;
+      --bg: #050a18; --bg-2: #0d1838;
+      --ink: #f3f6ff; --muted: #9aa8c6;
+      --g1: rgba(140,180,255,.18); --g2: rgba(110,150,255,.06);
+      --edge: rgba(170,205,255,.27);
+      --hair: rgba(150,185,255,.15);
+      --ctl: rgba(120,160,255,.19); --ctl-edge: rgba(170,205,255,.16);
+      --shadow: 0 1px 0 rgba(190,212,255,.12) inset, 0 16px 36px -16px rgba(0,4,24,.85);
+      --accent: #64b0ff; --accent-2: #64b0ff;
+      --btn-a: #4aa4ff; --btn-b: #2272f5;
+      --btn-glow: rgba(70,145,255,.5);
+      --green: #34d399; --green-bg: rgba(52,211,153,.16);
+      --red: #ff6b6b; --red-bg: rgba(255,107,107,.16);
+      --amber: #fbbf24; --amber-bg: rgba(251,191,36,.15);
+      --idc: #93c5ff; --idbg: rgba(80,150,255,.2);
+      --sheet: #121b34;
+      --scrim: rgba(2,6,20,.68);
+      --blob1: #3585f5; --blob2: #2468f0; --blob3: #7260f0; --blob4: #20b4ea; --blob-o: .62;
+      --c-a: #4fc3ff; --c-b: #5b7bff;
     }
+    [data-theme="dark"] :is(.card, .topbar, .bottom-nav, .link-box, .stats) { box-shadow: 0 1px 0 rgba(200,220,255,.16) inset, 0 0 0 1px rgba(110,170,255,.1), 0 14px 38px -16px rgba(40,110,255,.3); }
+    [data-theme="dark"] .section-title::before { box-shadow: 0 0 10px rgba(80,170,255,.5); }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation: none !important; transition: none !important; }
     }
@@ -468,7 +470,7 @@
     /* ---------- Efek (Low / Medium / Hard) ---------- */
     /* LOW & MEDIUM: hanya warna yang makin menyala, gerakan tetap sama */
     body.fx-low { --blur: 14px; --sat: 170%; --blob-o: .5; }
-    [data-theme="dark"] body.fx-low { --blob-o: .4; }
+    [data-theme="dark"] body.fx-low { --blob-o: .62; }
     body.fx-med { --blur: 22px; --sat: 210%; --blob-o: .92; }
     [data-theme="dark"] body.fx-med { --blob-o: .75; }
     body.fx-med :is(.card, .topbar, .link-box, .admin-card, .bottom-nav, .stats, .login-box) {
@@ -479,7 +481,7 @@
     /* HARD: liquid glass paling pekat — blur tebal, warna penuh, cahaya putih berjalan di tepi kaca */
     @property --ang { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
     body.fx-hard { --blur: 40px; --sat: 260%; --blob-o: 1; }
-    [data-theme="dark"] body.fx-hard { --blob-o: .95; }
+    [data-theme="dark"] body.fx-hard { --blob-o: .85; }
     body.fx-hard .aurora { filter: saturate(1.45); }
     body.fx-hard .aurora i:nth-child(1) { animation-duration: 9s; }
     body.fx-hard .aurora i:nth-child(2) { animation-duration: 12s; }
@@ -2369,7 +2371,7 @@
     const root = document.documentElement;
     const themeBtn = document.getElementById('themeToggle');
     function applyTheme(t) {
-      if (t === 'dark') { root.dataset.theme = 'dark'; themeBtn.textContent = '☾'; document.querySelector('meta[name="theme-color"]').content = '#08080b'; }
+      if (t === 'dark') { root.dataset.theme = 'dark'; themeBtn.textContent = '☾'; document.querySelector('meta[name="theme-color"]').content = '#060a16'; }
       else { delete root.dataset.theme; themeBtn.textContent = '☀'; document.querySelector('meta[name="theme-color"]').content = '#f2f2f7'; }
       lsSet(themeKey, t);
     }
