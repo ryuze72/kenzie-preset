@@ -807,7 +807,7 @@
 
     <div class="page active" id="homePage">
       <div class="home-row"><div class="stats"><b id="totalCount">0</b> preset · <b id="readyCount">0</b> siap</div>
-        <span class="ml-btns"><button class="ml-open" type="button" onclick="mlOpen()">Fake ML</button><button class="ml-open" type="button" onclick="ffOpen()">Fake FF</button><button class="ml-open" type="button" onclick="hdOpen()">HD Foto</button></span></div>
+        <span class="ml-btns"><button class="ml-open" type="button" onclick="mlOpen()">Fake ML</button><button class="ml-open" type="button" onclick="ffOpen()">Fake FF</button><button class="ml-open" type="button" onclick="hdOpen()">HD Foto</button><button class="ml-open" type="button" onclick="mpOpen()">Fake Profil ML</button></span></div>
       <div class="cats" id="catBar">
         <button class="cat active" data-cat="All">Semua</button>
         <button class="cat" data-cat="Trending">Trending</button>
@@ -1056,6 +1056,24 @@
       <div class="modal-actions">
         <button class="btn btn-outline" type="button" onclick="closeStoreModal('hdModal')">Tutup</button>
         <button class="btn btn-primary" type="button" id="hdGo" onclick="hdMake()">Jadikan HD</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="mpModal">
+    <div class="modal">
+      <h3>Fake Profil ML</h3>
+      <div class="form-group">
+        <label>Avatar (opsional)</label>
+        <input type="file" id="mpFile" accept="image/*" style="display:none" onchange="mpPick(this)" />
+        <div class="ml-pick"><img id="mpPrev" alt="" /><button type="button" class="btn btn-outline" style="font-size:12px" onclick="document.getElementById('mpFile').click()">Pilih foto</button></div>
+      </div>
+      <div class="form-group"><label>Username *</label><input class="form-input" id="mpName" maxlength="40" placeholder="Nama di profil" /></div>
+      <div class="form-group"><label>Rank</label><input class="form-input" id="mpRank" maxlength="30" list="mlRanks" placeholder="mis. imo" /></div>
+      <div class="ml-result" id="mpOut" hidden></div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" type="button" onclick="closeStoreModal('mpModal')">Tutup</button>
+        <button class="btn btn-primary" type="button" id="mpGo" onclick="mpMake()">Buat</button>
       </div>
     </div>
   </div>
@@ -1959,6 +1977,44 @@
         src = src.replace(/"/g, '');
         out.hidden = false;
         out.innerHTML = '<img class="zoomable" alt="Hasil" onclick="imgView(this.src)" src="' + src + '" /><div class="ml-hint">Tap gambar untuk memperbesar</div><a class="btn btn-outline" style="display:inline-block;text-decoration:none" download="fake-ff.jpg" href="' + src + '">Simpan gambar</a>'; imgView(src);
+      } catch (e) { toast('Gagal: ' + (e && e.message || 'tidak bisa terhubung'), 'err'); }
+      finally { go.disabled = false; go.textContent = 'Buat'; }
+    }
+
+    // ===== Fake Profil ML (api/ml-profile.js) =====
+    let mpAvatar = '';
+    function mpOpen() { openStoreModal('mpModal'); }
+    function mpPick(inp) {
+      const f = inp.files && inp.files[0]; if (!f) return;
+      const url = URL.createObjectURL(f), im = new Image();
+      im.onload = () => {
+        const n = 512, c = document.createElement('canvas'); c.width = c.height = n;
+        const k = Math.max(n / im.width, n / im.height), w = im.width * k, h = im.height * k;
+        c.getContext('2d').drawImage(im, (n - w) / 2, (n - h) / 2, w, h);
+        mpAvatar = c.toDataURL('image/png'); $s('mpPrev').src = mpAvatar; URL.revokeObjectURL(url);
+      };
+      im.onerror = () => { URL.revokeObjectURL(url); toast('Gambar tidak bisa dibaca', 'err'); };
+      im.src = url;
+    }
+    async function mpMake() {
+      const name = $s('mpName').value.trim();
+      if (!name) { toast('Username wajib diisi', 'err'); return; }
+      const go = $s('mpGo'), out = $s('mpOut'); go.disabled = true; go.textContent = 'Membuat…';
+      try {
+        const res = await fetch('/api/ml-profile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ avatar: mpAvatar, username: name, rank: $s('mpRank').value.trim() }) });
+        const ct = res.headers.get('content-type') || '';
+        let src = '';
+        if (res.ok && /^image\//i.test(ct)) src = URL.createObjectURL(await res.blob());
+        else {
+          const text = await res.text(); let d = null; try { d = JSON.parse(text); } catch {}
+          if (!res.ok) throw new Error((d && (d.error || d.message)) || ('HTTP ' + res.status));
+          const j = JSON.stringify(d || '');
+          const hit = j.match(/https?:\/\/[^"\s]+\.(?:png|jpe?g|webp)[^"\s]*/i) || j.match(/data:image\/[a-z]+;base64,[A-Za-z0-9+/=]+/i);
+          if (!hit) throw new Error('API tidak mengirim gambar');
+          src = hit[0].replace(/"/g, '');
+        }
+        out.hidden = false;
+        out.innerHTML = '<img class="zoomable" alt="Hasil" onclick="imgView(this.src)" src="' + src + '" /><div class="ml-hint">Tap gambar untuk memperbesar</div><a class="btn btn-outline" style="display:inline-block;text-decoration:none" download="fake-profil-ml.png" href="' + src + '">Simpan gambar</a>'; imgView(src);
       } catch (e) { toast('Gagal: ' + (e && e.message || 'tidak bisa terhubung'), 'err'); }
       finally { go.disabled = false; go.textContent = 'Buat'; }
     }
