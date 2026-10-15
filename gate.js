@@ -4,6 +4,7 @@
   try{var _hds=document.createElement('script');_hds.src='/hd-ui.js';_hds.defer=true;(document.head||document.documentElement).appendChild(_hds);}catch(_e){}
   try{var _ivf=document.createElement('script');_ivf.src='/iv-fix.js';_ivf.defer=true;(document.head||document.documentElement).appendChild(_ivf);}catch(_e2){}
   try{var _mpu=document.createElement('script');_mpu.src='/ml-profile-ui.js';_mpu.defer=true;(document.head||document.documentElement).appendChild(_mpu);}catch(_e3){}
+  try{var _mrf=document.createElement('script');_mrf.src='/ml-rank-fix.js';_mrf.defer=true;(document.head||document.documentElement).appendChild(_mrf);}catch(_e4){}
   var SALT = 'kenzie-preset|gate|v1', ITER = 150000, HASH = 'abad49864f84d54b53cc83071acd0033da673b63701de655f1735c819138a48e';
   var KEY = 'kenzie_gate_v1', TTL = 12 * 3600 * 1000, de = document.documentElement;
   function ls(f) { try { return f(); } catch (e) { return null; } }
