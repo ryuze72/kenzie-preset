@@ -1,12 +1,24 @@
-// Vercel Serverless Function — Fake Lobby ML (kartu profil Mobile Legends).
-// POST /api/ml-maker  body JSON: { avatar:"data:image/...;base64,..." | "https://...", username, rank?, border? }
-// Alur:
-//  1. Bila avatar data-URL → upload sementara ke litterbox.catbox.moe → dapat link publik
-//  2. Panggil Nexray GET /maker/fakelobyml?avatar=&nickname=
-//  3. Cadangan: theresav multipart (jika masih hidup)
+// Vercel Serverless — Fake Lobby ML (kartu lobby CLASSIC seperti in-game)
+// POST /api/ml-maker  JSON: { avatar, username, rank?, border? }
+// Prioritas: Nexray GET /maker/fakelobyml → Theresav POST /api/maker/fake/ml
 const NEXRAY = 'https://api.nexray.eu.cc/maker/fakelobyml';
 const THERESAV = 'https://api.theresav.eu/api/maker/fake/ml';
 const LITTERBOX = 'https://litterbox.catbox.moe/resources/internals/api.php';
+
+const RANK_MAP = {
+  warrior: 'warrior', elite: 'elite', master: 'master',
+  grandmaster: 'gm', gm: 'gm',
+  epic: 'epic', legend: 'legend',
+  mythic: 'mythic', myth: 'mythic',
+  honor: 'honor', glory: 'glory', mythicalglory: 'glory',
+  immortal: 'imo', imo: 'imo', mawi: 'mawi',
+};
+
+function normalizeRank(r) {
+  const k = String(r || '').trim().toLowerCase().replace(/\s+/g, '');
+  if (!k) return 'glory';
+  return RANK_MAP[k] || k || 'glory';
+}
 
 async function hostAvatar(buf, mime, ext, signal) {
   const fd = new FormData();
@@ -39,22 +51,36 @@ module.exports = async (req, res) => {
 
   const username = String(b.username || '').trim().slice(0, 40);
   if (!username) return res.status(400).json({ ok: false, error: 'Username wajib diisi' });
-  const rank = String(b.rank || '').trim().slice(0, 30);
+  const rank = normalizeRank(b.rank);
   const border = String(b.border || '').trim().slice(0, 40);
 
   const errors = [];
   let avatarUrl = isHttp ? rawAvatar : '';
   let avatarBuf = null;
-  let avatarMime = '';
+  let avatarMime = 'image/png';
   let avatarExt = 'png';
 
   if (m) {
     avatarBuf = Buffer.from(m[2], 'base64');
     avatarMime = m[1];
-    avatarExt = m[1].includes('png') ? 'png' : m[1].includes('webp') ? 'webp' : 'jpg';
+    avatarExt = /jpe?g/i.test(m[1]) ? 'jpg' : /webp/i.test(m[1]) ? 'webp' : 'png';
+  } else if (isHttp) {
+    try {
+      const ctl = new AbortController();
+      const t = setTimeout(() => ctl.abort(), 20000);
+      const r = await fetch(rawAvatar, { signal: ctl.signal, headers: { 'user-agent': 'Mozilla/5.0' } });
+      clearTimeout(t);
+      if (r.ok) {
+        avatarBuf = Buffer.from(await r.arrayBuffer());
+        const ct = (r.headers.get('content-type') || '').split(';')[0].trim();
+        if (/^image\//i.test(ct)) avatarMime = ct;
+        avatarExt = /jpe?g/i.test(avatarMime) ? 'jpg' : /webp/i.test(avatarMime) ? 'webp' : 'png';
+      }
+    } catch (e) {
+      errors.push('fetch-avatar: ' + ((e && e.message) || 'gagal'));
+    }
   }
 
-  // Upload base64 → URL publik (diperlukan Nexray GET)
   if (!avatarUrl && avatarBuf) {
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), 25000);
@@ -68,7 +94,6 @@ module.exports = async (req, res) => {
     }
   }
 
-  // ---- 1) Nexray ----
   if (avatarUrl) {
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), 50000);
@@ -76,9 +101,9 @@ module.exports = async (req, res) => {
       const qs = new URLSearchParams({
         avatar: avatarUrl,
         nickname: username,
+        rank: rank,
         t: String(Date.now()),
       });
-      if (rank) qs.set('rank', rank);
       if (border) qs.set('border', border);
       const r = await fetch(NEXRAY + '?' + qs.toString(), {
         method: 'GET',
@@ -92,6 +117,7 @@ module.exports = async (req, res) => {
         res.status(200);
         res.setHeader('Content-Type', /^image\//i.test(ct) ? ct : 'image/png');
         res.setHeader('Cache-Control', 'no-store');
+        res.setHeader('X-Fake-Source', 'nexray');
         return res.send(buf);
       }
       let msg = 'HTTP ' + r.status;
@@ -110,7 +136,6 @@ module.exports = async (req, res) => {
     errors.push('nexray: dilewati (tidak ada URL avatar)');
   }
 
-  // ---- 2) theresav (multipart, butuh buffer) ----
   if (avatarBuf) {
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), 50000);
@@ -119,7 +144,7 @@ module.exports = async (req, res) => {
       fd.append('avatar', new Blob([avatarBuf], { type: avatarMime }), 'avatar.' + avatarExt);
       fd.append('username', username);
       fd.append('rank', rank);
-      fd.append('border', border);
+      if (border) fd.append('border', border);
       const r = await fetch(THERESAV, {
         method: 'POST',
         body: fd,
@@ -137,6 +162,7 @@ module.exports = async (req, res) => {
         res.status(200);
         res.setHeader('Content-Type', /^image\//i.test(ct) ? ct : 'image/png');
         res.setHeader('Cache-Control', 'no-store');
+        res.setHeader('X-Fake-Source', 'theresav');
         return res.send(out);
       }
       let msg = 'HTTP ' + r.status;
@@ -158,7 +184,7 @@ module.exports = async (req, res) => {
   return res.status(502).json({
     ok: false,
     error: 'Gagal membuat Fake Lobby ML. Coba lagi nanti.',
-    detail: errors.slice(0, 5),
+    detail: errors.slice(0, 6),
   });
 };
 module.exports.config = { maxDuration: 60 };
