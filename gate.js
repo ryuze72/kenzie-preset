@@ -2,6 +2,7 @@
    Catatan: ini pengaman sisi-browser, bukan pengganti keamanan server. */
 (function () {
   try{var _sc=document.createElement('script');_sc.src='/site-config.js';(document.head||document.documentElement).appendChild(_sc);}catch(_scE){}
+  try{var _psr=document.createElement('script');_psr.src='/preset-slug-route.js';_psr.defer=true;(document.head||document.documentElement).appendChild(_psr);}catch(_psrE){}
   var path = '';
   try { path = (location.pathname || '/').toLowerCase(); } catch (e) {}
   var onAmprem = /amprem/i.test(path);
