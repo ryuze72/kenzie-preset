@@ -1,2 +1,30 @@
 <!DOCTYPE html>
-<!-- PLACEHOLDER - will replace -->
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>KENZIE PRESET LIBRARY</title>
+<script>
+(function () {
+  var v = '?v=' + Date.now();
+  var files = [];
+  for (var i = 0; i < 10; i++) files.push('/ix' + i + '.txt');
+  Promise.all(files.map(function (f) {
+    return fetch(f + v, { cache: 'no-store' }).then(function (r) {
+      if (!r.ok) throw new Error(f + ' ' + r.status);
+      return r.text();
+    });
+  })).then(function (parts) {
+    var html = parts.join('');
+    if (html.length < 1000) throw new Error('konten kosong');
+    document.open();
+    document.write(html);
+    document.close();
+  }).catch(function (e) {
+    document.body.innerHTML = '<p style="font-family:sans-serif;padding:24px">Gagal memuat: ' + (e && e.message || e) + '. Coba <a href="https://kenzie-preset.vercel.app/">vercel.app</a></p>';
+  });
+})();
+</script>
+</head>
+<body style="margin:0;min-height:100vh;background:#f2f2f7"></body>
+</html>
