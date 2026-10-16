@@ -6,68 +6,36 @@
 <title>KENZIE PRESET LIBRARY</title>
 <script>
 (function () {
-  var SRC = 'https://cdn.jsdelivr.net/gh/ryuze72/kenzie-preset@8ecca87960564fc0dfa0be746f29e1c002adb897/index.html';
-  fetch(SRC, { cache: 'no-store' }).then(function (r) {
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    return r.text();
-  }).then(function (html) {
-    if (html.length < 10000) throw new Error('konten pendek');
-
-    // webLink = NAMA preset
-    html = html.replace(
-      "function webLink(p) { return p?.id ? getSiteBase() + '/#preset/' + p.id : getSiteBase() + '/#home'; }",
-      "function presetSlug(name){return String(name||'').trim().toLowerCase().replace(/\\s+/g,'-').replace(/[^\\w\\u00C0-\\u024f\\-]+/g,'').replace(/-+/g,'-').replace(/^-|-$/g,'')||'preset';}" +
-      "function webLink(p){if(!p)return getSiteBase()+'/#home';var s=presetSlug(p.name)||String(p.id||'');return getSiteBase()+'/#preset/'+encodeURIComponent(s);}"
-    );
-
-    // parseRoute decode
-    html = html.replace(
-      "if (h.startsWith('preset/')) { const id = h.slice(7).split(/[/?#]/)[0]; if (id) { navigate('detail', id); return; } }",
-      "if (h.startsWith('preset/')) { let key = h.slice(7).split(/[/?#]/)[0]; try { key = decodeURIComponent(key); } catch (e) {} if (key) { navigate('detail', key); return; } }"
-    );
-
-    // renderDetail: cari by id/nama + RETRY jika data belum load
-    html = html.replace(
-      "function renderDetail(id) {\n      const p = presets.find(x=>x.id===id); const el = document.getElementById('detailContent');\n      if (!p) { el.innerHTML = `<div class=\"empty\"><h3>Mohon tunggu beberapa detik</h3><button class=\"btn btn-primary\" style=\"margin-top:12px\" onclick=\"navigate('home')\">Kembali</button></div>`; document.getElementById('similarSection').style.display='none'; return; }",
-      "function renderDetail(id) {\n" +
-      "      var key=(function(){try{return decodeURIComponent(String(id||''));}catch(e){return String(id||'');}})();\n" +
-      "      var sk=typeof presetSlug==='function'?presetSlug(key):key;\n" +
-      "      const p = presets.find(x=>x&&(x.id===key||x.id===id||(typeof presetSlug==='function'&&presetSlug(x.name)===sk)||x.name===key));\n" +
-      "      const el = document.getElementById('detailContent');\n" +
-      "      if (!p) {\n" +
-      "        el.innerHTML = '<div class=\"empty\"><h3>Mohon tunggu beberapa detik</h3><button class=\"btn btn-primary\" style=\"margin-top:12px\" onclick=\"navigate(\\x27home\\x27)\">Kembali</button></div>';\n" +
-      "        var sim=document.getElementById('similarSection'); if(sim) sim.style.display='none';\n" +
-      "        if (!window.__detailRetry) {\n" +
-      "          window.__detailRetry = setInterval(function(){\n" +
-      "            var found = presets && presets.find(function(x){return x&&(x.id===key||x.id===id||(typeof presetSlug==='function'&&presetSlug(x.name)===sk)||x.name===key);});\n" +
-      "            if (found || (typeof loaded!=='undefined'&&loaded&&presets&&presets.length)) {\n" +
-      "              clearInterval(window.__detailRetry); window.__detailRetry=null;\n" +
-      "              renderDetail(id);\n" +
-      "            }\n" +
-      "          }, 250);\n" +
-      "          setTimeout(function(){ if(window.__detailRetry){ clearInterval(window.__detailRetry); window.__detailRetry=null;\n" +
-      "            if(!presets.find(function(x){return x&&(x.id===key||x.id===id);})){\n" +
-      "              el.innerHTML='<div class=\"empty\"><h3>Preset tidak ditemukan</h3><button class=\"btn btn-primary\" style=\"margin-top:12px\" onclick=\"navigate(\\x27home\\x27)\">Kembali</button></div>';\n" +
-      "            }} }, 12000);\n" +
-      "        }\n" +
-      "        return;\n" +
-      "      }\n" +
-      "      if (window.__detailRetry) { clearInterval(window.__detailRetry); window.__detailRetry=null; }"
-    );
-
-    if (html.indexOf('preset-link.js') < 0) {
-      html = html.replace('</body>', '<script src="/preset-link.js"><\/script>\n</body>');
-    }
-
+  var TOTAL = 20;
+  var v = '?v=20261016b';
+  var files = [];
+  for (var i = 0; i < TOTAL; i++) {
+    var n = (i < 10 ? '0' : '') + i;
+    files.push('/ip' + n + '.txt' + v);
+  }
+  function fail(e) {
+    console.error(e);
+    document.body.innerHTML = '<div style="font-family:system-ui;padding:24px;max-width:420px;margin:40px auto">' +
+      '<h3 style="margin:0 0 8px">Gagal memuat aplikasi</h3>' +
+      '<p style="color:#555">' + (e && e.message || e) + '</p>' +
+      '<p><a href="https://kenzie-preset.vercel.app/">Coba vercel.app</a></p></div>';
+  }
+  Promise.all(files.map(function (f) {
+    return fetch(f, { cache: 'no-store' }).then(function (r) {
+      if (!r.ok) throw new Error(f + ' → ' + r.status);
+      return r.text();
+    });
+  })).then(function (parts) {
+    var html = parts.join('');
+    if (html.length < 50000) throw new Error('Konten tidak lengkap (' + html.length + ')');
     document.open();
     document.write(html);
     document.close();
-  }).catch(function (e) {
-    console.error(e);
-    location.replace('https://kenzie-preset.vercel.app/' + (location.hash || ''));
-  });
+  }).catch(fail);
 })();
 </script>
 </head>
-<body style="margin:0;min-height:100vh;background:#f2f2f7"></body>
+<body style="margin:0;min-height:100vh;background:#f2f2f7;display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif;color:#666">
+  <p>Memuat…</p>
+</body>
 </html>
