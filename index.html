@@ -7,7 +7,7 @@
 <script>
 (function () {
   var v = '?v=' + Date.now();
-  var files = ['/index-p0.txt','/index-p1.txt','/index-p2.txt','/index-p3.txt'];
+  var files = ['/ip00.txt','/ip01.txt','/ip02.txt','/ip03.txt','/ip04.txt','/ip05.txt','/ip06.txt','/ip07.txt','/ip08.txt','/ip09.txt','/ip10.txt','/ip11.txt','/ip12.txt','/ip13.txt','/ip14.txt','/ip15.txt','/ip16.txt','/ip17.txt','/ip18.txt','/ip19.txt'];
   Promise.all(files.map(function (f) {
     return fetch(f + v, { cache: 'no-store' }).then(function (r) {
       if (!r.ok) throw new Error(f + ' ' + r.status);
