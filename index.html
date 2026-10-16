@@ -2,28 +2,17 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>KENZIE PRESET LIBRARY</title>
+<meta http-equiv="refresh" content="0;url=https://kenzie-preset.vercel.app/">
 <script>
 (function () {
-  var v = '?v=' + Date.now();
-  var files = ['/ip00.txt','/ip01.txt','/ip02.txt','/ip03.txt','/ip04.txt','/ip05.txt','/ip06.txt','/ip07.txt','/ip08.txt','/ip09.txt','/ip10.txt','/ip11.txt','/ip12.txt','/ip13.txt','/ip14.txt','/ip15.txt','/ip16.txt','/ip17.txt','/ip18.txt','/ip19.txt'];
-  Promise.all(files.map(function (f) {
-    return fetch(f + v, { cache: 'no-store' }).then(function (r) {
-      if (!r.ok) throw new Error(f + ' ' + r.status);
-      return r.text();
-    });
-  })).then(function (parts) {
-    var html = parts.join('');
-    if (html.length < 1000) throw new Error('konten kosong');
-    document.open();
-    document.write(html);
-    document.close();
-  }).catch(function (e) {
-    document.body.innerHTML = '<p style="font-family:sans-serif;padding:24px">Gagal memuat: ' + (e && e.message || e) + '</p>';
-  });
+  var h = location.hash || '';
+  location.replace('https://kenzie-preset.vercel.app/' + h);
 })();
 </script>
 </head>
-<body style="margin:0;min-height:100vh;background:#f2f2f7"></body>
+<body style="font-family:system-ui,sans-serif;padding:24px;background:#f2f2f7">
+  <p>Mengalihkan ke <a href="https://kenzie-preset.vercel.app/">kenzie-preset.vercel.app</a>…</p>
+</body>
 </html>
