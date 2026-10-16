@@ -4,31 +4,41 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>KENZIE PRESET LIBRARY</title>
-<style>html,body{margin:0;height:100%;background:#f2f2f7}#boot{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif;color:#666;z-index:1}#app{position:fixed;inset:0;border:0;width:100%;height:100%;z-index:2;display:none}</style>
+<style>
+html,body{margin:0;height:100%;background:#f2f2f7}
+#boot{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif;color:#666;z-index:1;flex-direction:column;gap:8px}
+#app{position:fixed;inset:0;border:0;width:100%;height:100%;z-index:2}
+</style>
 </head>
 <body>
-<div id="boot">Memuat…</div>
-<iframe id="app" title="Kenzie Preset"></iframe>
+<div id="boot"><p>Memuat…</p></div>
+<iframe id="app" title="Kenzie Preset" style="display:none"></iframe>
 <script>
 (function () {
-  var ORIGIN = location.origin || 'https://kenzie-preset.web.id';
+  var ORIGIN = (location.origin && location.origin !== 'null') ? location.origin : 'https://kenzie-preset.web.id';
   var SRC = 'https://cdn.jsdelivr.net/gh/ryuze72/kenzie-preset@8ecca87960564fc0dfa0be746f29e1c002adb897/index.html';
   var boot = document.getElementById('boot');
   var frame = document.getElementById('app');
 
-  function slugFn() {
-    return "function presetSlug(name){return String(name||'').trim().toLowerCase().replace(/\\s+/g,'-').replace(/[^\\w\\u00C0-\\u024f\\-]+/g,'').replace(/-+/g,'-').replace(/^-|-$/g,'')||'preset';}";
-  }
-
   function patch(html) {
-    // absolute local assets so blob/srcdoc can load them
-    html = html.replace(/(src|href)=["']\/(?!\/)([^"']+)["']/g, function (_, a, p) {
-      return a + '="' + ORIGIN + '/' + p + '"';
-    });
+    // Force base so relative /api and assets resolve to real site
+    if (html.indexOf('<base ') < 0) {
+      html = html.replace(/<head[^>]*>/i, function (m) {
+        return m + '\n  <base href="' + ORIGIN + '/">';
+      });
+    }
 
+    // getSiteBase always real origin (parent)
+    html = html.replace(
+      /function getSiteBase\(\)\s*\{[^]*?\n\s*\}/,
+      "function getSiteBase(){ return '" + ORIGIN + "'; }"
+    );
+
+    // webLink = nama preset
     html = html.replace(
       "function webLink(p) { return p?.id ? getSiteBase() + '/#preset/' + p.id : getSiteBase() + '/#home'; }",
-      slugFn() + "function webLink(p){if(!p)return getSiteBase()+'/#home';var s=presetSlug(p.name)||String(p.id||'');return getSiteBase()+'/#preset/'+encodeURIComponent(s);}"
+      "function presetSlug(name){return String(name||'').trim().toLowerCase().replace(/\\s+/g,'-').replace(/[^\\w\\u00C0-\\u024f\\-]+/g,'').replace(/-+/g,'-').replace(/^-|-$/g,'')||'preset';}" +
+      "function webLink(p){if(!p)return getSiteBase()+'/#home';var s=presetSlug(p.name)||String(p.id||'');return getSiteBase()+'/#preset/'+encodeURIComponent(s);}"
     );
 
     html = html.replace(
@@ -36,9 +46,6 @@
       "if (h.startsWith('preset/')) { let key = h.slice(7).split(/[/?#]/)[0]; try { key = decodeURIComponent(key); } catch (e) {} if (key) { navigate('detail', key); return; } }"
     );
 
-    var oldRd = "function renderDetail(id) {\n      const p = presets.find(x=>x.id===id); const el = document.getElementById('detailContent');\n      if (!p) { el.innerHTML = `<div class=\"empty\"><h3>Mohon tunggu beberapa detik</h3><button class=\"btn btn-primary\" style=\"margin-top:12px\" onclick=\"navigate('home')\">Kembali</button></div>`; document.getElementById('similarSection').style.display='none'; return; }";
-
-    // simpler match without requiring exact !p block
     html = html.replace(
       "function renderDetail(id) {\n      const p = presets.find(x=>x.id===id); const el = document.getElementById('detailContent');",
       "function renderDetail(id) {\n" +
@@ -61,17 +68,32 @@
       "      if(window.__detailRetry){clearInterval(window.__detailRetry);window.__detailRetry=null;}\n"
     );
 
-    // inject hash + parent sync + preset-link
-    var inject = '<script>(function(){try{var h=parent.location.hash;if(h)location.hash=h;}catch(e){}' +
-      'window.addEventListener("hashchange",function(){try{parent.history.replaceState(null,"",parent.location.pathname+location.hash);}catch(e){}});' +
-      'var _sh=history.pushState;history.pushState=function(){_sh.apply(this,arguments);try{parent.history.replaceState(null,"",parent.location.pathname+location.hash);}catch(e){}};' +
-      'var _sr=history.replaceState;history.replaceState=function(){_sr.apply(this,arguments);try{parent.history.replaceState(null,"",parent.location.pathname+location.hash);}catch(e){}};' +
-      '})();<\/script>';
-    if (html.indexOf('preset-link.js') < 0) {
-      inject += '<script src="' + ORIGIN + '/preset-link.js"><\/script>';
-    }
+    // Sync hash from parent into iframe, and bubble hash changes up
+    var inject = '<script>(function(){try{var h=parent.location.hash;if(h){location.hash=h;}}catch(e){}' +
+      'function up(){try{parent.history.replaceState(null,"",parent.location.pathname+parent.location.search+location.hash);}catch(e){}}' +
+      'window.addEventListener("hashchange",up);' +
+      'var ps=history.pushState;history.pushState=function(){ps.apply(this,arguments);up();};' +
+      'var rs=history.replaceState;history.replaceState=function(){rs.apply(this,arguments);up();};' +
+      '})();<\/script>' +
+      '<script src="' + ORIGIN + '/preset-link.js"><\/script>';
     html = html.replace('</body>', inject + '\n</body>');
     return html;
+  }
+
+  function show(html) {
+    frame.style.display = 'block';
+    frame.onload = function () { boot.style.display = 'none'; };
+    try {
+      frame.removeAttribute('src');
+      frame.srcdoc = html;
+    } catch (e1) {
+      try {
+        frame.src = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
+      } catch (e2) {
+        document.open(); document.write(html); document.close(); return;
+      }
+    }
+    setTimeout(function () { boot.style.display = 'none'; }, 2500);
   }
 
   fetch(SRC, { cache: 'no-store' }).then(function (r) {
@@ -79,26 +101,10 @@
     return r.text();
   }).then(function (html) {
     if (html.length < 10000) throw new Error('konten pendek');
-    html = patch(html);
-    // Prefer srcdoc (keeps parent URL/hash on web.id)
-    frame.onload = function () {
-      boot.style.display = 'none';
-      frame.style.display = 'block';
-    };
-    try {
-      frame.srcdoc = html;
-    } catch (e) {
-      var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-      frame.src = URL.createObjectURL(blob);
-    }
-    setTimeout(function () {
-      boot.style.display = 'none';
-      frame.style.display = 'block';
-    }, 1200);
+    show(patch(html));
   }).catch(function (e) {
     console.error(e);
-    boot.innerHTML = '<div style="padding:24px;text-align:center"><p>Gagal memuat</p><p><a href="https://kenzie-preset.vercel.app/' +
-      encodeURIComponent(location.hash || '').replace('%23','#') + '">Buka vercel.app</a></p></div>';
+    boot.innerHTML = '<p>Gagal memuat</p><p><a href="https://kenzie-preset.vercel.app/' + (location.hash || '') + '">Buka vercel.app</a></p>';
   });
 })();
 </script>
