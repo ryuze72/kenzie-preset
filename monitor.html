@@ -1,1 +1,181 @@
-PLACEHOLDER
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<style>html:not(.gate-ok) body>*:not(#kgate){display:none!important}html:not(.gate-ok){background:#000}</style>
+<script src="/gate.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>KENZIE Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light;--bg:#f2f2f7;--ink:#000;--muted:#636366;--g1:rgba(255,255,255,.78);--g2:rgba(255,255,255,.5);--edge:rgba(255,255,255,.9);--hair:rgba(60,60,67,.14);--ctl:rgba(118,118,128,.12);
+--shadow:0 0 0 .5px rgba(0,0,0,.05),0 8px 24px -10px rgba(0,0,0,.18);--accent:#007aff;--btn-a:#1a8aff;--btn-b:#007aff;
+--green:#1c8a38;--green-bg:rgba(52,199,89,.16);--amber:#9a5a00;--amber-bg:rgba(255,159,10,.16);--red:#d70015;--red-bg:rgba(255,59,48,.12);--info:#0a5fd0;--info-bg:rgba(0,122,255,.12);--teal:#0a7f8f;--teal-bg:rgba(50,173,230,.16);
+--blob1:#5ac8fa;--blob2:#0a84ff;--blob3:#5e5ce6;--blob4:#30d5c8;--blob-o:.5;--blur:18px;--sat:170%;--ease:cubic-bezier(.2,.8,.2,1);
+--font:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'SF Pro Display',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,Menlo,monospace}
+:root[data-theme=dark]{color-scheme:dark;--bg:#000;--ink:#fff;--muted:#9a9aa0;--g1:rgba(255,255,255,.11);--g2:rgba(255,255,255,.04);--edge:rgba(255,255,255,.14);--hair:rgba(255,255,255,.12);--ctl:rgba(118,118,128,.24);
+--shadow:0 1px 0 rgba(255,255,255,.08) inset,0 16px 36px -16px rgba(0,0,0,.8);--accent:#0a84ff;--btn-a:#2e94ff;--btn-b:#0a84ff;
+--green:#30d158;--green-bg:rgba(48,209,88,.16);--amber:#ffd60a;--amber-bg:rgba(255,214,10,.14);--red:#ff453a;--red-bg:rgba(255,69,58,.16);--info:#64b0ff;--info-bg:rgba(10,132,255,.2);--teal:#64d2ff;--teal-bg:rgba(100,210,255,.16);
+--blob1:#64d2ff;--blob2:#0a84ff;--blob3:#5e5ce6;--blob4:#40c8e0;--blob-o:.42}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg);-webkit-text-size-adjust:100%}
+body{font-family:var(--font);color:var(--ink);min-height:100dvh;padding:calc(14px + env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom));-webkit-font-smoothing:antialiased;overflow-x:hidden}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}a{color:inherit;text-decoration:none}
+.aurora{position:fixed;inset:0;z-index:-1;overflow:hidden;background:var(--bg)}
+.aurora i{position:absolute;width:62vmax;height:62vmax;border-radius:50%;filter:blur(70px);opacity:var(--blob-o);animation:drift 26s ease-in-out infinite alternate}
+.aurora i:nth-child(1){background:var(--blob1);top:-22vmax;left:-18vmax}.aurora i:nth-child(2){background:var(--blob2);top:10vmax;right:-30vmax;animation-delay:-6s;animation-duration:32s}
+.aurora i:nth-child(3){background:var(--blob3);bottom:-30vmax;left:-12vmax;animation-delay:-12s;opacity:calc(var(--blob-o)*.55)}.aurora i:nth-child(4){background:var(--blob4);bottom:-24vmax;right:-20vmax;animation-delay:-3s;animation-duration:38s;opacity:calc(var(--blob-o)*.7)}
+@keyframes drift{to{transform:translate3d(6vmax,4vmax,0) scale(1.12)}}
+.wrap{max-width:760px;margin:0 auto}
+.glass{background:linear-gradient(180deg,var(--g1),var(--g2));border:.5px solid var(--edge);border-radius:24px;box-shadow:var(--shadow);backdrop-filter:blur(var(--blur)) saturate(var(--sat));-webkit-backdrop-filter:blur(var(--blur)) saturate(var(--sat))}
+.top{display:flex;align-items:center;gap:10px;padding:14px 14px 14px 18px;margin-bottom:12px}
+.top .grow{flex:1;min-width:0}.top h1{font-size:21px;font-weight:800;letter-spacing:-.03em}.top p{font-size:12.5px;color:var(--muted);font-weight:600;margin-top:2px}
+.live{display:inline-block;width:8px;height:8px;border-radius:50%;background:#34c759;margin-right:6px;animation:pulse 2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 6px rgba(52,199,89,0)}0%{box-shadow:0 0 0 0 rgba(52,199,89,.5)}}
+.ibtn{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:var(--ctl);transition:transform .25s var(--ease)}.ibtn:active{transform:scale(.92)}.ibtn svg{width:19px;height:19px}.ibtn.spin svg{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.seg{display:flex;gap:4px;padding:4px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none;border-radius:999px}.seg::-webkit-scrollbar{display:none}
+.seg button{flex:1 0 auto;padding:10px 14px;border-radius:999px;font-size:13px;font-weight:700;color:var(--muted);transition:all .3s var(--ease);white-space:nowrap}
+.seg button.on{background:linear-gradient(135deg,var(--btn-a),var(--btn-b));color:#fff;box-shadow:0 6px 16px -6px rgba(0,122,255,.45)}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
+@media(min-width:560px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat{padding:14px 16px}.stat b{display:block;font-size:22px;font-weight:800;letter-spacing:-.03em}.stat span{font-size:11.5px;color:var(--muted);font-weight:700}
+.panel{display:none;padding:6px 0 10px}.panel.on{display:block}
+.row{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-bottom:1px solid var(--hair)}
+.row:last-child{border-bottom:0}
+.badge{flex:0 0 auto;min-width:64px;text-align:center;padding:6px 8px;border-radius:12px;font-size:11px;font-weight:800}
+.badge.ok{background:var(--green-bg);color:var(--green)}.badge.wait{background:var(--amber-bg);color:var(--amber)}.badge.fail{background:var(--red-bg);color:var(--red)}.badge.info{background:var(--info-bg);color:var(--info)}.badge.teal{background:var(--teal-bg);color:var(--teal)}
+.meta{flex:1;min-width:0}.meta .t{font-weight:800;font-size:14px;margin-bottom:2px;word-break:break-word}.meta .s{font-size:12px;color:var(--muted);font-weight:600;word-break:break-word}.meta .id{font-family:var(--mono);font-size:11px;color:var(--accent);margin-top:4px}
+.empty{padding:28px 16px;text-align:center;color:var(--muted);font-weight:600;font-size:13px}
+.foot{margin-top:14px;text-align:center;font-size:11.5px;color:var(--muted);font-weight:600}
+.foot a{color:var(--accent);font-weight:700}
+</style>
+</head>
+<body>
+<div class="aurora" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+<div class="wrap">
+  <div class="glass top">
+    <div class="grow">
+      <h1>Monitor</h1>
+      <p><span class="live"></span>Live · Kenzie Preset</p>
+    </div>
+    <button class="ibtn" id="btnTheme" type="button" title="Tema" aria-label="Tema">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <button class="ibtn" id="btnReload" type="button" title="Refresh" aria-label="Refresh">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+    </button>
+  </div>
+
+  <div class="glass seg" id="tabs">
+    <button type="button" data-tab="orders" class="on">Orders</button>
+    <button type="button" data-tab="mail">Temp Mail</button>
+    <button type="button" data-tab="sms">SMS</button>
+    <button type="button" data-tab="tools">Tools</button>
+  </div>
+
+  <div class="stats" id="stats">
+    <div class="glass stat"><b id="sOrders">—</b><span>Orders</span></div>
+    <div class="glass stat"><b id="sPending">—</b><span>Pending</span></div>
+    <div class="glass stat"><b id="sDone">—</b><span>Selesai</span></div>
+    <div class="glass stat"><b id="sMail">—</b><span>Mail / SMS</span></div>
+  </div>
+
+  <div class="glass panel on" id="p-orders"><div class="empty">Memuat…</div></div>
+  <div class="glass panel" id="p-mail"><div class="empty">Memuat…</div></div>
+  <div class="glass panel" id="p-sms"><div class="empty">Memuat…</div></div>
+  <div class="glass panel" id="p-tools"><div class="empty">Memuat…</div></div>
+
+  <p class="foot">Kenzie Preset · <a href="https://kenzie-preset.web.id/">kenzie-preset.web.id</a></p>
+</div>
+<script>
+const DB='https://kenzie-preset-default-rtdb.firebaseio.com', SITE='https://kenzie-preset.web.id';
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+function themeInit(){
+  const t = localStorage.getItem('kenzie_theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-theme', t);
+}
+themeInit();
+$('#btnTheme').onclick = () => {
+  const cur = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', cur);
+  localStorage.setItem('kenzie_theme', cur);
+};
+$$('#tabs button').forEach(b => b.onclick = () => {
+  $$('#tabs button').forEach(x => x.classList.toggle('on', x === b));
+  $$('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + b.dataset.tab));
+});
+async function getJSON(path){
+  try{
+    const r = await fetch(DB + path + '.json', { cache: 'no-store' });
+    if(!r.ok) return null;
+    return await r.json();
+  }catch(e){ return null; }
+}
+function fmtTime(ts){
+  if(!ts) return '—';
+  try{
+    const d = new Date(typeof ts === 'number' ? ts : Date.parse(ts));
+    if(isNaN(d)) return String(ts);
+    return d.toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' });
+  }catch(e){ return String(ts); }
+}
+function row(badgeClass, badgeText, title, sub, id){
+  return `<div class="row"><div class="badge ${badgeClass}">${badgeText}</div><div class="meta"><div class="t">${title}</div><div class="s">${sub||''}</div>${id?`<div class="id">${id}</div>`:''}</div></div>`;
+}
+function renderList(el, html){ el.innerHTML = html || '<div class="empty">Belum ada data</div>'; }
+async function loadOrders(){
+  const data = await getJSON('/orders');
+  const list = data && typeof data === 'object' ? Object.entries(data).map(([k,v]) => ({ id:k, ...(v||{}) })) : [];
+  list.sort((a,b) => (b.createdAt||b.ts||0) - (a.createdAt||a.ts||0));
+  const pending = list.filter(x => /pending|wait|proses/i.test(String(x.status||''))).length;
+  const done = list.filter(x => /done|ok|selesai|success|paid/i.test(String(x.status||''))).length;
+  $('#sOrders').textContent = list.length;
+  $('#sPending').textContent = pending;
+  $('#sDone').textContent = done;
+  renderList($('#p-orders'), list.slice(0,80).map(o => {
+    const st = String(o.status||'—');
+    let bc = 'info';
+    if(/done|ok|selesai|success|paid/i.test(st)) bc='ok';
+    else if(/pending|wait|proses/i.test(st)) bc='wait';
+    else if(/fail|cancel|reject|error/i.test(st)) bc='fail';
+    return row(bc, st, o.email || o.buyer || o.name || o.id, [o.package||o.paket||'', fmtTime(o.createdAt||o.ts)].filter(Boolean).join(' · '), o.orderId || o.id);
+  }).join(''));
+}
+async function loadMail(){
+  const data = await getJSON('/tempmail') || await getJSON('/mail');
+  const list = data && typeof data === 'object' ? Object.entries(data).map(([k,v]) => ({ id:k, ...(v||{}) })) : [];
+  list.sort((a,b) => (b.ts||0) - (a.ts||0));
+  $('#sMail').textContent = list.length;
+  renderList($('#p-mail'), list.slice(0,80).map(m => row('teal', 'MAIL', m.email || m.address || m.id, fmtTime(m.ts||m.createdAt), m.id)).join(''));
+}
+async function loadSms(){
+  const data = await getJSON('/sms');
+  const list = data && typeof data === 'object' ? Object.entries(data).map(([k,v]) => ({ id:k, ...(v||{}) })) : [];
+  list.sort((a,b) => (b.ts||0) - (a.ts||0));
+  renderList($('#p-sms'), list.slice(0,80).map(m => row('info', 'SMS', m.number || m.phone || m.id, [m.country||'', fmtTime(m.ts)].filter(Boolean).join(' · '), m.id)).join(''));
+}
+async function loadTools(){
+  renderList($('#p-tools'), [
+    row('ok', 'SITE', SITE, 'Domain utama'),
+    row('info', 'DB', DB.replace('https://',''), 'Firebase RTDB'),
+    row('teal', 'AM', SITE + '/amprem.html', 'AM Premium'),
+    row('wait', 'SMS', SITE + '/sms.html', 'Temp SMS'),
+  ].join(''));
+}
+async function loadAll(){
+  const btn = $('#btnReload'); btn.classList.add('spin');
+  try{ await Promise.all([loadOrders(), loadMail(), loadSms(), loadTools()]); }
+  finally{ btn.classList.remove('spin'); }
+}
+$('#btnReload').onclick = () => loadAll();
+document.addEventListener('visibilitychange', () => { if(!document.hidden) loadAll(); });
+(function(){try{if('serviceWorker' in navigator){/* no-op */}}catch(e){}})();
+loadAll();setInterval(()=>{if(!document.hidden)loadAll()},60000);
+</script>
+</body>
+</html>
