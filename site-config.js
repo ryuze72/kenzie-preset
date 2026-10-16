@@ -6,15 +6,41 @@
 
   function makeUrl(id) {
     id = id == null ? '' : String(id).trim();
+    // tolak nomor urut murni tanpa prefix RYZ-
     return id ? (SITE + '/#preset/' + id) : (SITE + '/#home');
   }
 
-  function findPreset(id) {
-    var list = window.presets;
-    if (!Array.isArray(list)) return null;
-    var p = list.find(function (x) { return x && x.id === id; });
-    if (p) return p;
-    return null;
+  function copyUrl(url, msg) {
+    msg = msg || 'Link web disalin!';
+    if (typeof window.copyText === 'function') {
+      window.copyText(url, msg);
+      return;
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function () {
+        if (typeof toast === 'function') toast(msg, 'ok');
+      }).catch(function () {
+        try {
+          var ta = document.createElement('textarea');
+          ta.value = url;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          if (typeof toast === 'function') toast(msg, 'ok');
+        } catch (e) {}
+      });
+      return;
+    }
+    try {
+      var ta2 = document.createElement('textarea');
+      ta2.value = url;
+      document.body.appendChild(ta2);
+      ta2.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta2);
+      if (typeof toast === 'function') toast(msg, 'ok');
+    } catch (e) {}
   }
 
   function patch() {
@@ -25,36 +51,21 @@
         if (typeof p === 'string') return makeUrl(p);
         return makeUrl(p.id);
       };
+      // onclick selalu kirim p.id (RYZ-xxx) — jangan pakai index upload
       window.copyWebLink = function (id) {
-        var p = findPreset(id);
-        var useId = (p && p.id) ? p.id : id;
-        if (useId == null || useId === '') {
-          if (typeof toast === 'function') toast('Preset tidak ditemukan', 'err');
-          return;
-        }
-        var url = makeUrl(useId);
-        if (typeof window.copyText === 'function') window.copyText(url, 'Link web disalin!');
-        else if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(url).then(function () {
-            if (typeof toast === 'function') toast('Link web disalin!', 'ok');
-          });
-        }
+        var url = makeUrl(id);
+        copyUrl(url, 'Link web disalin!');
       };
-      var prevShare = window.sharePreset;
       window.sharePreset = function (id) {
-        var p = findPreset(id);
-        if (!p) {
-          if (typeof prevShare === 'function') return prevShare(id);
-          return;
-        }
-        var url = makeUrl(p.id);
-        var text = (p.name || p.id) + ' (' + p.id + ')\n' + url;
+        var url = makeUrl(id);
+        var title = String(id || 'Preset');
+        var text = title + '\n' + url;
         if (navigator.share) {
-          navigator.share({ title: p.name || p.id, text: text, url: url }).catch(function () {
-            if (typeof window.copyText === 'function') window.copyText(text, 'Disalin!');
+          navigator.share({ title: title, text: text, url: url }).catch(function () {
+            copyUrl(text, 'Disalin!');
           });
-        } else if (typeof window.copyText === 'function') {
-          window.copyText(text, 'Disalin!');
+        } else {
+          copyUrl(text, 'Disalin!');
         }
       };
     } catch (e) {}
