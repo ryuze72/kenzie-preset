@@ -4,38 +4,103 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>KENZIE PRESET LIBRARY</title>
+<style>html,body{margin:0;height:100%;background:#f2f2f7}#boot{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif;color:#666;z-index:1}#app{position:fixed;inset:0;border:0;width:100%;height:100%;z-index:2;display:none}</style>
+</head>
+<body>
+<div id="boot">Memuat…</div>
+<iframe id="app" title="Kenzie Preset"></iframe>
 <script>
 (function () {
-  var TOTAL = 20;
-  var v = '?v=20261016b';
-  var files = [];
-  for (var i = 0; i < TOTAL; i++) {
-    var n = (i < 10 ? '0' : '') + i;
-    files.push('/ip' + n + '.txt' + v);
+  var ORIGIN = location.origin || 'https://kenzie-preset.web.id';
+  var SRC = 'https://cdn.jsdelivr.net/gh/ryuze72/kenzie-preset@8ecca87960564fc0dfa0be746f29e1c002adb897/index.html';
+  var boot = document.getElementById('boot');
+  var frame = document.getElementById('app');
+
+  function slugFn() {
+    return "function presetSlug(name){return String(name||'').trim().toLowerCase().replace(/\\s+/g,'-').replace(/[^\\w\\u00C0-\\u024f\\-]+/g,'').replace(/-+/g,'-').replace(/^-|-$/g,'')||'preset';}";
   }
-  function fail(e) {
-    console.error(e);
-    document.body.innerHTML = '<div style="font-family:system-ui;padding:24px;max-width:420px;margin:40px auto">' +
-      '<h3 style="margin:0 0 8px">Gagal memuat aplikasi</h3>' +
-      '<p style="color:#555">' + (e && e.message || e) + '</p>' +
-      '<p><a href="https://kenzie-preset.vercel.app/">Coba vercel.app</a></p></div>';
-  }
-  Promise.all(files.map(function (f) {
-    return fetch(f, { cache: 'no-store' }).then(function (r) {
-      if (!r.ok) throw new Error(f + ' → ' + r.status);
-      return r.text();
+
+  function patch(html) {
+    // absolute local assets so blob/srcdoc can load them
+    html = html.replace(/(src|href)=["']\/(?!\/)([^"']+)["']/g, function (_, a, p) {
+      return a + '="' + ORIGIN + '/' + p + '"';
     });
-  })).then(function (parts) {
-    var html = parts.join('');
-    if (html.length < 50000) throw new Error('Konten tidak lengkap (' + html.length + ')');
-    document.open();
-    document.write(html);
-    document.close();
-  }).catch(fail);
+
+    html = html.replace(
+      "function webLink(p) { return p?.id ? getSiteBase() + '/#preset/' + p.id : getSiteBase() + '/#home'; }",
+      slugFn() + "function webLink(p){if(!p)return getSiteBase()+'/#home';var s=presetSlug(p.name)||String(p.id||'');return getSiteBase()+'/#preset/'+encodeURIComponent(s);}"
+    );
+
+    html = html.replace(
+      "if (h.startsWith('preset/')) { const id = h.slice(7).split(/[/?#]/)[0]; if (id) { navigate('detail', id); return; } }",
+      "if (h.startsWith('preset/')) { let key = h.slice(7).split(/[/?#]/)[0]; try { key = decodeURIComponent(key); } catch (e) {} if (key) { navigate('detail', key); return; } }"
+    );
+
+    var oldRd = "function renderDetail(id) {\n      const p = presets.find(x=>x.id===id); const el = document.getElementById('detailContent');\n      if (!p) { el.innerHTML = `<div class=\"empty\"><h3>Mohon tunggu beberapa detik</h3><button class=\"btn btn-primary\" style=\"margin-top:12px\" onclick=\"navigate('home')\">Kembali</button></div>`; document.getElementById('similarSection').style.display='none'; return; }";
+
+    // simpler match without requiring exact !p block
+    html = html.replace(
+      "function renderDetail(id) {\n      const p = presets.find(x=>x.id===id); const el = document.getElementById('detailContent');",
+      "function renderDetail(id) {\n" +
+      "      var key=(function(){try{return decodeURIComponent(String(id||''));}catch(e){return String(id||'');}})();\n" +
+      "      var sk=typeof presetSlug==='function'?presetSlug(key):key;\n" +
+      "      var p=presets.find(function(x){return x&&(x.id===key||x.id===id||(typeof presetSlug==='function'&&presetSlug(x.name)===sk)||x.name===key);});\n" +
+      "      var el=document.getElementById('detailContent');\n" +
+      "      if(!p){\n" +
+      "        el.innerHTML='<div class=\"empty\"><h3>Mohon tunggu beberapa detik</h3><button class=\"btn btn-primary\" style=\"margin-top:12px\" onclick=\"navigate(\\x27home\\x27)\">Kembali</button></div>';\n" +
+      "        var sim=document.getElementById('similarSection'); if(sim) sim.style.display='none';\n" +
+      "        if(!window.__detailRetry){\n" +
+      "          window.__detailRetry=setInterval(function(){\n" +
+      "            var found=presets&&presets.find(function(x){return x&&(x.id===key||x.id===id||(typeof presetSlug==='function'&&presetSlug(x.name)===sk)||x.name===key);});\n" +
+      "            if(found){clearInterval(window.__detailRetry);window.__detailRetry=null;renderDetail(found.id||id);}\n" +
+      "            else if(typeof loaded!=='undefined'&&loaded){clearInterval(window.__detailRetry);window.__detailRetry=null;el.innerHTML='<div class=\"empty\"><h3>Preset tidak ditemukan</h3><button class=\"btn btn-primary\" style=\"margin-top:12px\" onclick=\"navigate(\\x27home\\x27)\">Kembali</button></div>';}\n" +
+      "          },200);\n" +
+      "        }\n" +
+      "        return;\n" +
+      "      }\n" +
+      "      if(window.__detailRetry){clearInterval(window.__detailRetry);window.__detailRetry=null;}\n"
+    );
+
+    // inject hash + parent sync + preset-link
+    var inject = '<script>(function(){try{var h=parent.location.hash;if(h)location.hash=h;}catch(e){}' +
+      'window.addEventListener("hashchange",function(){try{parent.history.replaceState(null,"",parent.location.pathname+location.hash);}catch(e){}});' +
+      'var _sh=history.pushState;history.pushState=function(){_sh.apply(this,arguments);try{parent.history.replaceState(null,"",parent.location.pathname+location.hash);}catch(e){}};' +
+      'var _sr=history.replaceState;history.replaceState=function(){_sr.apply(this,arguments);try{parent.history.replaceState(null,"",parent.location.pathname+location.hash);}catch(e){}};' +
+      '})();<\/script>';
+    if (html.indexOf('preset-link.js') < 0) {
+      inject += '<script src="' + ORIGIN + '/preset-link.js"><\/script>';
+    }
+    html = html.replace('</body>', inject + '\n</body>');
+    return html;
+  }
+
+  fetch(SRC, { cache: 'no-store' }).then(function (r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.text();
+  }).then(function (html) {
+    if (html.length < 10000) throw new Error('konten pendek');
+    html = patch(html);
+    // Prefer srcdoc (keeps parent URL/hash on web.id)
+    frame.onload = function () {
+      boot.style.display = 'none';
+      frame.style.display = 'block';
+    };
+    try {
+      frame.srcdoc = html;
+    } catch (e) {
+      var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+      frame.src = URL.createObjectURL(blob);
+    }
+    setTimeout(function () {
+      boot.style.display = 'none';
+      frame.style.display = 'block';
+    }, 1200);
+  }).catch(function (e) {
+    console.error(e);
+    boot.innerHTML = '<div style="padding:24px;text-align:center"><p>Gagal memuat</p><p><a href="https://kenzie-preset.vercel.app/' +
+      encodeURIComponent(location.hash || '').replace('%23','#') + '">Buka vercel.app</a></p></div>';
+  });
 })();
 </script>
-</head>
-<body style="margin:0;min-height:100vh;background:#f2f2f7;display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif;color:#666">
-  <p>Memuat…</p>
 </body>
 </html>
