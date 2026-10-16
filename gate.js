@@ -1,6 +1,7 @@
 /* Gerbang password halaman admin. Password tidak disimpan polos (PBKDF2-SHA256).
    Catatan: ini pengaman sisi-browser, bukan pengganti keamanan server. */
 (function () {
+  try{var _sc=document.createElement('script');_sc.src='/site-config.js';(document.head||document.documentElement).appendChild(_sc);}catch(_scE){}
   var path = '';
   try { path = (location.pathname || '/').toLowerCase(); } catch (e) {}
   var onAmprem = /amprem/i.test(path);
