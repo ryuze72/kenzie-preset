@@ -1,72 +1,76 @@
-/* Domain resmi + format link: https://kenzie-preset.web.id/#preset/RYZ-059 */
+/* Domain + link preset pakai JUDUL: https://kenzie-preset.web.id/#preset/nama-judul */
 (function () {
   var SITE = 'https://kenzie-preset.web.id';
   window.KENZIE_SITE_URL = SITE;
   window.SITE_URL = SITE;
 
-  function makeUrl(id) {
-    id = id == null ? '' : String(id).trim();
-    // tolak nomor urut murni tanpa prefix RYZ-
-    return id ? (SITE + '/#preset/' + id) : (SITE + '/#home');
+  function slug(name) {
+    return String(name || '').trim().toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\u00C0-\u024f\-]+/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '') || 'preset';
+  }
+
+  function listPresets() {
+    try {
+      var raw = localStorage.getItem('kenzie_presets_v2');
+      var arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) { return []; }
+  }
+
+  function resolve(key) {
+    key = String(key || '');
+    try { key = decodeURIComponent(key); } catch (e) {}
+    var sk = slug(key);
+    var arr = listPresets();
+    return arr.find(function (x) {
+      return x && (x.id === key || slug(x.name) === sk || x.name === key);
+    }) || null;
+  }
+
+  function makeUrlFromPreset(p) {
+    if (!p) return SITE + '/#home';
+    var s = slug(p.name) || p.id;
+    return SITE + '/#preset/' + encodeURIComponent(s);
   }
 
   function copyUrl(url, msg) {
     msg = msg || 'Link web disalin!';
-    if (typeof window.copyText === 'function') {
-      window.copyText(url, msg);
-      return;
-    }
+    if (typeof window.copyText === 'function') return window.copyText(url, msg);
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(url).then(function () {
+      return navigator.clipboard.writeText(url).then(function () {
         if (typeof toast === 'function') toast(msg, 'ok');
-      }).catch(function () {
-        try {
-          var ta = document.createElement('textarea');
-          ta.value = url;
-          document.body.appendChild(ta);
-          ta.select();
-          document.execCommand('copy');
-          document.body.removeChild(ta);
-          if (typeof toast === 'function') toast(msg, 'ok');
-        } catch (e) {}
       });
-      return;
     }
-    try {
-      var ta2 = document.createElement('textarea');
-      ta2.value = url;
-      document.body.appendChild(ta2);
-      ta2.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta2);
-      if (typeof toast === 'function') toast(msg, 'ok');
-    } catch (e) {}
   }
 
   function patch() {
     try {
+      window.presetSlug = slug;
       window.getSiteBase = function () { return SITE; };
       window.webLink = function (p) {
         if (!p) return SITE + '/#home';
-        if (typeof p === 'string') return makeUrl(p);
-        return makeUrl(p.id);
+        if (typeof p === 'string') {
+          var hit = resolve(p);
+          return hit ? makeUrlFromPreset(hit) : (SITE + '/#preset/' + encodeURIComponent(slug(p)));
+        }
+        return makeUrlFromPreset(p);
       };
-      // onclick selalu kirim p.id (RYZ-xxx) — jangan pakai index upload
       window.copyWebLink = function (id) {
-        var url = makeUrl(id);
+        var p = resolve(id);
+        var url = p ? makeUrlFromPreset(p) : (SITE + '/#preset/' + encodeURIComponent(slug(id)));
         copyUrl(url, 'Link web disalin!');
       };
       window.sharePreset = function (id) {
-        var url = makeUrl(id);
-        var title = String(id || 'Preset');
+        var p = resolve(id);
+        var url = p ? makeUrlFromPreset(p) : (SITE + '/#preset/' + encodeURIComponent(slug(id)));
+        var title = (p && p.name) || String(id || 'Preset');
         var text = title + '\n' + url;
         if (navigator.share) {
-          navigator.share({ title: title, text: text, url: url }).catch(function () {
-            copyUrl(text, 'Disalin!');
-          });
-        } else {
-          copyUrl(text, 'Disalin!');
-        }
+          navigator.share({ title: title, text: text, url: url }).catch(function () { copyUrl(text, 'Disalin!'); });
+        } else copyUrl(text, 'Disalin!');
       };
     } catch (e) {}
   }
@@ -74,6 +78,6 @@
   patch();
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', patch);
   setTimeout(patch, 0);
-  setTimeout(patch, 300);
-  setTimeout(patch, 1200);
+  setTimeout(patch, 400);
+  setTimeout(patch, 1500);
 })();
