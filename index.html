@@ -6,13 +6,13 @@
 <title>KENZIE PRESET LIBRARY</title>
 <script>
 (function () {
-  // Ambil index utuh dari commit yang masih bagus, lalu patch link nama di client
-  var SRC = 'https://cdn.jsdelivr.net/gh/ryuze72/kenzie-preset@a39d3b370224f9e71a6b28395cd6577326c154a6/index.html';
+  var SRC = 'https://raw.githubusercontent.com/ryuze72/kenzie-preset/5b7f8333b6c3/index.html';
   fetch(SRC, { cache: 'no-store' }).then(function (r) {
     if (!r.ok) throw new Error('HTTP ' + r.status);
     return r.text();
   }).then(function (html) {
-    // Patch: salin link pakai NAMA preset
+    if (html.length < 10000) throw new Error('konten terlalu pendek');
+    // Salin link web = NAMA preset (bukan RYZ-xxx)
     html = html.replace(
       "function webLink(p) { return p?.id ? getSiteBase() + '/#preset/' + p.id : getSiteBase() + '/#home'; }",
       "function presetSlug(name){return String(name||'').trim().toLowerCase().replace(/\\s+/g,'-').replace(/[^\\w\\u00C0-\\u024f\\-]+/g,'').replace(/-+/g,'-').replace(/^-|-$/g,'')||'preset';}function webLink(p){if(!p)return getSiteBase()+'/#home';var s=presetSlug(p.name)||String(p.id||'');return getSiteBase()+'/#preset/'+encodeURIComponent(s);}"
@@ -25,14 +25,14 @@
       "function renderDetail(id) {\n      const p = presets.find(x=>x.id===id); const el = document.getElementById('detailContent');",
       "function renderDetail(id) { var key=(function(){try{return decodeURIComponent(String(id||''));}catch(e){return String(id||'');}})(); var sk=typeof presetSlug==='function'?presetSlug(key):key; const p = presets.find(x=>x.id===key||x.id===id||(typeof presetSlug==='function'&&presetSlug(x.name)===sk)||x.name===key); const el = document.getElementById('detailContent');"
     );
-    // Inject preset-link.js
     if (html.indexOf('preset-link.js') < 0) {
-      html = html.replace('</body>', '<script src="/preset-link.js"><\/script></body>');
+      html = html.replace('</body>', '<script src="/preset-link.js"><\/script>\n</body>');
     }
     document.open();
     document.write(html);
     document.close();
   }).catch(function (e) {
+    console.error(e);
     location.replace('https://kenzie-preset.vercel.app/' + (location.hash || ''));
   });
 })();
