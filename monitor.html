@@ -44,14 +44,16 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}a{colo
 @media(min-width:560px){.stats{grid-template-columns:repeat(4,1fr)}}
 .stat{padding:14px 16px}.stat b{display:block;font-size:22px;font-weight:800;letter-spacing:-.03em}.stat span{font-size:11.5px;color:var(--muted);font-weight:700}
 .panel{display:none;padding:6px 0 10px}.panel.on{display:block}
-.row{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-bottom:1px solid var(--hair)}
-.row:last-child{border-bottom:0}
+.card{padding:16px;margin-bottom:12px}.card h2{font-size:15px;font-weight:800;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px}.card h2 small{font-size:12px;font-weight:600;color:var(--muted)}
+.row{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--hair)}.row:last-child{border-bottom:0}
 .badge{flex:0 0 auto;min-width:64px;text-align:center;padding:6px 8px;border-radius:12px;font-size:11px;font-weight:800}
 .badge.ok{background:var(--green-bg);color:var(--green)}.badge.wait{background:var(--amber-bg);color:var(--amber)}.badge.fail{background:var(--red-bg);color:var(--red)}.badge.info{background:var(--info-bg);color:var(--info)}.badge.teal{background:var(--teal-bg);color:var(--teal)}
 .meta{flex:1;min-width:0}.meta .t{font-weight:800;font-size:14px;margin-bottom:2px;word-break:break-word}.meta .s{font-size:12px;color:var(--muted);font-weight:600;word-break:break-word}.meta .id{font-family:var(--mono);font-size:11px;color:var(--accent);margin-top:4px}
+.bar{height:8px;border-radius:99px;background:var(--ctl);overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--btn-a),var(--btn-b));border-radius:99px}
 .empty{padding:28px 16px;text-align:center;color:var(--muted);font-weight:600;font-size:13px}
 .foot{margin-top:14px;text-align:center;font-size:11.5px;color:var(--muted);font-weight:600}
 .foot a{color:var(--accent);font-weight:700}
+.btn{padding:8px 12px;border-radius:999px;background:var(--ctl);font-size:12px;font-weight:700}
 </style>
 </head>
 <body>
@@ -59,8 +61,8 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}a{colo
 <div class="wrap">
   <div class="glass top">
     <div class="grow">
-      <h1>Monitor</h1>
-      <p><span class="live"></span>Live · Kenzie Preset</p>
+      <h1>KENZIE Monitor</h1>
+      <p><span class="live"></span>Live · semua aktivitas fitur</p>
     </div>
     <button class="ibtn" id="btnTheme" type="button" title="Tema" aria-label="Tema">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -70,112 +72,200 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}a{colo
     </button>
   </div>
 
-  <div class="glass seg" id="tabs">
-    <button type="button" data-tab="orders" class="on">Orders</button>
-    <button type="button" data-tab="mail">Temp Mail</button>
-    <button type="button" data-tab="sms">SMS</button>
-    <button type="button" data-tab="tools">Tools</button>
-  </div>
+  <div class="glass seg" id="tabs"></div>
+  <div class="glass seg" id="ranges" style="margin-top:-4px"></div>
+  <div class="stats" id="stats"></div>
+  <div id="panels"></div>
 
-  <div class="stats" id="stats">
-    <div class="glass stat"><b id="sOrders">—</b><span>Orders</span></div>
-    <div class="glass stat"><b id="sPending">—</b><span>Pending</span></div>
-    <div class="glass stat"><b id="sDone">—</b><span>Selesai</span></div>
-    <div class="glass stat"><b id="sMail">—</b><span>Mail / SMS</span></div>
-  </div>
-
-  <div class="glass panel on" id="p-orders"><div class="empty">Memuat…</div></div>
-  <div class="glass panel" id="p-mail"><div class="empty">Memuat…</div></div>
-  <div class="glass panel" id="p-sms"><div class="empty">Memuat…</div></div>
-  <div class="glass panel" id="p-tools"><div class="empty">Memuat…</div></div>
-
-  <p class="foot">Kenzie Preset · <a href="https://kenzie-preset.vercel.app/">kenzie-preset.vercel.app</a></p>
+  <p class="foot">Kenzie Preset · <a id="siteLink" href="https://kenzie-preset.vercel.app/">kenzie-preset.vercel.app</a></p>
 </div>
 <script>
-const DB='https://kenzie-preset-default-rtdb.firebaseio.com', SITE='https://kenzie-preset.vercel.app';
-const $ = (s, r=document) => r.querySelector(s);
-const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const DB='https://kenzie-preset-default-rtdb.firebaseio.com';
+const SITE=(location.origin&&/kenzie-preset/i.test(location.origin)?location.origin:'https://kenzie-preset.vercel.app');
+const TABS=[['ov','Ringkasan'],['act','Aktivitas'],['pre','Preset'],['ord','Pesanan'],['sys','Halaman']];
+const RANGES=[['1','Hari ini'],['7','7 hari'],['0','Semua']];
+const PAGES={home:'Beranda',search:'Cari',premium:'Premium',music:'Musik',contact:'Hubungi',amprem:'AM Premium',sms:'SMS',monitor:'Monitor',admin:'Admin',detail:'Detail preset'};
+const FEAT={home:'Beranda',search:'Pencarian',premium:'Premium',music:'Musik',music_play:'Putar lagu',music_download:'Unduh lagu',contact:'Hubungi',amprem:'AM Premium',sms:'Temp SMS',tempmail:'Temp Mail',fake_ml:'Fake Lobby ML',fake_ff:'Fake Lobby FF',hd:'HD Foto',view_preset:'Lihat preset',open_preset:'Buka preset',copy_link:'Salin link',share:'Share'};
+
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+let range='7', tab='ov', cache={logs:[], presets:[], orders:[]};
+
 function themeInit(){
-  const t = localStorage.getItem('kenzie_theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-  document.documentElement.setAttribute('data-theme', t);
+  const t=localStorage.getItem('kenzie_theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  document.documentElement.setAttribute('data-theme',t);
 }
 themeInit();
-$('#btnTheme').onclick = () => {
-  const cur = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', cur);
-  localStorage.setItem('kenzie_theme', cur);
+$('#btnTheme').onclick=()=>{
+  const cur=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',cur);
+  localStorage.setItem('kenzie_theme',cur);
 };
-$$('#tabs button').forEach(b => b.onclick = () => {
-  $$('#tabs button').forEach(x => x.classList.toggle('on', x === b));
-  $$('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + b.dataset.tab));
-});
+
 async function getJSON(path){
   try{
-    const r = await fetch(DB + path + '.json', { cache: 'no-store' });
+    const r=await fetch(DB+path+'.json',{cache:'no-store'});
     if(!r.ok) return null;
     return await r.json();
   }catch(e){ return null; }
 }
+function num(n){ return (Number(n)||0).toLocaleString('id-ID'); }
 function fmtTime(ts){
   if(!ts) return '—';
   try{
-    const d = new Date(typeof ts === 'number' ? ts : Date.parse(ts));
+    const d=new Date(typeof ts==='number'? (ts<1e12?ts*1000:ts) : Date.parse(ts));
     if(isNaN(d)) return String(ts);
-    return d.toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' });
+    return d.toLocaleString('id-ID',{dateStyle:'short',timeStyle:'short'});
   }catch(e){ return String(ts); }
 }
-function row(badgeClass, badgeText, title, sub, id){
+function dayStart(d){ const x=new Date(d); x.setHours(0,0,0,0); return x.getTime(); }
+in function inRange(ts){
+  if(range==='0') return true;
+  const t=typeof ts==='number'? (ts<1e12?ts*1000:ts) : Date.parse(ts);
+  if(!t||isNaN(t)) return true;
+  const now=Date.now();
+  if(range==='1') return t>=dayStart(now);
+  if(range==='7') return t>=now-7*864e5;
+  return true;
+}
+function featName(k){ return FEAT[k]||PAGES[k]||k||'—'; }
+function pageName(k){ return PAGES[k]||k||'—'; }
+
+function buildTabs(){
+  $('#tabs').innerHTML=TABS.map(([id,label],i)=>`<button type="button" data-tab="${id}" class="${id===tab?'on':''}">${label}</button>`).join('');
+  $('#ranges').innerHTML=RANGES.map(([id,label])=>`<button type="button" data-range="${id}" class="${id===range?'on':''}">${label}</button>`).join('');
+  $$('#tabs button').forEach(b=>b.onclick=()=>{ tab=b.dataset.tab; buildTabs(); render(); });
+  $$('#ranges button').forEach(b=>b.onclick=()=>{ range=b.dataset.range; buildTabs(); render(); });
+}
+
+function row(badgeClass,badgeText,title,sub,id){
   return `<div class="row"><div class="badge ${badgeClass}">${badgeText}</div><div class="meta"><div class="t">${title}</div><div class="s">${sub||''}</div>${id?`<div class="id">${id}</div>`:''}</div></div>`;
 }
-function renderList(el, html){ el.innerHTML = html || '<div class="empty">Belum ada data</div>'; }
-async function loadOrders(){
-  const data = await getJSON('/orders');
-  const list = data && typeof data === 'object' ? Object.entries(data).map(([k,v]) => ({ id:k, ...(v||{}) })) : [];
-  list.sort((a,b) => (b.createdAt||b.ts||0) - (a.createdAt||a.ts||0));
-  const pending = list.filter(x => /pending|wait|proses/i.test(String(x.status||''))).length;
-  const done = list.filter(x => /done|ok|selesai|success|paid/i.test(String(x.status||''))).length;
-  $('#sOrders').textContent = list.length;
-  $('#sPending').textContent = pending;
-  $('#sDone').textContent = done;
-  renderList($('#p-orders'), list.slice(0,80).map(o => {
-    const st = String(o.status||'—');
-    let bc = 'info';
-    if(/done|ok|selesai|success|paid/i.test(st)) bc='ok';
-    else if(/pending|wait|proses/i.test(st)) bc='wait';
-    else if(/fail|cancel|reject|error/i.test(st)) bc='fail';
-    return row(bc, st, o.email || o.buyer || o.name || o.id, [o.package||o.paket||'', fmtTime(o.createdAt||o.ts)].filter(Boolean).join(' · '), o.orderId || o.id);
-  }).join(''));
+function barRow(label,value,max){
+  const pct=max?Math.max(4,Math.round(value/max*100)):0;
+  return `<div class="row" style="align-items:center"><div class="meta" style="width:100%"><div class="t" style="display:flex;justify-content:space-between"><span>${label}</span><span>${num(value)}</span></div><div class="bar"><i style="width:${pct}%"></i></div></div></div>`;
 }
-async function loadMail(){
-  const data = await getJSON('/tempmail') || await getJSON('/mail');
-  const list = data && typeof data === 'object' ? Object.entries(data).map(([k,v]) => ({ id:k, ...(v||{}) })) : [];
-  list.sort((a,b) => (b.ts||0) - (a.ts||0));
-  $('#sMail').textContent = list.length;
-  renderList($('#p-mail'), list.slice(0,80).map(m => row('teal', 'MAIL', m.email || m.address || m.id, fmtTime(m.ts||m.createdAt), m.id)).join(''));
+
+function filterLogs(){
+  return (cache.logs||[]).filter(x=>inRange(x.ts||x.time||x.createdAt));
 }
-async function loadSms(){
-  const data = await getJSON('/sms');
-  const list = data && typeof data === 'object' ? Object.entries(data).map(([k,v]) => ({ id:k, ...(v||{}) })) : [];
-  list.sort((a,b) => (b.ts||0) - (a.ts||0));
-  renderList($('#p-sms'), list.slice(0,80).map(m => row('info', 'SMS', m.number || m.phone || m.id, [m.country||'', fmtTime(m.ts)].filter(Boolean).join(' · '), m.id)).join(''));
+
+function render(){
+  const L=filterLogs();
+  const byFeat={};
+  const byPage={};
+  const bySearch={};
+  const bySong={};
+  const days=[];
+  for(let i=6;i>=0;i--){
+    const d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-i);
+    days.push({t:d.getTime(),n:0,label:d.toLocaleDateString('id-ID',{weekday:'short'})});
+  }
+  L.forEach(x=>{
+    const f=x.feature||x.feat||x.type||x.event||'other';
+    byFeat[f]=(byFeat[f]||0)+1;
+    const p=x.page||x.path||'';
+    if(p) byPage[p]=(byPage[p]||0)+1;
+    if(x.q||x.query||x.search){ const q=String(x.q||x.query||x.search).toLowerCase(); bySearch[q]=(bySearch[q]||0)+1; }
+    if(x.song||x.title||x.track){ const s=String(x.song||x.title||x.track); bySong[s]=(bySong[s]||0)+1; }
+    const ts=typeof x.ts==='number'?(x.ts<1e12?x.ts*1000:x.ts):Date.parse(x.ts||x.time||x.createdAt);
+    if(ts){ const ds=dayStart(ts); const day=days.find(d=>d.t===ds); if(day) day.n++; }
+  });
+
+  // stats strip
+  const pending=(cache.orders||[]).filter(o=>/pending|wait|proses/i.test(String(o.status||''))).length;
+  const done=(cache.orders||[]).filter(o=>/done|ok|selesai|success|paid/i.test(String(o.status||''))).length;
+  $('#stats').innerHTML=`
+    <div class="glass stat"><b>${num(L.length)}</b><span>Aktivitas</span></div>
+    <div class="glass stat"><b>${num(Object.keys(byFeat).length)}</b><span>Jenis fitur</span></div>
+    <div class="glass stat"><b>${num((cache.presets||[]).length)}</b><span>Preset</span></div>
+    <div class="glass stat"><b>${num((cache.orders||[]).length)}</b><span>Pesanan</span></div>`;
+
+  let html='';
+  if(tab==='ov'){
+    const topFeat=Object.entries(byFeat).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    const maxF=topFeat[0]?topFeat[0][1]:1;
+    html+=`<div class="glass card"><h2>Kunjungan 7 hari<small>${num(days.reduce((a,d)=>a+d.n,0))} total</small></h2>${days.map(d=>barRow(d.label,d.n,Math.max(...days.map(x=>x.n),1))).join('')||'<div class="empty">Belum ada data</div>'}</div>`;
+    html+=`<div class="glass card"><h2>Fitur paling dibuka</h2>${topFeat.map(([k,v])=>barRow(featName(k),v,maxF)).join('')||'<div class="empty">Belum ada data</div>'}</div>`;
+    html+=`<div class="glass card"><h2>Terbaru<small>${L.length} aktivitas</small></h2>${L.slice(0,12).map(x=>row('info',featName(x.feature||x.feat||x.type||x.event),x.label||x.message||x.q||x.path||featName(x.feature||x.type),fmtTime(x.ts||x.time),x.id||'')).join('')||'<div class="empty">Belum ada aktivitas</div>'}</div>`;
+  } else if(tab==='act'){
+    const topSearch=Object.entries(bySearch).sort((a,b)=>b[1]-a[1]).slice(0,10);
+    const topSong=Object.entries(bySong).sort((a,b)=>b[1]-a[1]).slice(0,10);
+    html+=`<div class="glass card"><h2>Pencarian terbanyak</h2>${topSearch.map(([k,v])=>row('teal',String(v),k,'','')).join('')||'<div class="empty">Belum ada pencarian</div>'}</div>`;
+    html+=`<div class="glass card"><h2>Lagu paling diputar</h2>${topSong.map(([k,v])=>row('ok',String(v),k,'','')).join('')||'<div class="empty">Belum ada data musik</div>'}</div>`;
+    html+=`<div class="glass card"><h2>Log aktivitas<small>${L.length}</small></h2>${L.slice(0,60).map(x=>row('info',featName(x.feature||x.feat||x.type||x.event),x.label||x.message||x.q||x.path||'—',[x.page?pageName(x.page):'',fmtTime(x.ts||x.time)].filter(Boolean).join(' · '),x.uid||x.ip||'')).join('')||'<div class="empty">Belum ada log</div>'}</div>`;
+  } else if(tab==='pre'){
+    const e=(cache.presets||[]).slice().sort((a,b)=>(b.views||0)-(a.views||0));
+    const used=e.slice().sort((a,b)=>(b.uses||b.used||0)-(a.uses||a.used||0));
+    html+=`<div class="glass card"><h2>Paling dilihat</h2>${e.slice(0,15).map(p=>row('info',String(p.views||0),p.name||p.title||p.id,p.id||'','')).join('')||'<div class="empty">Belum ada preset</div>'}</div>`;
+    html+=`<div class="glass card"><h2>Paling dipakai</h2>${used.slice(0,15).map(p=>row('ok',String(p.uses||p.used||0),p.name||p.title||p.id,p.id||'','')).join('')||'<div class="empty">Belum ada data</div>'}</div>`;
+    html+=`<div class="glass card"><h2>Semua preset<small>${e.length}</small></h2>${e.slice(0,40).map(p=>row('teal',p.cat||p.category||'—',p.name||p.title||p.id,[p.creator||p.author||'',fmtTime(p.createdAt||p.ts)].filter(Boolean).join(' · '),p.id)).join('')||'<div class="empty">Kosong</div>'}</div>`;
+  } else if(tab==='ord'){
+    const O=(cache.orders||[]).slice().sort((a,b)=>(b.createdAt||b.ts||0)-(a.createdAt||a.ts||0));
+    html+=`<div class="glass card"><h2>Pesanan terbaru<small>${O.length}</small></h2>${O.slice(0,50).map(o=>{const st=String(o.status||'—'); let bc='info'; if(/done|ok|selesai|success|paid/i.test(st)) bc='ok'; else if(/pending|wait|proses/i.test(st)) bc='wait'; else if(/fail|cancel|reject|error/i.test(st)) bc='fail'; return row(bc,st,o.email||o.buyer||o.name||o.id,[o.package||o.paket||'',fmtTime(o.createdAt||o.ts)].filter(Boolean).join(' · '),o.orderId||o.id);}).join('')||'<div class="empty">Belum ada pesanan</div>'}</div>`;
+  } else if(tab==='sys'){
+    const pages=Object.entries(byPage).sort((a,b)=>b[1]-a[1]);
+    html+=`<div class="glass card"><h2>Halaman web</h2>${pages.map(([k,v])=>row('info',String(v),pageName(k),k,'')).join('')||'<div class="empty">Belum ada data halaman</div>'}</div>`;
+    html+=`<div class="glass card"><h2>Layanan</h2>${[
+      row('ok','SITE',SITE,'Domain aktif'),
+      row('info','DB',DB.replace('https://',''),'Firebase RTDB'),
+      row('teal','AM',SITE+'/amprem.html','AM Premium'),
+      row('wait','SMS',SITE+'/sms.html','Temp SMS'),
+      row('info','Monitor',SITE+'/monitor.html','Monitor ini'),
+    ].join('')}</div>`;
+  }
+  $('#panels').innerHTML=html||'<div class="glass empty">Tidak ada data</div>';
 }
-async function loadTools(){
-  renderList($('#p-tools'), [
-    row('ok', 'SITE', SITE, 'Domain utama'),
-    row('info', 'DB', DB.replace('https://',''), 'Firebase RTDB'),
-    row('teal', 'AM', SITE + '/amprem.html', 'AM Premium'),
-    row('wait', 'SMS', SITE + '/sms.html', 'Temp SMS'),
-  ].join(''));
+
+function normalizeLogs(data){
+  if(!data) return [];
+  if(Array.isArray(data)) return data.filter(Boolean);
+  if(typeof data==='object'){
+    return Object.entries(data).map(([k,v])=>({id:k,...(v||{})}));
+  }
+  return [];
 }
+function normalizePresets(data){
+  if(!data) return [];
+  if(Array.isArray(data)) return data.filter(Boolean);
+  if(typeof data==='object'){
+    return Object.entries(data).map(([k,v])=>({id:k,...(v||{})}));
+  }
+  return [];
+}
+function normalizeOrders(data){
+  if(!data) return [];
+  if(typeof data==='object'){
+    return Object.entries(data).map(([k,v])=>({id:k,...(v||{})}));
+  }
+  return [];
+}
+
 async function loadAll(){
-  const btn = $('#btnReload'); btn.classList.add('spin');
-  try{ await Promise.all([loadOrders(), loadMail(), loadSms(), loadTools()]); }
-  finally{ btn.classList.remove('spin'); }
+  const btn=$('#btnReload'); btn.classList.add('spin');
+  try{
+    const [logs, logs2, presets, orders]=await Promise.all([
+      getJSON('/activity'),
+      getJSON('/logs'),
+      getJSON('/presets'),
+      getJSON('/orders'),
+    ]);
+    const A=normalizeLogs(logs).concat(normalizeLogs(logs2));
+    A.sort((a,b)=>(b.ts||b.time||0)-(a.ts||a.time||0));
+    cache.logs=A;
+    cache.presets=normalizePresets(presets);
+    cache.orders=normalizeOrders(orders);
+    render();
+  }finally{ btn.classList.remove('spin'); }
 }
-$('#btnReload').onclick = () => loadAll();
-document.addEventListener('visibilitychange', () => { if(!document.hidden) loadAll(); });
-(function(){try{if('serviceWorker' in navigator){/* no-op */}}catch(e){}})();
-loadAll();setInterval(()=>{if(!document.hidden)loadAll()},60000);
+
+$('#siteLink').href=SITE+'/';
+$('#siteLink').textContent=SITE.replace(/^https?:\/\//,'');
+buildTabs();
+$('#btnReload').onclick=()=>loadAll();
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) loadAll(); });
+loadAll();
+setInterval(()=>{ if(!document.hidden) loadAll(); },60000);
 </script>
 </body>
 </html>
