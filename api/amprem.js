@@ -1,8 +1,6 @@
-// POST /api/amprem?action=send|verify → am.noxxyrorr.biz.id/api
-// Endpoint baru: /send-link + /verify-link (POST JSON, butuh cookie dari step 1)
-const BASE = 'https://am.noxxyrorr.biz.id/api';
-const ORIGIN = 'https://am.noxxyrorr.biz.id';
-const DEFAULT_ORDER_ID = process.env.AM_ORDER_ID || 'Kenzie';
+// POST /api/amprem?action=send|verify → api.theresav.eu alightmotion
+const BASE = 'https://api.theresav.eu/api/premium/alightmotion/';
+const API_KEY = process.env.AM_API_KEY || 'kenzie';
 
 function pickMsg(data) {
   if (!data || typeof data !== 'object') return '';
@@ -35,14 +33,11 @@ module.exports = async (req, res) => {
   }
   b = b || {};
   const email = String(b.email || '').trim();
-  const cookie = String(b.cookie || '').trim();
-  const customOrderId = String(b.customOrderId || '').trim() || DEFAULT_ORDER_ID;
-  let link = String(b.magicLink || b.link || '').trim();
+  let link = String(b.link || '').trim();
 
   if (!email || !email.includes('@')) {
     return res.status(200).json({ ok: false, message: 'Email tidak valid' });
   }
-
   if (action === 'verify') {
     const m = link.match(/https:\/\/alight-creative\.firebaseapp\.com\/__\/auth\/links\?[^\s"'<>]+/i)
       || link.match(/https:\/\/alightcreative\.com\/auth_action\/?[^\s"'<>]+/i)
@@ -54,33 +49,27 @@ module.exports = async (req, res) => {
     if (!/oobCode/i.test(link)) {
       return res.status(200).json({ ok: false, message: 'Link tidak berisi oobCode. Ambil lagi dari email Alight Creative.' });
     }
-    if (!cookie) {
-      return res.status(200).json({ ok: false, message: 'Cookie dari step /send wajib diisi. Jalankan ulang send lalu salin cookie dari respons.' });
-    }
   }
 
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), 25000);
-
   try {
-    const path = action === 'send' ? 'send-link' : 'verify-link';
-    const payload = action === 'send'
-      ? { email }
-      : { email, cookie, magicLink: link, customOrderId };
-
-    const r = await fetch(`${BASE}/${path}`, {
-      method: 'POST',
+    let qs = 'email=' + encodeURIComponent(email);
+    if (action === 'send') {
+      qs += '&lang=en&language=en&locale=en';
+    }
+    if (action === 'verify') {
+      qs += '&link=' + encodeURIComponent(link);
+    }
+    const r = await fetch(BASE + action + '?' + qs, {
+      method: 'GET',
       signal: ctl.signal,
       headers: {
-        'Content-Type': 'application/json',
         accept: 'application/json',
-        'Origin': ORIGIN,
-        'Referer': ORIGIN + '/',
+        'x-apikey': API_KEY,
         'user-agent': 'Mozilla/5.0 (compatible; KenziePreset/1.0)',
       },
-      body: JSON.stringify(payload),
     });
-
     const text = await r.text();
     let data;
     try { data = JSON.parse(text); } catch { data = null; }
@@ -95,12 +84,6 @@ module.exports = async (req, res) => {
       const ok = !failed && (data.ok === true || data.status === true || data.success === true || (r.ok && data.error == null));
       data.ok = !!ok;
       if (!data.message) data.message = pickMsg(data) || (ok ? 'Berhasil' : 'Gagal');
-
-      // Pastikan cookie tersedia di respons /send (untuk dipakai di /verify)
-      if (action === 'send' && !data.cookie) {
-        const setCookie = r.headers.get('set-cookie');
-        if (setCookie) data.cookie = setCookie.split(';')[0];
-      }
       return res.status(200).json(data);
     }
 
