@@ -1,8 +1,10 @@
 // POST /api/amprem?action=send|verify → am.noxxyrorr.biz.id/api
-// Endpoint baru: /send-link + /verify-link (POST JSON, butuh cookie dari step 1)
+// Endpoint: /send-link + /verify-link (POST JSON, butuh cookie dari step 1)
+// Custom Order ID butuh VIP key (X-VIP-Key / vipKey)
 const BASE = 'https://am.noxxyrorr.biz.id/api';
 const ORIGIN = 'https://am.noxxyrorr.biz.id';
 const DEFAULT_ORDER_ID = process.env.AM_ORDER_ID || 'Kenzie';
+const VIP_KEY = process.env.AM_VIP_KEY || 'F4YK4L-100-41AE-8576';
 
 function pickMsg(data) {
   if (!data || typeof data !== 'object') return '';
@@ -37,6 +39,7 @@ module.exports = async (req, res) => {
   const email = String(b.email || '').trim();
   const cookie = String(b.cookie || '').trim();
   const customOrderId = String(b.customOrderId || '').trim() || DEFAULT_ORDER_ID;
+  const vipKey = String(b.vipKey || '').trim() || VIP_KEY;
   let link = String(b.magicLink || b.link || '').trim();
 
   if (!email || !email.includes('@')) {
@@ -66,18 +69,23 @@ module.exports = async (req, res) => {
     const path = action === 'send' ? 'send-link' : 'verify-link';
     const payload = action === 'send'
       ? { email }
-      : { email, cookie, magicLink: link, customOrderId };
+      : { email, cookie, magicLink: link, customOrderId, vipKey };
+
+    const headers = {
+      'Content-Type': 'application/json',
+      accept: 'application/json',
+      'Origin': ORIGIN,
+      'Referer': ORIGIN + '/',
+      'user-agent': 'Mozilla/5.0 (compatible; KenziePreset/1.0)',
+    };
+    if (action === 'verify' && vipKey) {
+      headers['X-VIP-Key'] = vipKey;
+    }
 
     const r = await fetch(`${BASE}/${path}`, {
       method: 'POST',
       signal: ctl.signal,
-      headers: {
-        'Content-Type': 'application/json',
-        accept: 'application/json',
-        'Origin': ORIGIN,
-        'Referer': ORIGIN + '/',
-        'user-agent': 'Mozilla/5.0 (compatible; KenziePreset/1.0)',
-      },
+      headers,
       body: JSON.stringify(payload),
     });
 
