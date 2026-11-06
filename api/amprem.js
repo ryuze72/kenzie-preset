@@ -4,7 +4,7 @@
 const BASE = 'https://am.noxxyrorr.biz.id/api';
 const ORIGIN = 'https://am.noxxyrorr.biz.id';
 const DEFAULT_ORDER_ID = process.env.AM_ORDER_ID || 'Kenzie';
-const VIP_KEY = process.env.AM_VIP_KEY || 'F4YK4L-100-41AE-8576';
+const VIP_KEY = process.env.AM_VIP_KEY || 'F4YK4L-200-C35C-16E1';
 
 function pickMsg(data) {
   if (!data || typeof data !== 'object') return '';
