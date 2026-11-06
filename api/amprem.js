@@ -1,6 +1,6 @@
 // POST /api/amprem?action=send|verify → am.noxxyrorr.biz.id/api
-// Endpoint: /send-link + /verify-link (POST JSON, butuh cookie dari step 1)
-// Custom Order ID butuh VIP key (X-VIP-Key / vipKey)
+// /send-link + /verify-link (POST JSON, cookie dari step 1)
+// customOrderId hanya kalau VIP key valid; kalau VIP ditolak, retry tanpa customOrderId
 const BASE = 'https://am.noxxyrorr.biz.id/api';
 const ORIGIN = 'https://am.noxxyrorr.biz.id';
 const DEFAULT_ORDER_ID = process.env.AM_ORDER_ID || 'Kenzie';
@@ -15,6 +15,29 @@ function pickMsg(data) {
     return String(v.message || v.error || v.msg || JSON.stringify(v).slice(0, 200));
   }
   return String(v);
+}
+
+function normalizeUpstream(data, r) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+  const failed =
+    data.status === false ||
+    data.success === false ||
+    data.ok === false ||
+    data.premiumActive === false ||
+    data.authenticated === false ||
+    (data.error != null && data.error !== '') ||
+    /^(error|fail)/i.test(String(data.status || ''));
+  // Sukses ketat: ok/success true ATAU premiumActive true, dan tidak ada error
+  const ok =
+    !failed &&
+    (data.premiumActive === true ||
+      data.ok === true ||
+      data.success === true ||
+      data.status === true ||
+      (r.ok && data.error == null && data.message && /berhasil|sukses|aktif|success/i.test(String(data.message))));
+  data.ok = !!ok;
+  if (!data.message) data.message = pickMsg(data) || (ok ? 'Berhasil' : 'Gagal');
+  return data;
 }
 
 module.exports = async (req, res) => {
@@ -63,53 +86,77 @@ module.exports = async (req, res) => {
   }
 
   const ctl = new AbortController();
-  const timer = setTimeout(() => ctl.abort(), 25000);
+  const timer = setTimeout(() => ctl.abort(), 28000);
 
-  try {
+  async function callUpstream(payload, withVip) {
     const path = action === 'send' ? 'send-link' : 'verify-link';
-    const payload = action === 'send'
-      ? { email }
-      : { email, cookie, magicLink: link, customOrderId, vipKey };
-
     const headers = {
       'Content-Type': 'application/json',
       accept: 'application/json',
-      'Origin': ORIGIN,
-      'Referer': ORIGIN + '/',
+      Origin: ORIGIN,
+      Referer: ORIGIN + '/',
       'user-agent': 'Mozilla/5.0 (compatible; KenziePreset/1.0)',
     };
-    if (action === 'verify' && vipKey) {
-      headers['X-VIP-Key'] = vipKey;
-    }
-
+    if (withVip && vipKey) headers['X-VIP-Key'] = vipKey;
     const r = await fetch(`${BASE}/${path}`, {
       method: 'POST',
       signal: ctl.signal,
       headers,
       body: JSON.stringify(payload),
     });
-
     const text = await r.text();
     let data;
     try { data = JSON.parse(text); } catch { data = null; }
+    return { r, text, data };
+  }
 
-    if (data && typeof data === 'object' && !Array.isArray(data)) {
-      const failed =
-        data.status === false ||
-        data.success === false ||
-        data.ok === false ||
-        (data.error != null && data.error !== '') ||
-        /^(error|fail)/i.test(String(data.status || ''));
-      const ok = !failed && (data.ok === true || data.status === true || data.success === true || (r.ok && data.error == null));
-      data.ok = !!ok;
-      if (!data.message) data.message = pickMsg(data) || (ok ? 'Berhasil' : 'Gagal');
-
-      // Pastikan cookie tersedia di respons /send (untuk dipakai di /verify)
-      if (action === 'send' && !data.cookie) {
-        const setCookie = r.headers.get('set-cookie');
-        if (setCookie) data.cookie = setCookie.split(';')[0];
+  try {
+    if (action === 'send') {
+      const { r, text, data } = await callUpstream({ email }, false);
+      const norm = normalizeUpstream(data, r);
+      if (norm) {
+        if (!norm.cookie) {
+          const setCookie = r.headers.get('set-cookie');
+          if (setCookie) norm.cookie = setCookie.split(';')[0];
+        }
+        return res.status(200).json(norm);
       }
-      return res.status(200).json(data);
+      const snippet = (text || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 160);
+      return res.status(200).json({
+        ok: false,
+        message: 'API membalas HTTP ' + r.status + (snippet ? ': ' + snippet : ' tanpa isi JSON'),
+      });
+    }
+
+    // VERIFY: coba dulu dengan VIP + customOrderId, kalau VIP error → retry tanpa customOrderId
+    let { r, text, data } = await callUpstream(
+      { email, cookie, magicLink: link, customOrderId, vipKey },
+      true
+    );
+
+    const isVipBlock =
+      data &&
+      (data.isVipError === true ||
+        /kunci vip|custom order id|pengguna vip|x-vip-key|vipkey/i.test(String(data.message || data.error || '')));
+
+    if (isVipBlock) {
+      // Fallback: aktivasi biasa tanpa custom order id (tanpa VIP)
+      ({ r, text, data } = await callUpstream(
+        { email, cookie, magicLink: link },
+        false
+      ));
+    }
+
+    const norm = normalizeUpstream(data, r);
+    if (norm) {
+      // Kalau API bilang sukses tapi premiumActive explicit false → jangan bohong
+      if (data && data.premiumActive === false) {
+        norm.ok = false;
+        norm.message =
+          pickMsg(data) ||
+          'Verifikasi diterima tapi premium belum aktif di server. Coba logout/login Alight Motion, atau kirim ulang magic link.';
+      }
+      return res.status(200).json(norm);
     }
 
     const snippet = (text || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 160);
@@ -120,7 +167,7 @@ module.exports = async (req, res) => {
   } catch (e) {
     const why =
       e && e.name === 'AbortError'
-        ? 'timeout 25 detik'
+        ? 'timeout 28 detik'
         : (e && e.cause && (e.cause.code || e.cause.message)) || (e && e.message) || 'unknown';
     return res.status(200).json({
       ok: false,
