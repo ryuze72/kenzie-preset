@@ -17,8 +17,14 @@ function pickMsg(data) {
   return String(v);
 }
 
-function normalizeUpstream(data, r) {
+/**
+ * Normalize upstream response.
+ * - send: boleh sukses kalau status/ok/success true (cookie didapat)
+ * - verify: HANYA sukses kalau premiumActive === true (jangan bohong ke user)
+ */
+function normalizeUpstream(data, r, action) {
   if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+
   const failed =
     data.status === false ||
     data.success === false ||
@@ -27,16 +33,25 @@ function normalizeUpstream(data, r) {
     data.authenticated === false ||
     (data.error != null && data.error !== '') ||
     /^(error|fail)/i.test(String(data.status || ''));
-  // Sukses ketat: ok/success true ATAU premiumActive true, dan tidak ada error
-  const ok =
-    !failed &&
-    (data.premiumActive === true ||
-      data.ok === true ||
-      data.success === true ||
-      data.status === true ||
-      (r.ok && data.error == null && data.message && /berhasil|sukses|aktif|success/i.test(String(data.message))));
+
+  let ok = false;
+  if (action === 'verify') {
+    // Ketat: hanya bila server benar-benar mengaktifkan premium
+    ok = !failed && data.premiumActive === true;
+  } else {
+    // send: cukup response sukses + (idealnya) cookie
+    ok =
+      !failed &&
+      (data.ok === true ||
+        data.success === true ||
+        data.status === true ||
+        (r.ok && data.error == null && data.message && /berhasil|sukses|success|terkirim|sent/i.test(String(data.message))));
+  }
+
   data.ok = !!ok;
-  if (!data.message) data.message = pickMsg(data) || (ok ? 'Berhasil' : 'Gagal');
+  if (!data.message) {
+    data.message = pickMsg(data) || (ok ? (action === 'verify' ? 'Premium aktif' : 'Berhasil') : 'Gagal');
+  }
   return data;
 }
 
@@ -113,7 +128,7 @@ module.exports = async (req, res) => {
   try {
     if (action === 'send') {
       const { r, text, data } = await callUpstream({ email }, false);
-      const norm = normalizeUpstream(data, r);
+      const norm = normalizeUpstream(data, r, 'send');
       if (norm) {
         if (!norm.cookie) {
           const setCookie = r.headers.get('set-cookie');
@@ -147,14 +162,20 @@ module.exports = async (req, res) => {
       ));
     }
 
-    const norm = normalizeUpstream(data, r);
+    const norm = normalizeUpstream(data, r, 'verify');
     if (norm) {
-      // Kalau API bilang sukses tapi premiumActive explicit false → jangan bohong
-      if (data && data.premiumActive === false) {
+      // Extra safety: kalau premiumActive explicit false / undefined setelah normalize
+      if (data && data.premiumActive !== true) {
         norm.ok = false;
-        norm.message =
-          pickMsg(data) ||
-          'Verifikasi diterima tapi premium belum aktif di server. Coba logout/login Alight Motion, atau kirim ulang magic link.';
+        if (data.premiumActive === false) {
+          norm.message =
+            pickMsg(data) ||
+            'Verifikasi diterima tapi premium belum aktif di server. Coba logout/login Alight Motion, atau kirim ulang magic link.';
+        } else {
+          norm.message =
+            pickMsg(data) ||
+            'Verifikasi selesai, tapi status premium belum terkonfirmasi (premiumActive tidak true). Cek di app AM atau coba lagi.';
+        }
       }
       return res.status(200).json(norm);
     }
