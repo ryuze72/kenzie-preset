@@ -8,18 +8,25 @@ async function amCall(path,body){
   try{const r=await fetch(API_PROXY+'?action='+encodeURIComponent(path),opts);const text=await r.text();let d=null;try{d=JSON.parse(text);}catch{}res={r,text,d};}catch(e){return{ok:false,message:'Tidak bisa terhubung ke API ('+(e.message||'jaringan')+')'};}
   const {r,text}=res;let d=res.d;
   if(!d||typeof d!=='object'||Array.isArray(d))d={ok:false,message:(text||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,160)||'respons kosong'};
-  if(d.ok===undefined)d.ok=!!(r.ok&&(d.status===true||d.success===true)&&d.error==null&&!/^(error|fail)/i.test(String(d.status||'')));
-  if(d.status===true&&d.ok!==false)d.ok=true;
+  // Backend sudah ketat untuk verify; tetap jaga di client:
+  // - send: boleh longgar
+  // - verify: wajib premiumActive === true
+  if(path==='verify'){
+    d.ok = d.premiumActive === true && d.ok !== false && d.success !== false && d.status !== false;
+  }else{
+    if(d.ok===undefined)d.ok=!!(r.ok&&(d.status===true||d.success===true)&&d.error==null&&!/^(error|fail)/i.test(String(d.status||'')));
+    if(d.status===true&&d.ok!==false)d.ok=true;
+  }
   if(!d.message&&d.result)d.message=amText(d.result.message||d.result.msg||(typeof d.result==='string'?d.result:''));
   if(!d.message&&d.msg)d.message=amText(d.msg);
   if(d.ok!==true){d.ok=false;if(!d.message&&!d.error&&!d.detail)d.message='Gagal';d.message=(amText(d.message)||amText(d.error)||amText(d.detail))+' [HTTP '+r.status+', '+via+']';}
-  else d.message=amText(d.message)||'Berhasil';
+  else d.message=amText(d.message)||(path==='verify'?'Premium aktif':'Berhasil');
   return d;
 }
 function showPanel(name,tab){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.getElementById('panel-'+name).classList.add('active');if(tab)tab.classList.add('active');}
 function showMsg(id,text,type){const el=document.getElementById(id);el.textContent=text;el.className='msg'+(type?' '+type:'');}
 async function sendLink(){const email=document.getElementById('email').value.trim();if(!email||!email.includes('@')){showMsg('msg','Email tidak valid','err');return;}const btn=document.getElementById('btnSend');btn.disabled=true;btn.textContent='Mengirim...';try{const d=await amCall('send',{email});if(d.ok){_amCookie=String(d.cookie||d.Cookie||'').trim();showMsg('msg',amText(d.message)||'Link dikirim!','ok');visitors++;document.getElementById('visitors').textContent=visitors;watchInbox(email);}else showMsg('msg',amText(d.message)||amText(d.error)||'Gagal','err');}catch(e){showMsg('msg','Error: '+e.message,'err');}btn.disabled=false;btn.textContent='Send magic link →';}
-async function verifyLink(){const email=document.getElementById('email').value.trim();const link=document.getElementById('link').value.trim();if(!email||!link){showMsg('msg','Isi email dan link','err');return;}if(!_amCookie){showMsg('msg','Cookie belum ada. Klik Send magic link dulu.','err');return;}const btn=document.getElementById('btnVerif');btn.disabled=true;btn.textContent='Memverifikasi...';try{const d=await amCall('verify',{email,link,cookie:_amCookie,customOrderId:'Kenzie'});if(d.ok){showMsg('msg',amText(d.message)||'Premium aktif','ok');verified++;document.getElementById('verified').textContent=verified;}else showMsg('msg',amText(d.message)||amText(d.error)||'Gagal','err');}catch(e){showMsg('msg','Error: '+e.message,'err');}btn.disabled=false;btn.textContent='Verify account →';}
+async function verifyLink(){const email=document.getElementById('email').value.trim();const link=document.getElementById('link').value.trim();if(!email||!link){showMsg('msg','Isi email dan link','err');return;}if(!_amCookie){showMsg('msg','Cookie belum ada. Klik Send magic link dulu.','err');return;}const btn=document.getElementById('btnVerif');btn.disabled=true;btn.textContent='Memverifikasi...';try{const d=await amCall('verify',{email,link,cookie:_amCookie,customOrderId:'Kenzie'});if(d.ok && d.premiumActive===true){showMsg('msg',amText(d.message)||'Premium aktif','ok');verified++;document.getElementById('verified').textContent=verified;}else{var msg=amText(d.message)||amText(d.error)||'Gagal';if(d.premiumActive!==true){msg=msg||'Verifikasi selesai tapi premium belum aktif di server. Coba logout/login AM atau kirim ulang magic link.';}showMsg('msg',msg,'err');}}catch(e){showMsg('msg','Error: '+e.message,'err');}btn.disabled=false;btn.textContent='Verify account →';}
 function goTab(name){document.querySelectorAll('.tab').forEach(t=>{if((t.getAttribute('onclick')||'').includes(""+name+""))showPanel(name,t);});}
 function mailText(m){return [m.subject,m.body,m.text,m.content,m.html,m.snippet].filter(Boolean).join(' ');}
 function isSignInMail(m){const subj=String(m.subject||''),all=mailText(m);const good=/sign[\s-]*in\s+to\s+alight\s+creative/i,bad=/log[\s-]*in\s+to\s+alight\s+creative/i;if(good.test(subj))return true;if(bad.test(subj))return false;return good.test(all)&&!bad.test(all);}
