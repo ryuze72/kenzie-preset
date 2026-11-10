@@ -150,7 +150,12 @@ async function amCall(path, body) {
   }
   const { r, text } = res; let d = res.d;
   if (!d || typeof d !== 'object' || Array.isArray(d)) d = { ok: false, message: (text || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 160) || 'respons kosong' };
-  if (d.ok === undefined) d.ok = r.ok && d.error == null && d.success !== false && d.status !== false && !/^(error|fail)/i.test(String(d.status || ''));
+  // Respect backend strictness, especially for verify
+  if (path === 'verify') {
+    d.ok = d.premiumActive === true && d.ok !== false && d.success !== false && d.status !== false;
+  } else {
+    if (d.ok === undefined) d.ok = r.ok && d.error == null && d.success !== false && d.status !== false && !/^(error|fail)/i.test(String(d.status || ''));
+  }
   if (!d.message && d.result) d.message = amText(d.result.message || d.result.msg || (typeof d.result === 'string' ? d.result : ''));
   if (!d.message && d.msg) d.message = amText(d.msg);
   if (d.ok !== true) {
@@ -223,14 +228,17 @@ async function verifyLink() {
   btn.disabled = true; btn.textContent = 'Memverifikasi...';
   try {
     const d = await amCall('verify', { email, link, cookie: _amCookie, customOrderId: 'Kenzie' });
-    if (d.ok) {
-      var _om = amText(d.message) || ('Premium aktif' + (d.status ? ' (' + d.status + ')' : '') + (d.orderId ? ' · ' + d.orderId : ''));
-      _om = String(_om).replace(/GPA\.?/gi, 'KENZIE.');
-      if (!/KENZIE/i.test(_om)) _om += ' · Nomor pesanan: KENZIE.' + String(Date.now()).slice(-12);
-      showMsg('msg', _om, 'ok');
+    // Hanya anggap sukses penuh kalau premiumActive benar-benar true
+    if (d.premiumActive === true && d.ok) {
+      var msg = amText(d.message) || 'Premium aktif';
+      msg = String(msg).replace(/GPA\.?/gi, 'KENZIE.');
+      showMsg('msg', msg + ' — silakan cek di aplikasi Alight Motion (logout/login jika perlu).', 'ok');
       verified++; document.getElementById('verified').textContent = verified;
     } else {
-      showMsg('msg', amText(d.message) || amText(d.error) || amText(d.detail) || 'Gagal', 'err');
+      // Jangan klaim "Premium VIP aktif" kalau belum terkonfirmasi
+      var warn = amText(d.message) || 'Verifikasi selesai, tapi status premium belum terkonfirmasi.';
+      warn += ' Silakan buka aplikasi Alight Motion → Akun Saya dan cek apakah keanggotaan sudah aktif. Jika belum, coba logout/login atau kirim ulang magic link.';
+      showMsg('msg', warn, 'err');
     }
   } catch(e) { showMsg('msg', 'Error: ' + e.message, 'err'); }
   btn.disabled = false; btn.textContent = 'Verify account →';
