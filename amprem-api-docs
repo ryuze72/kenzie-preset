@@ -1,1 +1,64 @@
-PLACEHOLDER
+{
+  "name": "Alight Motion Premium API (theresav.eu)",
+  "description": "API untuk mengaktifkan akun Alight Motion Premium lewat magic link email. Alur: kirim magic link ke email, lalu verifikasi dengan link dari email tersebut. Order ID selalu kenzie.",
+  "version": "3.0.0",
+  "baseUrl": "https://api.theresav.eu/api/premium/alightmotion",
+  "authentication": {
+    "type": "API Key",
+    "header": "x-apikey: kenzie"
+  },
+  "conventions": {
+    "method": "GET",
+    "responseFormat": "JSON",
+    "orderId": "Selalu \"kenzie\" pada verify"
+  },
+  "flow": [
+    {
+      "step": 1,
+      "action": "GET /send?email=...",
+      "detail": "Kirim magic link Alight Creative ke email."
+    },
+    {
+      "step": 2,
+      "action": "Buka inbox email",
+      "detail": "Cari email berjudul 'Sign in to Alight Creative'."
+    },
+    {
+      "step": 3,
+      "action": "Salin link dari email",
+      "detail": "Link berisi oobCode."
+    },
+    {
+      "step": 4,
+      "action": "GET /verify?email=...&link=...&orderid=kenzie",
+      "detail": "Verifikasi dan aktivasi premium. Order ID wajib kenzie."
+    }
+  ],
+  "endpoints": [
+    {
+      "name": "Kirim magic link",
+      "method": "GET",
+      "path": "/send",
+      "url": "https://api.theresav.eu/api/premium/alightmotion/send?email=EMAIL",
+      "headers": { "x-apikey": "kenzie" },
+      "params": { "email": "string required" }
+    },
+    {
+      "name": "Verifikasi & aktivasi premium",
+      "method": "GET",
+      "path": "/verify",
+      "url": "https://api.theresav.eu/api/premium/alightmotion/verify?email=EMAIL&link=LINK&orderid=kenzie",
+      "headers": { "x-apikey": "kenzie" },
+      "params": {
+        "email": "string required",
+        "link": "string required (full magic link with oobCode)",
+        "orderid": "string, wajib \"kenzie\""
+      }
+    }
+  ],
+  "notes": [
+    "Proxy internal di /api/amprem?action=send|verify tetap kompatibel dengan frontend lama.",
+    "Order ID selalu di-set ke kenzie pada backend.",
+    "Wajib no error: response dinormalisasi dengan ok/premiumActive untuk kompatibilitas."
+  ]
+}
