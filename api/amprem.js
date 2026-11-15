@@ -1,10 +1,10 @@
 // Proxy ke api.theresav.eu
-// Order ID selalu "kenzie"
-// Hanya anggap premiumActive jika upstream benar-benar konfirmasi aktivasi
+// Order ID default "kenzie", bisa di-override dari body
+// Provider masih merata-kan perbaikan aktivasi
 
 const API_BASE = 'https://api.theresav.eu/api/premium/alightmotion';
 const API_KEY = 'kenzie';
-const ORDER_ID = 'kenzie';
+const DEFAULT_ORDER_ID = 'kenzie';
 
 function pickMsg(data) {
   if (!data || typeof data !== 'object') return '';
@@ -47,6 +47,7 @@ module.exports = async (req, res) => {
   }
   const email = String(b.email || '').trim();
   let link = String(b.magicLink || b.link || '').trim();
+  const orderId = String(b.orderid || b.orderId || DEFAULT_ORDER_ID).trim() || DEFAULT_ORDER_ID;
 
   if (!email || !email.includes('@')) {
     return res.status(200).json({ ok: false, message: 'Email tidak valid' });
@@ -68,7 +69,7 @@ module.exports = async (req, res) => {
   try {
     const url = action === 'send'
       ? `${API_BASE}/send?email=${encodeURIComponent(email)}`
-      : `${API_BASE}/verify?email=${encodeURIComponent(email)}&link=${encodeURIComponent(link)}&orderid=${ORDER_ID}`;
+      : `${API_BASE}/verify?email=${encodeURIComponent(email)}&link=${encodeURIComponent(link)}&orderid=${encodeURIComponent(orderId)}`;
 
     const r = await fetch(url, {
       method: 'GET',
@@ -99,7 +100,7 @@ module.exports = async (req, res) => {
         message = 'Premium berhasil diaktifkan. Buka Alight Motion → My Account → Refresh atau Logout/Login.';
       } else if (statusOk) {
         ok = false;
-        message = 'API bilang status true, tapi tidak ada konfirmasi aktivasi premium. Coba Logout/Login di app, atau key/orderid ini mungkin tidak mengaktifkan premium secara nyata.';
+        message = 'Provider bilang status true, tapi aktivasi premium belum merata (masih diperbaiki). Coba lagi nanti atau Logout/Login di app. OrderID dipakai: ' + orderId;
       }
     } else if (statusOk) {
       message = message || 'Link berhasil dikirim.';
@@ -116,6 +117,7 @@ module.exports = async (req, res) => {
       usage: data.usage,
       upstream: data,
       premiumActive,
+      orderIdUsed: orderId,
     };
 
     if (action === 'send' && ok) response.cookie = 'compat-session=kenzie';
