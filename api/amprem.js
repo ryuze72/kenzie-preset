@@ -2,7 +2,7 @@
 // send: GET /send?email=...
 // verify: GET /verify?email=...&link=...&orderid=kenzie
 // Header: x-apikey: kenzie
-// Order ID selalu "kenzie" — wajib no error
+// Order ID selalu "kenzie"
 
 const API_BASE = 'https://api.theresav.eu/api/premium/alightmotion';
 const API_KEY = 'kenzie';
@@ -46,9 +46,9 @@ module.exports = async (req, res) => {
   }
 
   if (action === 'verify') {
-    const m = link.match(/https:\/\/alight-creative\.firebaseapp\.com\/__\/auth\/links\?[^\s\"'<>]+/i)
-      || link.match(/https:\/\/alightcreative\.com\/auth_action\/?[^\s\"'<>]+/i)
-      || link.match(/https?:\/\/[^\s\"'<>]*oobCode[^\s\"'<>]*/i);
+    const m = link.match(/https:\/\/alight-creative\.firebaseapp\.com\/__\/auth\/links\?[^\s"'<>]+/i)
+      || link.match(/https:\/\/alightcreative\.com\/auth_action\/?[^\s"'<>]+/i)
+      || link.match(/https?:\/\/[^\s"'<>]*oobCode[^\s"'<>]*/i);
     if (m) link = m[0].replace(/[.,;]+$/, '');
     if (!link || link.length < 40 || !/oobCode/i.test(link)) {
       return res.status(200).json({ ok: false, message: 'Link verifikasi tidak lengkap atau tidak berisi oobCode. Salin ulang dari inbox (harus diawali https://).' });
@@ -91,22 +91,29 @@ module.exports = async (req, res) => {
     const failed = data.status === false || data.success === false || data.ok === false || (data.error != null && String(data.error).trim() !== '');
     const ok = !failed && (data.status === true || data.success === true || data.ok === true);
 
+    let message = pickMsg(data);
+    if (ok && action === 'verify') {
+      message = 'Verifikasi diterima! Buka aplikasi Alight Motion → My Account → tekan tombol Refresh (atau Logout kemudian Login lagi) supaya status premium langsung muncul.';
+    } else if (ok && action === 'send') {
+      message = message || 'Link verifikasi berhasil dikirim ke email. Cek inbox lalu verifikasi.';
+    } else if (!message) {
+      message = ok ? 'Berhasil' : 'Gagal';
+    }
+
     const response = {
       ok: !!ok,
       status: data.status,
-      message: pickMsg(data) || (ok ? (action === 'verify' ? 'Premium aktif' : 'Link verifikasi berhasil dikirim') : 'Gagal'),
+      message,
       creator: data.creator,
       data: data.data,
       usage: data.usage,
     };
 
     if (action === 'send' && ok) {
-      // Dummy cookie untuk kompatibilitas frontend yang masih cek cookie
       response.cookie = 'compat-session=kenzie';
     }
 
     if (action === 'verify' && ok) {
-      // Agar frontend yang cek premiumActive === true tidak anggap error
       response.premiumActive = true;
     }
 
