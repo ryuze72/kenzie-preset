@@ -1,8 +1,6 @@
-// Proxy to https://api.theresav.eu/api/premium/alightmotion
-// send: GET /send?email=...
-// verify: GET /verify?email=...&link=...&orderid=kenzie
-// Header: x-apikey: kenzie
+// Proxy ke API baru theresav.eu
 // Order ID selalu "kenzie"
+// Pesan sukses menekankan bahwa user HARUS refresh/logout di app AM
 
 const API_BASE = 'https://api.theresav.eu/api/premium/alightmotion';
 const API_KEY = 'kenzie';
@@ -13,9 +11,7 @@ function pickMsg(data) {
   const v = data.message || data.error || data.detail || data.msg || data.reason;
   if (v == null) return '';
   if (typeof v === 'string' || typeof v === 'number') return String(v);
-  if (typeof v === 'object') {
-    return String(v.message || v.error || v.msg || JSON.stringify(v).slice(0, 200));
-  }
+  if (typeof v === 'object') return String(v.message || v.error || v.msg || JSON.stringify(v).slice(0, 180));
   return String(v);
 }
 
@@ -33,11 +29,10 @@ module.exports = async (req, res) => {
     return res.status(405).json({ ok: false, message: 'Gunakan POST' });
   }
 
-  let b = req.body;
+  let b = req.body || {};
   if (typeof b === 'string') {
     try { b = JSON.parse(b); } catch { b = {}; }
   }
-  b = b || {};
   const email = String(b.email || '').trim();
   let link = String(b.magicLink || b.link || '').trim();
 
@@ -51,7 +46,7 @@ module.exports = async (req, res) => {
       || link.match(/https?:\/\/[^\s"'<>]*oobCode[^\s"'<>]*/i);
     if (m) link = m[0].replace(/[.,;]+$/, '');
     if (!link || link.length < 40 || !/oobCode/i.test(link)) {
-      return res.status(200).json({ ok: false, message: 'Link verifikasi tidak lengkap atau tidak berisi oobCode. Salin ulang dari inbox (harus diawali https://).' });
+      return res.status(200).json({ ok: false, message: 'Link verifikasi tidak lengkap atau tidak berisi oobCode. Salin ulang dari inbox.' });
     }
   }
 
@@ -59,12 +54,9 @@ module.exports = async (req, res) => {
   const timer = setTimeout(() => ctl.abort(), 28000);
 
   try {
-    let url;
-    if (action === 'send') {
-      url = `${API_BASE}/send?email=${encodeURIComponent(email)}`;
-    } else {
-      url = `${API_BASE}/verify?email=${encodeURIComponent(email)}&link=${encodeURIComponent(link)}&orderid=${ORDER_ID}`;
-    }
+    const url = action === 'send'
+      ? `${API_BASE}/send?email=${encodeURIComponent(email)}`
+      : `${API_BASE}/verify?email=${encodeURIComponent(email)}&link=${encodeURIComponent(link)}&orderid=${ORDER_ID}`;
 
     const r = await fetch(url, {
       method: 'GET',
@@ -81,21 +73,21 @@ module.exports = async (req, res) => {
     try { data = JSON.parse(text); } catch { data = null; }
 
     if (!data || typeof data !== 'object') {
-      const snippet = (text || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 160);
       return res.status(200).json({
         ok: false,
-        message: 'API membalas HTTP ' + r.status + (snippet ? ': ' + snippet : ' tanpa isi JSON'),
+        message: 'API membalas non-JSON (HTTP ' + r.status + ')',
+        raw: text.slice(0, 200),
       });
     }
 
-    const failed = data.status === false || data.success === false || data.ok === false || (data.error != null && String(data.error).trim() !== '');
-    const ok = !failed && (data.status === true || data.success === true || data.ok === true);
+    const failed = data.status === false || data.success === false || (data.error && String(data.error).trim());
+    const ok = !failed && (data.status === true || data.success === true);
 
     let message = pickMsg(data);
     if (ok && action === 'verify') {
-      message = 'Verifikasi diterima! Buka aplikasi Alight Motion → My Account → tekan tombol Refresh (atau Logout kemudian Login lagi) supaya status premium langsung muncul.';
+      message = 'Verifikasi diterima oleh server. WAJIB: Buka Alight Motion → My Account → tekan Refresh. Kalau masih belum, Logout → Login ulang dengan email yang sama, lalu tunggu 1-2 menit. Status premium kadang butuh sync manual.';
     } else if (ok && action === 'send') {
-      message = message || 'Link verifikasi berhasil dikirim ke email. Cek inbox lalu verifikasi.';
+      message = message || 'Link berhasil dikirim. Cek inbox (termasuk spam) lalu verifikasi.';
     } else if (!message) {
       message = ok ? 'Berhasil' : 'Gagal';
     }
@@ -107,28 +99,16 @@ module.exports = async (req, res) => {
       creator: data.creator,
       data: data.data,
       usage: data.usage,
+      upstream: data,
     };
 
-    if (action === 'send' && ok) {
-      response.cookie = 'compat-session=kenzie';
-    }
-
-    if (action === 'verify' && ok) {
-      response.premiumActive = true;
-    }
-
-    if (data.email) response.email = data.email;
+    if (action === 'send' && ok) response.cookie = 'compat-session=kenzie';
+    if (action === 'verify' && ok) response.premiumActive = true;
 
     return res.status(200).json(response);
   } catch (e) {
-    const why =
-      e && e.name === 'AbortError'
-        ? 'timeout 28 detik'
-        : (e && e.cause && (e.cause.code || e.cause.message)) || (e && e.message) || 'unknown';
-    return res.status(200).json({
-      ok: false,
-      message: 'Gagal menghubungi API AM Premium (' + why + ')',
-    });
+    const why = e.name === 'AbortError' ? 'timeout' : (e.message || 'unknown');
+    return res.status(200).json({ ok: false, message: 'Gagal hubungi API: ' + why });
   } finally {
     clearTimeout(timer);
   }
